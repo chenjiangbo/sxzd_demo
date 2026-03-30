@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface": "#0b1c30",
+              "error": "#ba1a1a",
+              "on-tertiary-container": "#2ca397",
+              "on-surface-variant": "#43474f",
+              "on-secondary-fixed": "#001453",
+              "on-primary-fixed": "#001b3d",
+              "primary-fixed": "#d6e3ff",
+              "secondary-fixed-dim": "#b8c4ff",
+              "outline": "#747780",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "primary-container": "#002b5b",
+              "inverse-surface": "#213145",
+              "inverse-primary": "#a9c7ff",
+              "inverse-on-surface": "#eaf1ff",
+              "on-secondary": "#ffffff",
+              "on-tertiary-fixed-variant": "#005049",
+              "background": "#f8f9ff",
+              "primary": "#001736",
+              "surface-container-low": "#eff4ff",
+              "on-tertiary-fixed": "#00201d",
+              "surface-container-highest": "#d3e4fe",
+              "surface-bright": "#f8f9ff",
+              "on-primary-fixed-variant": "#264778",
+              "on-error": "#ffffff",
+              "surface": "#f8f9ff",
+              "on-primary-container": "#7594ca",
+              "surface-dim": "#cbdbf5",
+              "surface-container-lowest": "#ffffff",
+              "secondary": "#3755c3",
+              "tertiary-fixed-dim": "#6bd8cb",
+              "surface-tint": "#405f91",
+              "surface-variant": "#d3e4fe",
+              "tertiary-fixed": "#89f5e7",
+              "error-container": "#ffdad6",
+              "secondary-fixed": "#dde1ff",
+              "tertiary-container": "#00322d",
+              "on-secondary-fixed-variant": "#173bab",
+              "surface-container-high": "#dce9ff",
+              "tertiary": "#001b18",
+              "surface-container": "#e5eeff",
+              "on-tertiary": "#ffffff",
+              "outline-variant": "#c4c6d0",
+              "on-background": "#0b1c30",
+              "primary-fixed-dim": "#a9c7ff",
+              "on-secondary-container": "#00217a",
+              "secondary-container": "#708cfd"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d3e4fe; border-radius: 10px; }
+        .glass-panel { backdrop-filter: blur(12px); background: rgba(255, 255, 255, 0.8); }
+        .pdf-highlight { background: rgba(55, 85, 195, 0.15); border: 1px solid #3755c3; }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface select-none">
+<!-- SideNavBar (Shared Component) -->
+<aside class="fixed left-0 top-0 h-full z-40 h-screen w-64 flex flex-col border-r-0 bg-slate-50 dark:bg-slate-900 font-manrope text-sm font-semibold tracking-tight">
+<div class="p-6">
+<h1 class="text-lg font-extrabold text-[#002B5B] dark:text-white">代偿补偿系统</h1>
+<p class="text-[10px] text-slate-400 mt-1">V2.4.0</p>
+</div>
+<nav class="flex-1 px-4 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-[#002B5B] dark:text-blue-300 font-bold border-r-4 border-[#002B5B] bg-white dark:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+<span>案件管理</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-[#002B5B] hover:bg-[#eff4ff] dark:hover:bg-slate-800/80 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>数据看板</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-[#002B5B] hover:bg-[#eff4ff] dark:hover:bg-slate-800/80 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="rule">rule</span>
+<span>规则配置</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-[#002B5B] hover:bg-[#eff4ff] dark:hover:bg-slate-800/80 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>系统设置</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-[#002B5B] hover:bg-[#eff4ff] dark:hover:bg-slate-800/80 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span>操作审计</span>
+</a>
+</nav>
+<div class="p-6 border-t border-slate-100">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<p class="text-xs font-bold text-primary">Admin User</p>
+<p class="text-[10px] text-slate-400">系统管理员</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopAppBar (Shared Component) -->
+<header class="fixed top-0 right-0 left-64 h-16 flex items-center justify-between px-8 z-30 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md shadow-sm dark:shadow-none border-b border-slate-100 dark:border-slate-800/50">
+<div class="flex items-center gap-6">
+<h2 class="font-manrope text-xl font-black text-[#001736] dark:text-white">补偿案件审核中心</h2>
+<nav class="hidden md:flex items-center gap-8 ml-4">
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#001736] transition-all" href="#">案件总览</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#001736] transition-all" href="#">完整性检查</a>
+<a class="text-[#3755c3] dark:text-blue-400 border-b-2 border-[#3755c3] pb-2 font-bold transition-all" href="#">证据查看</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#001736] transition-all" href="#">文书生成</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#001736] transition-all" href="#">人工复核</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative flex items-center bg-surface-container-low px-3 py-1.5 rounded-md">
+<span class="material-symbols-outlined text-slate-400 text-sm">search</span>
+<input class="bg-transparent border-none text-xs focus:ring-0 w-48" placeholder="搜索案件/证据..." type="text"/>
+</div>
+<div class="flex items-center gap-4 text-slate-500">
+<span class="material-symbols-outlined cursor-pointer hover:text-primary">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary">contact_support</span>
+<span class="material-symbols-outlined cursor-pointer text-secondary">smart_toy</span>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-64 pt-16 h-screen flex flex-col">
+<!-- Step Indicator -->
+<section class="bg-surface-container-low px-8 py-4 flex items-center gap-4">
+<div class="flex items-center gap-2 text-xs font-semibold">
+<span class="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center">1</span>
+<span class="text-primary">受理登记</span>
+</div>
+<div class="h-px w-8 bg-outline-variant/30"></div>
+<div class="flex items-center gap-2 text-xs font-semibold">
+<span class="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center">2</span>
+<span class="text-primary">形式审查</span>
+</div>
+<div class="h-px w-8 bg-outline-variant/30"></div>
+<div class="flex items-center gap-2 text-xs font-semibold">
+<span class="w-6 h-6 rounded-full border-2 border-secondary text-secondary flex items-center justify-center">3</span>
+<span class="text-secondary">证据核验</span>
+</div>
+<div class="h-px w-8 bg-outline-variant/30"></div>
+<div class="flex items-center gap-2 text-xs text-on-surface-variant/50">
+<span class="w-6 h-6 rounded-full border-2 border-outline-variant/30 flex items-center justify-center text-[10px]">4</span>
+<span>代偿决策</span>
+</div>
+</section>
+<!-- Dynamic Content Layout -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Column 1: PDF Viewer -->
+<section class="w-[35%] bg-surface-container border-r border-slate-100 flex flex-col">
+<div class="p-4 flex items-center justify-between bg-white/50 backdrop-blur-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">description</span>
+<span class="text-xs font-bold text-primary">证据原件: 代偿申请书_0922.pdf</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-1 hover:bg-white rounded"><span class="material-symbols-outlined text-sm">zoom_in</span></button>
+<button class="p-1 hover:bg-white rounded"><span class="material-symbols-outlined text-sm">zoom_out</span></button>
+<button class="p-1 hover:bg-white rounded"><span class="material-symbols-outlined text-sm">print</span></button>
+</div>
+</div>
+<div class="flex-1 p-6 overflow-y-auto bg-slate-200/50 flex flex-col items-center gap-8">
+<!-- PDF Page 1 Simulation -->
+<div class="w-full max-w-md bg-white shadow-xl aspect-[1/1.4] p-10 relative overflow-hidden group">
+<div class="absolute top-24 left-10 right-10 pdf-highlight h-12 rounded-sm ring-2 ring-secondary/20"></div>
+<div class="space-y-4">
+<div class="h-6 w-1/3 bg-slate-100 rounded"></div>
+<div class="h-4 w-full bg-slate-50 rounded"></div>
+<div class="h-4 w-5/6 bg-slate-50 rounded"></div>
+<div class="h-4 w-full bg-slate-50 rounded"></div>
+<div class="h-10"></div>
+<div class="h-4 w-full bg-slate-50 rounded"></div>
+<div class="h-4 w-3/4 bg-slate-50 rounded"></div>
+<div class="h-4 w-full bg-slate-100 rounded"></div>
+<div class="mt-8 flex justify-between">
+<div class="w-24 h-24 border-2 border-dashed border-slate-200 rounded flex items-center justify-center">
+<span class="text-[8px] text-slate-300">印章定位区</span>
+</div>
+<div class="w-32 h-6 bg-slate-100 rounded"></div>
+</div>
+</div>
+<div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<span class="text-xs font-bold text-primary bg-white/90 px-3 py-1.5 rounded-full shadow-lg">OCR 已识别: 98.4%</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Column 2: Conclusion List -->
+<section class="w-[30%] bg-white flex flex-col border-r border-slate-100">
+<div class="p-4 border-b border-slate-50 flex items-center justify-between">
+<h3 class="text-sm font-extrabold text-primary">核验结论</h3>
+<div class="flex gap-1 p-1 bg-surface-container rounded-lg">
+<button class="px-3 py-1 text-[10px] font-bold rounded-md bg-white shadow-sm text-primary">全部</button>
+<button class="px-3 py-1 text-[10px] font-semibold text-on-surface-variant hover:text-primary">高风险</button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto">
+<!-- Conclusion Cards -->
+<div class="p-4 space-y-3">
+<!-- Active Card -->
+<div class="p-4 rounded-xl bg-primary-container/10 border-l-4 border-secondary transition-all">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-bold text-secondary uppercase tracking-wider">身份一致性</span>
+<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[9px] font-bold">通过</span>
+</div>
+<h4 class="text-xs font-bold text-primary mb-1">社会信用代码核对一致</h4>
+<p class="text-[10px] text-on-surface-variant leading-relaxed">申请书代码 (91110108MA01...) 与 工商系统信息 100% 匹配。</p>
+</div>
+<!-- Card 2 -->
+<div class="p-4 rounded-xl bg-surface hover:bg-surface-container transition-all cursor-pointer">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">债权核验</span>
+<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[9px] font-bold">通过</span>
+</div>
+<h4 class="text-xs font-bold text-primary mb-1">主债权金额一致</h4>
+<p class="text-[10px] text-on-surface-variant leading-relaxed">合同金额 5,000,000.00 元，与代偿通知书金额一致。</p>
+</div>
+<!-- Warning Card -->
+<div class="p-4 rounded-xl bg-error-container/20 border-l-4 border-error transition-all cursor-pointer">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-bold text-error uppercase tracking-wider">变更审查</span>
+<span class="px-2 py-0.5 rounded-full bg-error-container text-error text-[9px] font-bold">待复核</span>
+</div>
+<h4 class="text-xs font-bold text-primary mb-1">法定代表人变更说明</h4>
+<p class="text-[10px] text-on-surface-variant leading-relaxed">检测到法人由 [张*] 变更为 [李*]，相关变更证明材料待核验。</p>
+</div>
+<!-- Card 4 -->
+<div class="p-4 rounded-xl bg-surface hover:bg-surface-container transition-all cursor-pointer">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">精算核对</span>
+<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[9px] font-bold">通过</span>
+</div>
+<h4 class="text-xs font-bold text-primary mb-1">代偿金额计算依据</h4>
+<p class="text-[10px] text-on-surface-variant leading-relaxed">本金 + 利息(4.35%) + 罚息计算结果无误。</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Column 3: Evidence Details -->
+<section class="flex-1 bg-surface-container-low flex flex-col">
+<div class="p-6">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-lg font-bold font-manrope text-primary">引用定位详情</h3>
+<div class="flex gap-2">
+<button class="bg-primary text-on-primary px-4 py-1.5 rounded-md text-xs font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">verified</span>
+                                一键确认为证据
+                            </button>
+</div>
+</div>
+<!-- Asymmetric Multi-Source Evidence Display -->
+<div class="grid grid-cols-1 gap-6">
+<!-- Evidence Block 1 -->
+<div class="bg-white rounded-xl p-5 shadow-sm border-t-2 border-secondary relative overflow-hidden">
+<div class="absolute -right-8 -top-8 w-24 h-24 bg-secondary/5 rounded-full"></div>
+<div class="flex items-start justify-between mb-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-sm">file_open</span>
+</div>
+<div>
+<p class="text-xs font-bold text-primary">来源 A: 代偿申请书原文</p>
+<p class="text-[10px] text-on-surface-variant">页码: P1 / 行号: L12-L14</p>
+</div>
+</div>
+<span class="text-[10px] font-mono text-secondary px-2 py-1 bg-secondary/10 rounded">Match: 100%</span>
+</div>
+<div class="bg-slate-50 p-4 rounded-lg italic text-xs text-on-surface leading-loose border-l-2 border-slate-200">
+                                "申请单位社会统一信用代码为 <span class="bg-secondary/20 font-bold px-1">91110108MA01XY7B2D</span>，法人代表张平，申请代偿金额共计伍佰万元整。"
+                            </div>
+</div>
+<!-- Evidence Block 2 -->
+<div class="bg-white rounded-xl p-5 shadow-sm relative overflow-hidden">
+<div class="flex items-start justify-between mb-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-tertiary-fixed-dim/20 flex items-center justify-center text-on-tertiary-container">
+<span class="material-symbols-outlined text-sm">database</span>
+</div>
+<div>
+<p class="text-xs font-bold text-primary">来源 B: 国家企业信用信息公示系统</p>
+<p class="text-[10px] text-on-surface-variant">查询时间: 2023-09-23 10:20:00</p>
+</div>
+</div>
+<span class="text-[10px] font-mono text-on-tertiary-container px-2 py-1 bg-tertiary-fixed-dim/20 rounded">Verify: Success</span>
+</div>
+<div class="grid grid-cols-2 gap-4 text-[10px]">
+<div class="space-y-1">
+<p class="text-on-surface-variant">企业名称</p>
+<p class="font-bold">某某融资担保有限公司</p>
+</div>
+<div class="space-y-1">
+<p class="text-on-surface-variant">信用代码</p>
+<p class="font-bold text-secondary">91110108MA01XY7B2D</p>
+</div>
+<div class="space-y-1">
+<p class="text-on-surface-variant">注册资本</p>
+<p class="font-bold">50,000,000.00 RMB</p>
+</div>
+<div class="space-y-1">
+<p class="text-on-surface-variant">经营状态</p>
+<p class="font-bold text-green-600">存续（在营、开业、在册）</p>
+</div>
+</div>
+</div>
+<!-- AI Summary Block -->
+<div class="bg-tertiary-container text-tertiary-fixed p-6 rounded-xl relative">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-sm">auto_awesome</span>
+<span class="text-xs font-bold tracking-tight">AI 证据摘要</span>
+</div>
+<p class="text-xs leading-relaxed opacity-90">
+                                经交叉核验，该案件主体身份信息真实有效。社会信用代码在三方来源（申请书、工商系统、银行征信报告）中完全一致。建议通过身份完整性校验，关注点在于法人代表变更证书的有效性日期。
+                            </p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- NavigationDrawer (AI Assistant) - Collapsed State Shown via Slide-In logic -->
+<div class="fixed right-0 top-0 h-full z-50 flex flex-col w-16 bg-white shadow-[-10px_0_30px_rgba(11,28,48,0.05)] border-l border-slate-100 items-center py-6 gap-6 transition-all duration-500 hover:w-80 group">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-white cursor-pointer group-hover:w-12 group-hover:h-12 transition-all">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+</div>
+<!-- Expanded Content (Hidden until hover) -->
+<div class="hidden group-hover:flex flex-col w-full px-6 overflow-hidden">
+<div class="mb-8">
+<h4 class="text-lg font-bold text-primary font-manrope">AI 智能助手</h4>
+<p class="text-[10px] text-slate-400">Agent Intelligence</p>
+</div>
+<div class="space-y-4 mb-8">
+<div class="bg-surface-container-low p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-secondary" data-icon="warning">warning</span>
+<span class="text-xs font-semibold">查看风险预警 (3)</span>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-secondary" data-icon="fact_check">fact_check</span>
+<span class="text-xs font-semibold">合规性操作建议</span>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-secondary" data-icon="update">update</span>
+<span class="text-xs font-semibold">历史轨迹溯源</span>
+</div>
+</div>
+<button class="w-full bg-[#6bd8cb] text-[#001b18] py-3 rounded-xl font-bold text-sm shadow-lg shadow-teal-200/50">
+                开始风险扫描
+            </button>
+</div>
+<!-- Collapsed Icons -->
+<div class="group-hover:hidden flex flex-col gap-6">
+<span class="material-symbols-outlined text-slate-400 hover:text-secondary cursor-pointer">warning</span>
+<span class="material-symbols-outlined text-slate-400 hover:text-secondary cursor-pointer">fact_check</span>
+<span class="material-symbols-outlined text-slate-400 hover:text-secondary cursor-pointer">update</span>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface": "#0b1c30",
+              "error": "#ba1a1a",
+              "on-tertiary-container": "#2ca397",
+              "on-surface-variant": "#43474f",
+              "on-secondary-fixed": "#001453",
+              "on-primary-fixed": "#001b3d",
+              "primary-fixed": "#d6e3ff",
+              "secondary-fixed-dim": "#b8c4ff",
+              "outline": "#747780",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "primary-container": "#002b5b",
+              "inverse-surface": "#213145",
+              "inverse-primary": "#a9c7ff",
+              "inverse-on-surface": "#eaf1ff",
+              "on-secondary": "#ffffff",
+              "on-tertiary-fixed-variant": "#005049",
+              "background": "#f8f9ff",
+              "primary": "#001736",
+              "surface-container-low": "#eff4ff",
+              "on-tertiary-fixed": "#00201d",
+              "surface-container-highest": "#d3e4fe",
+              "surface-bright": "#f8f9ff",
+              "on-primary-fixed-variant": "#264778",
+              "on-error": "#ffffff",
+              "surface": "#f8f9ff",
+              "on-primary-container": "#7594ca",
+              "surface-dim": "#cbdbf5",
+              "surface-container-lowest": "#ffffff",
+              "secondary": "#3755c3",
+              "tertiary-fixed-dim": "#6bd8cb",
+              "surface-tint": "#405f91",
+              "surface-variant": "#d3e4fe",
+              "tertiary-fixed": "#89f5e7",
+              "error-container": "#ffdad6",
+              "secondary-fixed": "#dde1ff",
+              "tertiary-container": "#00322d",
+              "on-secondary-fixed-variant": "#173bab",
+              "surface-container-high": "#dce9ff",
+              "tertiary": "#001b18",
+              "surface-container": "#e5eeff",
+              "on-tertiary": "#ffffff",
+              "outline-variant": "#c4c6d0",
+              "on-background": "#0b1c30",
+              "primary-fixed-dim": "#a9c7ff",
+              "on-secondary-container": "#00217a",
+              "secondary-container": "#708cfd"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface">
+<!-- SideNavBar (Authority: JSON) -->
+<aside class="fixed left-0 top-0 h-full w-64 flex flex-col border-r-0 bg-slate-50 z-40">
+<div class="p-6">
+<h1 class="text-lg font-extrabold text-[#002B5B]">代偿补贴系统</h1>
+<p class="text-xs text-slate-500 font-semibold tracking-tight">V2.4.0</p>
+</div>
+<nav class="flex-1 mt-4">
+<a class="flex items-center px-6 py-3 text-[#002B5B] font-bold border-r-4 border-[#002B5B] bg-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="assignment">assignment</span>
+<span class="font-manrope text-sm tracking-tight">案件管理</span>
+</a>
+<a class="flex items-center px-6 py-3 text-slate-500 hover:text-[#002B5B] hover:bg-[#eff4ff] transition-colors duration-200" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="dashboard">dashboard</span>
+<span class="font-manrope text-sm tracking-tight">数据看板</span>
+</a>
+<a class="flex items-center px-6 py-3 text-slate-500 hover:text-[#002B5B] hover:bg-[#eff4ff] transition-colors duration-200" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="rule">rule</span>
+<span class="font-manrope text-sm tracking-tight">规则配置</span>
+</a>
+<a class="flex items-center px-6 py-3 text-slate-500 hover:text-[#002B5B] hover:bg-[#eff4ff] transition-colors duration-200" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="settings">settings</span>
+<span class="font-manrope text-sm tracking-tight">系统设置</span>
+</a>
+<a class="flex items-center px-6 py-3 text-slate-500 hover:text-[#002B5B] hover:bg-[#eff4ff] transition-colors duration-200" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="history">history</span>
+<span class="font-manrope text-sm tracking-tight">操作审计</span>
+</a>
+</nav>
+<div class="p-6 mt-auto">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container overflow-hidden">
+<img alt="User Profile" data-alt="professional portrait of a financial administrator in a clean minimalist style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCb3SAtCE-Tb5nVVhjSGa5LxbeIyIpz9n1JqVxSBpfcbpeOuq60nGsXVTHDM3jDoDUwBukdZlrKnK28-OJXgByE4st39u_ykjGl7WwTcwmWe7ODNWWgwEbAjKQk3yOHqhH8OjYMh_f78wWutCi89FP_I8BTkfPULewcIYI-1P6CO_ohGaZaQBYSjSjdVDugzzmL_IWaDFZRDMFrgVyZ7-XAiHcMcwcjJh3N7f9ZF3ocEvBFZjYLiETVo2BWx0BuWGN8wkLGHQf9v6Y"/>
+</div>
+<div class="text-xs">
+<p class="font-bold">系统管理员</p>
+<p class="text-on-surface-variant">Admin</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopAppBar (Authority: JSON) -->
+<header class="fixed top-0 right-0 left-64 h-16 flex items-center justify-between px-8 z-30 bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-100">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black text-[#001736]">补偿案件审核中心</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-slate-500 hover:text-[#001736] transition-all text-sm font-semibold" href="#">案件总览</a>
+<a class="text-[#3755c3] border-b-2 border-[#3755c3] pb-2 font-bold text-sm" href="#">完整性检查</a>
+<a class="text-slate-500 hover:text-[#001736] transition-all text-sm font-semibold" href="#">核验与规则</a>
+<a class="text-slate-500 hover:text-[#001736] transition-all text-sm font-semibold" href="#">证据查看</a>
+<a class="text-slate-500 hover:text-[#001736] transition-all text-sm font-semibold" href="#">文书生成</a>
+<a class="text-slate-500 hover:text-[#001736] transition-all text-sm font-semibold" href="#">人工复核</a>
+<a class="text-slate-500 hover:text-[#001736] transition-all text-sm font-semibold" href="#">提交 OA</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer" data-icon="notifications">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer" data-icon="contact_support">contact_support</span>
+<span class="material-symbols-outlined text-[#3755c3] cursor-pointer" data-icon="smart_toy">smart_toy</span>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-64 mt-16 p-8 pb-32">
+<!-- Step Indicator -->
+<div class="mb-10 flex items-center justify-center">
+<div class="flex items-center gap-4 w-full max-w-4xl">
+<div class="flex flex-col items-center flex-1">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold mb-2">1</div>
+<span class="text-xs font-bold text-primary">完整性检查</span>
+</div>
+<div class="h-px bg-slate-200 flex-1 -mt-6"></div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant text-xs font-bold mb-2">2</div>
+<span class="text-xs text-on-surface-variant">一致性核验</span>
+</div>
+<div class="h-px bg-slate-200 flex-1 -mt-6"></div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant text-xs font-bold mb-2">3</div>
+<span class="text-xs text-on-surface-variant">合规性扫描</span>
+</div>
+<div class="h-px bg-slate-200 flex-1 -mt-6"></div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant text-xs font-bold mb-2">4</div>
+<span class="text-xs text-on-surface-variant">终审上报</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-8">
+<!-- Left Side: Check Summary & Table -->
+<div class="col-span-9 space-y-8">
+<!-- Summary Header -->
+<div class="grid grid-cols-4 gap-6">
+<div class="bg-surface-container-lowest p-6 rounded-lg shadow-sm border-l-4 border-primary">
+<p class="text-xs text-on-surface-variant font-medium mb-1">待审材料总数</p>
+<h2 class="text-3xl font-headline font-extrabold text-primary">12</h2>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-lg shadow-sm border-l-4 border-on-tertiary-container">
+<p class="text-xs text-on-surface-variant font-medium mb-1">已自动匹配要件</p>
+<h2 class="text-3xl font-headline font-extrabold text-on-tertiary-container">8</h2>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-lg shadow-sm border-l-4 border-secondary">
+<p class="text-xs text-on-surface-variant font-medium mb-1">待人工确认</p>
+<h2 class="text-3xl font-headline font-extrabold text-secondary">2</h2>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-lg shadow-sm border-l-4 border-error">
+<p class="text-xs text-on-surface-variant font-medium mb-1">关键件缺失</p>
+<h2 class="text-3xl font-headline font-extrabold text-error">1</h2>
+</div>
+</div>
+<!-- Main Table Section -->
+<section class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+<div class="px-8 py-5 flex items-center justify-between bg-surface-container-low/30">
+<h3 class="font-headline font-bold text-lg text-primary">材料要件检查清单</h3>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-surface-container rounded text-xs font-bold text-on-surface-variant flex items-center">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="filter_list">filter_list</span>
+                                全部状态
+                            </span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-slate-50">
+<tr>
+<th class="px-8 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">要件名称</th>
+<th class="px-8 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">对应识别材料</th>
+<th class="px-8 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">核验状态</th>
+<th class="px-8 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-wider text-right">操作</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+<tr>
+<td class="px-8 py-5 font-semibold text-sm">正式红头代偿补偿申请函</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant italic">识别文件：关于XXX代偿补偿申请.pdf</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 rounded-full bg-on-tertiary-container/10 text-on-tertiary-container text-[11px] font-bold">已匹配</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-secondary hover:underline text-xs font-bold">查看详情</button>
+</td>
+</tr>
+<tr>
+<td class="px-8 py-5 font-semibold text-sm">代偿审批文件</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant italic">未找到直接对应文件</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 rounded-full bg-secondary/10 text-secondary text-[11px] font-bold">待人工确认</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-secondary hover:underline text-xs font-bold">手动关联</button>
+</td>
+</tr>
+<tr>
+<td class="px-8 py-5 font-semibold text-sm">借款合同</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant italic">识别文件：JZL-2023-004.pdf</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 rounded-full bg-on-tertiary-container/10 text-on-tertiary-container text-[11px] font-bold">已匹配</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-secondary hover:underline text-xs font-bold">查看详情</button>
+</td>
+</tr>
+<tr>
+<td class="px-8 py-5 font-semibold text-sm">保证合同 / 委托担保合同</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant italic">识别文件：WTDB-2023-08.pdf</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 rounded-full bg-on-tertiary-container/10 text-on-tertiary-container text-[11px] font-bold">已匹配</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-secondary hover:underline text-xs font-bold">查看详情</button>
+</td>
+</tr>
+<tr>
+<td class="px-8 py-5 font-semibold text-sm">反担保合同</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant italic">识别文件：FDB-GZ-001.pdf</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 rounded-full bg-on-tertiary-container/10 text-on-tertiary-container text-[11px] font-bold">已匹配</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-secondary hover:underline text-xs font-bold">查看详情</button>
+</td>
+</tr>
+<tr>
+<td class="px-8 py-5 font-semibold text-sm">反担保物权利凭证</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant italic">本案采取个人连带责任保证</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-bold">本案可能不适用</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-on-surface-variant opacity-50 cursor-not-allowed text-xs font-bold">无需操作</button>
+</td>
+</tr>
+<tr class="bg-error/5">
+<td class="px-8 py-5 font-semibold text-sm">追偿过程法律文书</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant italic">未在上传包中检测到</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 rounded-full bg-error/10 text-error text-[11px] font-bold">缺失</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-error hover:underline text-xs font-bold">补录通知</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Right Side: AI Assistant (Authority: JSON Drawer) -->
+<div class="col-span-3">
+<div class="sticky top-24 bg-white/90 backdrop-blur-xl rounded-lg shadow-[-20px_0_40px_rgba(11,28,48,0.06)] h-[calc(100vh-140px)] flex flex-col">
+<div class="p-6 border-b border-slate-100">
+<div class="flex items-center justify-between mb-4">
+<span class="text-lg font-bold text-[#001b18]">AI 智能助手</span>
+<span class="material-symbols-outlined text-[#6bd8cb]" data-icon="bolt">bolt</span>
+</div>
+<p class="text-xs text-slate-500 mb-4">Agent Intelligence</p>
+<button class="w-full py-2 bg-on-tertiary-container text-white text-xs font-bold rounded-lg hover:opacity-90 transition-all">开始风险扫描</button>
+</div>
+<div class="flex-1 overflow-y-auto p-6 space-y-6">
+<!-- AI Insights -->
+<div class="bg-primary/5 p-4 rounded-lg border-l-2 border-[#6bd8cb]">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-[16px] text-on-tertiary-container" data-icon="lightbulb">lightbulb</span>
+<span class="text-xs font-bold text-primary">智能提示</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+                                系统检测到本案反担保措施为“个人连带责任保证”，已自动标记“反担保物权利凭证”为不适用项。建议重点核查保证人的征信报告完整性。
+                            </p>
+</div>
+<div class="space-y-4">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-on-tertiary-container mt-1" data-icon="warning">warning</span>
+<div>
+<p class="text-xs font-bold text-primary mb-1">风险预警</p>
+<p class="text-[11px] text-on-surface-variant">代偿审批文件与申请函日期跨度超过60天，请注意合规性风险。</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-on-tertiary-container mt-1" data-icon="fact_check">fact_check</span>
+<div>
+<p class="text-xs font-bold text-primary mb-1">合规建议</p>
+<p class="text-[11px] text-on-surface-variant">建议在后续“一致性核验”环节加强对借款合同编号的比对。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 bg-slate-50 rounded-b-lg border-t border-slate-100">
+<div class="flex items-center gap-2 text-[10px] text-slate-400">
+<span class="material-symbols-outlined text-[14px]" data-icon="update">update</span>
+<span>最后更新: 2023-11-24 14:20</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Fixed Footer Actions -->
+<footer class="fixed bottom-0 right-0 left-64 bg-white/90 backdrop-blur-md border-t border-slate-100 px-8 py-4 flex items-center justify-between z-30">
+<div class="flex gap-4">
+<button class="px-5 py-2 rounded-lg bg-surface-container text-primary text-sm font-bold hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px] mr-1" data-icon="info">info</span>
+                查看缺口解释
+            </button>
+<button class="px-5 py-2 rounded-lg bg-error-container text-on-error-container text-sm font-bold hover:bg-error/10 transition-colors">
+<span class="material-symbols-outlined text-[18px] mr-1" data-icon="keyboard_return">keyboard_return</span>
+                退回补充材料
+            </button>
+</div>
+<div>
+<button class="px-8 py-3 rounded-lg bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                进入一致性核验
+                <span class="material-symbols-outlined text-[18px] ml-1" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>代偿补偿审核中心 - 案件管理</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface": "#0b1c30",
+              "error": "#ba1a1a",
+              "on-tertiary-container": "#2ca397",
+              "on-surface-variant": "#43474f",
+              "on-secondary-fixed": "#001453",
+              "on-primary-fixed": "#001b3d",
+              "primary-fixed": "#d6e3ff",
+              "secondary-fixed-dim": "#b8c4ff",
+              "outline": "#747780",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "primary-container": "#002b5b",
+              "inverse-surface": "#213145",
+              "inverse-primary": "#a9c7ff",
+              "inverse-on-surface": "#eaf1ff",
+              "on-secondary": "#ffffff",
+              "on-tertiary-fixed-variant": "#005049",
+              "background": "#f8f9ff",
+              "primary": "#001736",
+              "surface-container-low": "#eff4ff",
+              "on-tertiary-fixed": "#00201d",
+              "surface-container-highest": "#d3e4fe",
+              "surface-bright": "#f8f9ff",
+              "on-primary-fixed-variant": "#264778",
+              "on-error": "#ffffff",
+              "surface": "#f8f9ff",
+              "on-primary-container": "#7594ca",
+              "surface-dim": "#cbdbf5",
+              "surface-container-lowest": "#ffffff",
+              "secondary": "#3755c3",
+              "tertiary-fixed-dim": "#6bd8cb",
+              "surface-tint": "#405f91",
+              "surface-variant": "#d3e4fe",
+              "tertiary-fixed": "#89f5e7",
+              "error-container": "#ffdad6",
+              "secondary-fixed": "#dde1ff",
+              "tertiary-container": "#00322d",
+              "on-secondary-fixed-variant": "#173bab",
+              "surface-container-high": "#dce9ff",
+              "tertiary": "#001b18",
+              "surface-container": "#e5eeff",
+              "on-tertiary": "#ffffff",
+              "outline-variant": "#c4c6d0",
+              "on-background": "#0b1c30",
+              "primary-fixed-dim": "#a9c7ff",
+              "on-secondary-container": "#00217a",
+              "secondary-container": "#708cfd"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full z-40 bg-slate-50 dark:bg-slate-900 h-screen w-64 flex flex-col border-r-0 font-manrope text-sm font-semibold tracking-tight">
+<div class="p-6">
+<h1 class="text-lg font-extrabold text-[#002B5B] dark:text-white mb-1">代偿补偿系统</h1>
+<p class="text-xs text-slate-400">V2.4.0</p>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center px-4 py-3 text-[#002B5B] dark:text-blue-300 font-bold border-r-4 border-[#002B5B] bg-white dark:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined mr-3">assignment</span>
+                案件管理
+            </a>
+<a class="flex items-center px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-[#002B5B] hover:bg-[#eff4ff] dark:hover:bg-slate-800/80 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined mr-3">dashboard</span>
+                数据看板
+            </a>
+<a class="flex items-center px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-[#002B5B] hover:bg-[#eff4ff] dark:hover:bg-slate-800/80 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined mr-3">rule</span>
+                规则配置
+            </a>
+<a class="flex items-center px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-[#002B5B] hover:bg-[#eff4ff] dark:hover:bg-slate-800/80 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined mr-3">settings</span>
+                系统设置
+            </a>
+<a class="flex items-center px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-[#002B5B] hover:bg-[#eff4ff] dark:hover:bg-slate-800/80 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined mr-3">history</span>
+                操作审计
+            </a>
+</nav>
+<div class="p-4 mt-auto">
+<div class="flex items-center p-3 bg-surface-container-low rounded-xl">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-white mr-3">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<p class="text-xs font-bold text-primary">业务一部 / 代偿岗</p>
+<p class="text-[10px] text-on-surface-variant">管理员</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-64 h-16 flex items-center justify-between px-8 z-30 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800/50 shadow-sm">
+<div class="flex items-center space-x-8">
+<span class="text-xl font-black text-[#001736] dark:text-white">补偿案件审核中心</span>
+<nav class="hidden md:flex items-center space-x-6">
+<a class="text-[#3755c3] dark:text-blue-400 border-b-2 border-[#3755c3] pb-2 font-bold transition-all" href="#">案件总览</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#001736] transition-all" href="#">完整性检查</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#001736] transition-all" href="#">核验与规则</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#001736] transition-all" href="#">证据查看</a>
+</nav>
+</div>
+<div class="flex items-center space-x-5">
+<div class="relative group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary cursor-pointer transition-colors">notifications</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer transition-colors">contact_support</span>
+<span class="material-symbols-outlined text-on-tertiary-container hover:scale-110 transition-transform cursor-pointer">smart_toy</span>
+<div class="h-8 w-px bg-outline-variant/30 mx-2"></div>
+<img alt="Administrator" class="w-8 h-8 rounded-full border-2 border-white shadow-sm" data-alt="professional male portrait in business attire, clean corporate headshot with soft studio lighting and neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAw-sx-mUdfLIQkDX8o2z2UIGuB3biywDvs5ReXl7stC3S-OVEh6b2VwRa36bgNT08ydMwLuUCFtdxE_gxSqjBW2SU23y5um3Q5kSPFeMm3wLpmcV-wewwFwBjN5Fjs5IqiPw_BN122hAEb27AQJ7BOUsTOc0dSs9_vkfjbwjea4mKMNAA_PzCxxU65GxCIW7x0MLXeHAjoHfiGsE1Z70lQGrPzc34Ep6LXaZpFogXS2LEeJ4pDGGtDwhlNSOHCabmoG5UAuFysli8"/>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 mt-16 p-8 min-h-screen">
+<!-- AI Intelligence Alert -->
+<div class="mb-10 p-4 bg-tertiary-container/5 rounded-xl flex items-center space-x-3 border border-tertiary-fixed-dim/20">
+<span class="material-symbols-outlined text-on-tertiary-container" style="font-variation-settings: 'FILL' 1;">info</span>
+<p class="text-on-tertiary-container font-medium text-sm">
+                案件数据已同步自国担数字化平台 / 省级分中心 / 数据中台，系统已自动完成资料归集和初步结构化处理。
+            </p>
+</div>
+<!-- Asymmetric Stats Grid -->
+<section class="grid grid-cols-12 gap-6 mb-12">
+<div class="col-span-12 lg:col-span-4 p-6 bg-surface-container-lowest rounded-xl shadow-[-20px_0_40px_rgba(11,28,48,0.04)]">
+<p class="label-md uppercase tracking-wider text-on-surface-variant font-semibold mb-2">待审案件数</p>
+<div class="flex items-end space-x-4">
+<span class="text-4xl font-black text-primary leading-none">128</span>
+<span class="text-xs text-error font-bold mb-1 flex items-center">
+<span class="material-symbols-outlined text-sm mr-1">trending_up</span>
+                        较昨日 +12%
+                    </span>
+</div>
+<div class="mt-4 h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-2/3"></div>
+</div>
+</div>
+<div class="col-span-6 lg:col-span-2 p-6 bg-surface-container-lowest rounded-xl">
+<p class="text-xs text-on-surface-variant font-medium mb-1">AI 初检完成</p>
+<span class="text-2xl font-bold text-on-tertiary-container">94</span>
+<div class="mt-2 text-[10px] text-on-surface-variant">完成率 73.4%</div>
+</div>
+<div class="col-span-6 lg:col-span-2 p-6 bg-surface-container-lowest rounded-xl">
+<p class="text-xs text-on-surface-variant font-medium mb-1">待人工复核</p>
+<span class="text-2xl font-bold text-secondary">34</span>
+<div class="mt-2 text-[10px] text-on-surface-variant">高优处理 8</div>
+</div>
+<div class="col-span-6 lg:col-span-2 p-6 bg-surface-container-lowest rounded-xl">
+<p class="text-xs text-on-surface-variant font-medium mb-1">今日已提交 OA</p>
+<span class="text-2xl font-bold text-on-surface">16</span>
+<div class="mt-2 text-[10px] text-on-surface-variant">审批中 12</div>
+</div>
+<div class="col-span-6 lg:col-span-2 p-6 bg-error-container/30 border border-error-container rounded-xl">
+<p class="text-xs text-error font-bold mb-1">高风险待确认</p>
+<span class="text-2xl font-black text-error">5</span>
+<div class="mt-2 text-[10px] text-on-error-container">需立即介入</div>
+</div>
+</section>
+<!-- Filter Area -->
+<section class="bg-surface-container-low rounded-xl p-8 mb-8">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-on-surface-variant">债务人名称</label>
+<input class="w-full bg-surface-container-lowest border-0 rounded-lg text-sm px-4 py-2.5 focus:ring-2 focus:ring-secondary/20 placeholder:text-slate-300" placeholder="搜索债务人名称..." type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-on-surface-variant">担保机构</label>
+<select class="w-full bg-surface-container-lowest border-0 rounded-lg text-sm px-4 py-2.5 focus:ring-2 focus:ring-secondary/20 appearance-none">
+<option>全部机构</option>
+<option>宝鸡市中小企业融资担保有限公司</option>
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-on-surface-variant">债权人</label>
+<input class="w-full bg-surface-container-lowest border-0 rounded-lg text-sm px-4 py-2.5 focus:ring-2 focus:ring-secondary/20" placeholder="输入银行名称..." type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-on-surface-variant">代偿日期区间</label>
+<div class="flex items-center space-x-2">
+<input class="w-full bg-surface-container-lowest border-0 rounded-lg text-xs px-3 py-2.5" type="date"/>
+<span class="text-slate-400">-</span>
+<input class="w-full bg-surface-container-lowest border-0 rounded-lg text-xs px-3 py-2.5" type="date"/>
+</div>
+</div>
+</div>
+<div class="mt-6 flex flex-wrap items-center gap-4 border-t border-white/40 pt-6">
+<div class="flex items-center space-x-3">
+<span class="text-xs font-bold text-on-surface-variant">产品类别:</span>
+<div class="flex gap-2">
+<button class="px-3 py-1.5 rounded-full bg-primary text-white text-xs font-medium">全部</button>
+<button class="px-3 py-1.5 rounded-full bg-white text-slate-500 text-xs font-medium hover:bg-slate-50 transition-colors">政采贷</button>
+<button class="px-3 py-1.5 rounded-full bg-white text-slate-500 text-xs font-medium hover:bg-slate-50 transition-colors">科创担</button>
+</div>
+</div>
+<div class="h-4 w-px bg-slate-200"></div>
+<label class="flex items-center space-x-2 cursor-pointer group">
+<div class="w-5 h-5 rounded border-2 border-slate-200 group-hover:border-secondary flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-xs text-secondary opacity-0 group-hover:opacity-100">check</span>
+</div>
+<span class="text-xs font-bold text-on-surface-variant">已完成 AI 初检</span>
+</label>
+<div class="ml-auto flex items-center space-x-3">
+<button class="text-xs font-bold text-secondary hover:underline underline-offset-4">重置筛选</button>
+<button class="px-6 py-2.5 bg-primary text-on-primary rounded-lg text-sm font-bold shadow-sm hover:opacity-90 transition-opacity">执行查询</button>
+</div>
+</div>
+</section>
+<!-- Case List (Tonal Stacking) -->
+<div class="space-y-4">
+<!-- Table Header -->
+<div class="grid grid-cols-12 px-6 py-3 text-[10px] font-black uppercase tracking-[0.1em] text-on-surface-variant/60">
+<div class="col-span-3">债务人 / 担保机构</div>
+<div class="col-span-2">债权人</div>
+<div class="col-span-2">主债权金额 / 代偿日期</div>
+<div class="col-span-2">当前状态</div>
+<div class="col-span-1 text-center">风险等级</div>
+<div class="col-span-2 text-right px-4">操作</div>
+</div>
+<!-- List Item 1 -->
+<div class="grid grid-cols-12 items-center px-6 py-5 bg-surface-container-lowest rounded-xl hover:shadow-lg hover:shadow-slate-200/50 transition-all group">
+<div class="col-span-3">
+<h3 class="font-bold text-primary mb-1">宝鸡三家村餐饮管理有限公司</h3>
+<p class="text-xs text-on-surface-variant flex items-center">
+<span class="material-symbols-outlined text-sm mr-1">corporate_fare</span>
+                        宝鸡市中小企业融资担保有限公司
+                    </p>
+</div>
+<div class="col-span-2">
+<p class="text-sm font-medium text-on-surface">陕西岐山农村商业银行</p>
+</div>
+<div class="col-span-2">
+<p class="text-sm font-black text-primary">200 万元</p>
+<p class="text-xs text-on-surface-variant">2025-10-21</p>
+</div>
+<div class="col-span-2">
+<div class="flex flex-col">
+<span class="inline-flex items-center text-[10px] font-bold text-on-tertiary-container mb-1">
+<span class="material-symbols-outlined text-xs mr-1" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                            AI 初检已完成
+                        </span>
+<span class="text-xs font-medium text-secondary">待人工复核</span>
+</div>
+</div>
+<div class="col-span-1 text-center">
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed text-[10px] font-black rounded-full">中风险</span>
+</div>
+<div class="col-span-2 text-right px-4">
+<button class="px-5 py-2 bg-primary text-on-primary rounded-lg text-xs font-bold hover:scale-[1.02] active:scale-[0.98] transition-all">
+                        开始审查
+                    </button>
+</div>
+</div>
+<!-- List Item 2 (Repeated for visual density) -->
+<div class="grid grid-cols-12 items-center px-6 py-5 bg-surface-container-lowest rounded-xl hover:shadow-lg hover:shadow-slate-200/50 transition-all">
+<div class="col-span-3">
+<h3 class="font-bold text-primary mb-1">西安高新区科技贸易有限公司</h3>
+<p class="text-xs text-on-surface-variant flex items-center">
+<span class="material-symbols-outlined text-sm mr-1">corporate_fare</span>
+                        西安担保集团有限公司
+                    </p>
+</div>
+<div class="col-span-2">
+<p class="text-sm font-medium text-on-surface">招商银行西安分行</p>
+</div>
+<div class="col-span-2">
+<p class="text-sm font-black text-primary">850 万元</p>
+<p class="text-xs text-on-surface-variant">2025-10-22</p>
+</div>
+<div class="col-span-2">
+<span class="text-xs font-medium text-slate-400 italic">待归集资料...</span>
+</div>
+<div class="col-span-1 text-center">
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant text-[10px] font-black rounded-full">低风险</span>
+</div>
+<div class="col-span-2 text-right px-4">
+<button class="px-5 py-2 border border-outline-variant text-on-surface-variant rounded-lg text-xs font-bold hover:bg-slate-50 transition-all">
+                        查看详情
+                    </button>
+</div>
+</div>
+<!-- List Item 3 (High Risk) -->
+<div class="grid grid-cols-12 items-center px-6 py-5 bg-surface-container-lowest rounded-xl border-l-4 border-error hover:shadow-lg transition-all">
+<div class="col-span-3">
+<h3 class="font-bold text-primary mb-1">渭南现代农业发展有限公司</h3>
+<p class="text-xs text-on-surface-variant flex items-center">
+<span class="material-symbols-outlined text-sm mr-1">corporate_fare</span>
+                        渭南市中小企业融资担保有限公司
+                    </p>
+</div>
+<div class="col-span-2">
+<p class="text-sm font-medium text-on-surface">中国建设银行渭南分行</p>
+</div>
+<div class="col-span-2">
+<p class="text-sm font-black text-primary">1,200 万元</p>
+<p class="text-xs text-on-surface-variant">2025-10-20</p>
+</div>
+<div class="col-span-2">
+<div class="flex flex-col">
+<span class="inline-flex items-center text-[10px] font-bold text-error mb-1">
+<span class="material-symbols-outlined text-xs mr-1">warning</span>
+                            AI 初检异常
+                        </span>
+<span class="text-xs font-medium text-error">财务指标存疑</span>
+</div>
+</div>
+<div class="col-span-1 text-center">
+<span class="px-3 py-1 bg-error-container text-on-error-container text-[10px] font-black rounded-full">高风险</span>
+</div>
+<div class="col-span-2 text-right px-4">
+<button class="px-5 py-2 bg-error text-white rounded-lg text-xs font-bold hover:brightness-110 transition-all">
+                        紧急审查
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- NavigationDrawer (AI Assistant) -->
+<div class="fixed right-8 bottom-8 z-50 group">
+<div class="flex items-center justify-center w-14 h-14 bg-tertiary-fixed-dim text-tertiary rounded-full shadow-2xl cursor-pointer hover:scale-110 transition-transform active:scale-95 group-hover:bg-tertiary-fixed">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<!-- Tooltip hint -->
+<div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white px-4 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap text-sm font-bold text-primary">
+            AI 智能助手就绪
+        </div>
+</div>
+<!-- Hidden Drawer Content (Visual reference) -->
+<div class="fixed right-0 top-0 h-full w-80 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-[-20px_0_40px_rgba(11,28,48,0.06)] translate-x-full pointer-events-none hidden">
+<div class="p-6 h-full flex flex-col">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h2 class="text-lg font-bold text-[#001b18]">AI 智能助手</h2>
+<p class="text-[10px] text-slate-400">Agent Intelligence</p>
+</div>
+<button class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<nav class="space-y-2 mb-8 font-inter body-md tracking-normal">
+<a class="flex items-center px-4 py-3 bg-[#6bd8cb]/10 text-[#001b18] rounded-lg" href="#">
+<span class="material-symbols-outlined mr-3 text-[#6bd8cb]">bolt</span> 智能问答
+                </a>
+<a class="flex items-center px-4 py-3 text-slate-400 hover:bg-slate-50 rounded-lg" href="#">
+<span class="material-symbols-outlined mr-3">warning</span> 风险预警
+                </a>
+<a class="flex items-center px-4 py-3 text-slate-400 hover:bg-slate-50 rounded-lg" href="#">
+<span class="material-symbols-outlined mr-3">fact_check</span> 合规建议
+                </a>
+</nav>
+<button class="mt-auto w-full py-4 bg-[#6bd8cb] text-[#001b18] font-bold rounded-xl shadow-lg shadow-[#6bd8cb]/20">
+                开始风险扫描
+            </button>
+</div>
+</div>
+</body></html>

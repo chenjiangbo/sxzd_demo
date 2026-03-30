@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface": "#0b1c30",
+              "error": "#ba1a1a",
+              "on-tertiary-container": "#2ca397",
+              "on-surface-variant": "#43474f",
+              "on-secondary-fixed": "#001453",
+              "on-primary-fixed": "#001b3d",
+              "primary-fixed": "#d6e3ff",
+              "secondary-fixed-dim": "#b8c4ff",
+              "outline": "#747780",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "primary-container": "#002b5b",
+              "inverse-surface": "#213145",
+              "inverse-primary": "#a9c7ff",
+              "inverse-on-surface": "#eaf1ff",
+              "on-secondary": "#ffffff",
+              "on-tertiary-fixed-variant": "#005049",
+              "background": "#f8f9ff",
+              "primary": "#001736",
+              "surface-container-low": "#eff4ff",
+              "on-tertiary-fixed": "#00201d",
+              "surface-container-highest": "#d3e4fe",
+              "surface-bright": "#f8f9ff",
+              "on-primary-fixed-variant": "#264778",
+              "on-error": "#ffffff",
+              "surface": "#f8f9ff",
+              "on-primary-container": "#7594ca",
+              "surface-dim": "#cbdbf5",
+              "surface-container-lowest": "#ffffff",
+              "secondary": "#3755c3",
+              "tertiary-fixed-dim": "#6bd8cb",
+              "surface-tint": "#405f91",
+              "surface-variant": "#d3e4fe",
+              "tertiary-fixed": "#89f5e7",
+              "error-container": "#ffdad6",
+              "secondary-fixed": "#dde1ff",
+              "tertiary-container": "#00322d",
+              "on-secondary-fixed-variant": "#173bab",
+              "surface-container-high": "#dce9ff",
+              "tertiary": "#001b18",
+              "surface-container": "#e5eeff",
+              "on-tertiary": "#ffffff",
+              "outline-variant": "#c4c6d0",
+              "on-background": "#0b1c30",
+              "primary-fixed-dim": "#a9c7ff",
+              "on-secondary-container": "#00217a",
+              "secondary-container": "#708cfd"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface">
+<!-- SideNavBar (Authority: JSON) -->
+<nav class="fixed left-0 top-0 h-full w-64 bg-slate-50 dark:bg-slate-900 border-r-0 z-40 flex flex-col font-headline text-sm font-semibold tracking-tight">
+<div class="p-8">
+<h1 class="text-lg font-extrabold text-[#002B5B] dark:text-white">代偿补偿系统</h1>
+<p class="text-[10px] text-slate-400 mt-1">V2.4.0</p>
+</div>
+<div class="flex-1 px-4 space-y-2">
+<!-- Active: 案件管理 -->
+<div class="flex items-center gap-3 p-3 text-[#002B5B] dark:text-blue-300 font-bold border-r-4 border-[#002B5B] bg-white dark:bg-slate-800 transition-colors duration-200 cursor-pointer">
+<span class="material-symbols-outlined">assignment</span>
+<span>案件管理</span>
+</div>
+<div class="flex items-center gap-3 p-3 text-slate-500 dark:text-slate-400 hover:bg-[#eff4ff] dark:hover:bg-slate-800/80 transition-colors duration-200 cursor-pointer">
+<span class="material-symbols-outlined">dashboard</span>
+<span>数据看板</span>
+</div>
+<div class="flex items-center gap-3 p-3 text-slate-500 dark:text-slate-400 hover:bg-[#eff4ff] dark:hover:bg-slate-800/80 transition-colors duration-200 cursor-pointer">
+<span class="material-symbols-outlined">rule</span>
+<span>规则配置</span>
+</div>
+<div class="flex items-center gap-3 p-3 text-slate-500 dark:text-slate-400 hover:bg-[#eff4ff] dark:hover:bg-slate-800/80 transition-colors duration-200 cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span>系统设置</span>
+</div>
+<div class="flex items-center gap-3 p-3 text-slate-500 dark:text-slate-400 hover:bg-[#eff4ff] dark:hover:bg-slate-800/80 transition-colors duration-200 cursor-pointer">
+<span class="material-symbols-outlined">history</span>
+<span>操作审计</span>
+</div>
+</div>
+<div class="p-6 mt-auto">
+<div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-low">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-white text-xs">AD</div>
+<div>
+<p class="text-xs font-bold text-primary">Admin User</p>
+<p class="text-[10px] text-on-surface-variant">系统管理员</p>
+</div>
+</div>
+</div>
+</nav>
+<!-- TopAppBar (Authority: JSON) -->
+<header class="fixed top-0 right-0 left-64 h-16 flex items-center justify-between px-8 z-30 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md shadow-sm dark:shadow-none border-b border-slate-100 dark:border-slate-800/50">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black text-[#001736] dark:text-white">补偿案件审核中心</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-[#3755c3] dark:text-blue-400 border-b-2 border-[#3755c3] pb-1 font-bold" href="#">案件总览</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#001736] transition-all" href="#">完整性检查</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#001736] transition-all" href="#">核验与规则</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#001736] transition-all" href="#">证据查看</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#001736] transition-all" href="#">文书生成</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#001736] transition-all" href="#">人工复核</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#001736] transition-all" href="#">提交 OA</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<input class="bg-surface-container-low border-none rounded-full px-4 py-1.5 text-sm w-64 focus:ring-2 focus:ring-secondary" placeholder="搜索案件号/企业名" type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-1.5 text-slate-400 text-sm">search</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-all">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-all">contact_support</span>
+<span class="material-symbols-outlined text-[#6bd8cb] cursor-pointer hover:opacity-80 transition-all">smart_toy</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 mr-80 pt-24 pb-12 px-10 min-h-screen">
+<!-- Action Header -->
+<div class="flex justify-between items-end mb-10">
+<div class="space-y-1">
+<div class="flex items-center gap-2 text-on-surface-variant text-sm mb-2">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+<span>案件管理</span>
+<span>/</span>
+<span class="text-primary font-semibold">案件详情 (CAS-20251021-001)</span>
+</div>
+<h2 class="text-3xl font-headline font-extrabold text-primary tracking-tight">案件详情与材料地图</h2>
+</div>
+<button class="bg-primary text-on-primary px-6 py-2.5 rounded-md font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:opacity-80 transition-all">
+<span>进入完整性检查</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Left: Case Info (4 cols) -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<span class="bg-primary-container/10 text-primary-container text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Basic Info</span>
+<span class="material-symbols-outlined text-slate-300">verified</span>
+</div>
+<div class="space-y-6">
+<div>
+<label class="block text-label-sm text-on-surface-variant mb-1">债务人名称</label>
+<p class="text-lg font-bold text-primary">宝鸡三家村餐饮管理有限公司</p>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-label-sm text-on-surface-variant mb-1">统一社会信用代码</label>
+<p class="text-xs font-mono font-medium">91610323MA6XACQM0Y</p>
+</div>
+<div>
+<label class="block text-label-sm text-on-surface-variant mb-1">申请补偿金额</label>
+<p class="text-lg font-black text-secondary">¥ 771,767.83</p>
+</div>
+</div>
+<div class="pt-4 border-t border-slate-50">
+<label class="block text-label-sm text-on-surface-variant mb-3 font-semibold">关联信贷产品</label>
+<div class="flex items-center gap-3 p-3 bg-surface-container-low rounded-lg">
+<span class="material-symbols-outlined text-primary-container" data-weight="fill">account_balance</span>
+<div>
+<p class="text-xs font-bold text-primary">普惠金融-经营贷</p>
+<p class="text-[10px] text-on-surface-variant">合作行：建设银行宝鸡分行</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- AI Extraction Summary -->
+<div class="bg-primary-container text-white rounded-xl p-6 relative overflow-hidden">
+<div class="relative z-10">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-[#6bd8cb]">bolt</span>
+<span class="text-xs font-bold tracking-widest uppercase">AI Insights</span>
+</div>
+<p class="text-sm opacity-90 leading-relaxed mb-4">系统已通过 OCR 及 NLP 语义分析，自动完成了 <span class="text-[#6bd8cb] font-bold">14 份</span> 文件的分类归口，识别出 <span class="text-[#6bd8cb] font-bold">3 处</span> 业务链关键风险点。</p>
+<div class="flex gap-2">
+<span class="bg-white/10 px-2 py-1 rounded text-[10px] border border-white/20">主体一致性: 100%</span>
+<span class="bg-white/10 px-2 py-1 rounded text-[10px] border border-white/20">金额匹配度: 高</span>
+</div>
+</div>
+<div class="absolute -bottom-8 -right-8 opacity-10">
+<span class="material-symbols-outlined text-[120px]">smart_toy</span>
+</div>
+</div>
+</div>
+<!-- Center: Timeline (4 cols) -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col">
+<h3 class="font-headline font-bold text-primary mb-8 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">history</span>
+                    业务时间轴
+                </h3>
+<div class="flex-1 relative pl-6 space-y-10">
+<div class="absolute left-1 top-2 bottom-2 w-0.5 bg-slate-100"></div>
+<div class="relative">
+<div class="absolute -left-7 top-1 w-3 h-3 rounded-full border-2 border-white bg-slate-300 ring-4 ring-slate-50"></div>
+<p class="text-[10px] font-bold text-on-surface-variant mb-1">2023-09</p>
+<p class="text-sm font-bold text-primary">首次备案</p>
+<p class="text-xs text-on-surface-variant mt-1">初始额度审批通过，业务正式进入库内管理</p>
+</div>
+<div class="relative">
+<div class="absolute -left-7 top-1 w-3 h-3 rounded-full border-2 border-white bg-slate-300 ring-4 ring-slate-50"></div>
+<p class="text-[10px] font-bold text-on-surface-variant mb-1">2024-08</p>
+<p class="text-sm font-bold text-primary">展期续接</p>
+<p class="text-xs text-on-surface-variant mt-1">借款人申请展期 12 个月，保后跟踪正常</p>
+</div>
+<div class="relative">
+<div class="absolute -left-7 top-1 w-3 h-3 rounded-full border-2 border-white bg-[#6bd8cb] ring-4 ring-[#6bd8cb]/10"></div>
+<p class="text-[10px] font-bold text-primary mb-1">2025-10-21</p>
+<p class="text-sm font-bold text-primary">代偿解保</p>
+<p class="text-xs text-on-surface-variant mt-1">发生风险违约，本公司执行代偿程序</p>
+</div>
+<div class="relative">
+<div class="absolute -left-7 top-1 w-3 h-3 rounded-full border-2 border-white bg-secondary ring-4 ring-secondary/10"></div>
+<p class="text-[10px] font-bold text-secondary mb-1">2025-12-09</p>
+<p class="text-sm font-bold text-secondary">提交补偿资料</p>
+<p class="text-xs text-on-surface-variant mt-1">进入补偿审核流程，资料包上传成功</p>
+</div>
+<div class="relative opacity-50">
+<div class="absolute -left-7 top-1 w-3 h-3 rounded-full border-2 border-white bg-slate-200 ring-4 ring-slate-50"></div>
+<p class="text-[10px] font-bold text-on-surface-variant mb-1">预计 2026-03-19</p>
+<p class="text-sm font-bold text-slate-400">审查成文</p>
+</div>
+</div>
+</div>
+<!-- Right: Material Map (4 cols) -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container-low/50 rounded-xl p-6 flex flex-col border border-white">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-headline font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">account_tree</span>
+                        材料地图
+                    </h3>
+<div class="flex gap-1">
+<div class="w-2 h-2 rounded-full bg-green-500"></div>
+<div class="w-2 h-2 rounded-full bg-amber-400"></div>
+</div>
+</div>
+<div class="space-y-4">
+<!-- Category 1 -->
+<div class="bg-surface-container-lowest rounded-lg p-4 shadow-sm">
+<div class="flex items-center justify-between mb-3">
+<span class="text-xs font-bold text-primary">代偿基础要件 (3)</span>
+<span class="material-symbols-outlined text-green-500 text-sm">check_circle</span>
+</div>
+<div class="space-y-2">
+<div class="flex items-center justify-between p-2 hover:bg-surface-container-low rounded group cursor-pointer transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary text-lg">picture_as_pdf</span>
+<span class="text-xs text-on-surface">代偿补偿函.pdf</span>
+</div>
+<span class="text-[10px] text-on-surface-variant">OCR 匹配</span>
+</div>
+<div class="flex items-center justify-between p-2 hover:bg-surface-container-low rounded group cursor-pointer transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary text-lg">picture_as_pdf</span>
+<span class="text-xs text-on-surface">借款合同.pdf</span>
+</div>
+<span class="text-[10px] text-on-surface-variant">业务关联</span>
+</div>
+<div class="flex items-center justify-between p-2 hover:bg-surface-container-low rounded group cursor-pointer transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary text-lg">picture_as_pdf</span>
+<span class="text-xs text-on-surface">保证合同.pdf</span>
+</div>
+<span class="text-[10px] text-on-surface-variant">法务核验</span>
+</div>
+</div>
+</div>
+<!-- Category 2 -->
+<div class="bg-surface-container-lowest rounded-lg p-4 shadow-sm border-l-4 border-amber-400">
+<div class="flex items-center justify-between mb-3">
+<span class="text-xs font-bold text-primary">风控调查文件 (2)</span>
+<span class="material-symbols-outlined text-amber-500 text-sm">pending</span>
+</div>
+<div class="space-y-2">
+<div class="flex items-center justify-between p-2 hover:bg-surface-container-low rounded group cursor-pointer transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary text-lg">description</span>
+<span class="text-xs text-on-surface">风险预警月报.docx</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 bg-error-container/20 rounded group cursor-pointer border border-error/10">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-error text-lg">warning</span>
+<span class="text-xs text-on-error-container">缺失：现场核查记录表</span>
+</div>
+<span class="material-symbols-outlined text-error text-sm">priority_high</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- NavigationDrawer (Authority: JSON - Expanded Sidebar) -->
+<aside class="fixed right-0 top-0 h-full w-80 z-50 flex flex-col bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-[-20px_0_40px_rgba(11,28,48,0.06)] font-inter">
+<div class="p-6 border-b border-slate-100 flex items-center justify-between">
+<div>
+<h3 class="text-lg font-bold text-[#001b18] dark:text-[#6bd8cb]">AI 智能助手</h3>
+<p class="text-[10px] text-slate-400 uppercase tracking-tighter">Agent Intelligence</p>
+</div>
+<span class="material-symbols-outlined text-slate-400 cursor-pointer">close</span>
+</div>
+<div class="flex-1 flex flex-col">
+<!-- Tabs -->
+<div class="flex p-2 bg-surface-container-low m-4 rounded-xl">
+<button class="flex-1 flex flex-col items-center py-2 bg-[#6bd8cb]/10 text-[#001b18] dark:text-[#6bd8cb] rounded-lg">
+<span class="material-symbols-outlined text-sm" data-weight="fill">bolt</span>
+<span class="text-[10px] mt-1">智能问答</span>
+</button>
+<button class="flex-1 flex flex-col items-center py-2 text-slate-400 hover:text-slate-600 transition-all">
+<span class="material-symbols-outlined text-sm">warning</span>
+<span class="text-[10px] mt-1">风险预警</span>
+</button>
+<button class="flex-1 flex flex-col items-center py-2 text-slate-400 hover:text-slate-600 transition-all">
+<span class="material-symbols-outlined text-sm">fact_check</span>
+<span class="text-[10px] mt-1">合规建议</span>
+</button>
+<button class="flex-1 flex flex-col items-center py-2 text-slate-400 hover:text-slate-600 transition-all">
+<span class="material-symbols-outlined text-sm">update</span>
+<span class="text-[10px] mt-1">历史追踪</span>
+</button>
+</div>
+<div class="flex-1 px-6 space-y-6 overflow-y-auto">
+<div class="p-4 bg-primary text-white rounded-xl shadow-sm">
+<p class="text-xs leading-relaxed">你好，我是补偿审核助手。当前案件 <span class="text-[#6bd8cb] font-bold">CAS-20251021-001</span> 已完成自动解析，你可以问我关于材料完整性或债务人风险的问题。</p>
+</div>
+<div class="space-y-4">
+<h4 class="text-[10px] font-bold text-on-surface-variant uppercase">常见问题</h4>
+<button class="w-full text-left p-3 text-xs bg-surface-container-lowest border border-slate-100 rounded-lg hover:border-secondary transition-all">
+                        该案件是否有重复补偿记录？
+                    </button>
+<button class="w-full text-left p-3 text-xs bg-surface-container-lowest border border-slate-100 rounded-lg hover:border-secondary transition-all">
+                        借款合同中的担保条款是否完整？
+                    </button>
+<button class="w-full text-left p-3 text-xs bg-surface-container-lowest border border-slate-100 rounded-lg hover:border-secondary transition-all">
+                        分析该债务人的行业风险趋势。
+                    </button>
+</div>
+<div class="p-4 rounded-xl border border-dashed border-slate-200">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-amber-500 text-sm">lightbulb</span>
+<span class="text-xs font-bold text-primary">合规提示</span>
+</div>
+<p class="text-[10px] text-on-surface-variant leading-relaxed">检测到“代偿补偿函”签章模糊，建议在完整性检查阶段进行人工标记或重新上传清晰件。</p>
+</div>
+</div>
+<div class="p-6 mt-auto bg-slate-50">
+<button class="w-full bg-[#001b18] text-[#6bd8cb] py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-black transition-all">
+<span class="material-symbols-outlined text-sm">qr_code_scanner</span>
+                    开始风险扫描
+                </button>
+</div>
+</div>
+</aside>
+<!-- Background Decoration -->
+<div class="fixed top-0 right-0 -z-10 w-[600px] h-[600px] bg-secondary/5 rounded-full blur-[120px] translate-x-1/2 -translate-y-1/2"></div>
+<div class="fixed bottom-0 left-64 -z-10 w-[400px] h-[400px] bg-tertiary-fixed-dim/5 rounded-full blur-[100px] -translate-x-1/4 translate-y-1/4"></div>
+</body></html>
