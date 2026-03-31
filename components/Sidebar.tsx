@@ -1,13 +1,13 @@
 'use client';
 
-import { BotMessageSquare, ClipboardList, FileStack, Gauge, Settings, ShieldCheck, User } from 'lucide-react';
+import { BotMessageSquare, ClipboardList, FileStack, Gauge, NotebookText, Settings, ShieldCheck, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const items = [
   { href: '#', label: '首页', icon: Gauge },
   { href: '/', label: '代偿补偿', icon: ClipboardList },
-  { href: '#', label: '场景中心', icon: BotMessageSquare },
+  { href: '/brief', label: '简报', icon: NotebookText },
   { href: '#', label: '文书中心', icon: FileStack },
   { href: '#', label: '审计与风控', icon: ShieldCheck },
   { href: '#', label: '系统管理', icon: Settings },
