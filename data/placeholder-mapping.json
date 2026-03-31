@@ -1,50 +1,188 @@
 {
-  "placeholders": {
-    "single_indicators": {
-      "{{report_title}}": "业务一部担保业务简报",
-      "{{report_period}}": "2026 年上半年",
-      "{{total_balance}}": "125.6 亿元",
-      "{{total_balance_growth}}": "8.5%",
-      "{{total_accounts}}": "1,245 户",
-      "{{total_accounts_growth}}": "12.3%",
-      "{{total_guarantee_amount}}": "89.3 亿元",
-      "{{total_guarantee_growth}}": "15.7%",
-      "{{average_rate}}": "1.8%",
-      "{{rate_change}}": "-0.2%",
-      "{{compensation_amount}}": "3,456 万元",
-      "{{compensation_growth}}": "12.5%",
-      "{{compensation_rate}}": "2.75%",
-      "{{overdue_rate}}": "3.12%",
-      "{{recovery_amount}}": "1,234 万元",
-      "{{recovery_rate}}": "35.7%",
-      "{{reserve_amount}}": "15,678 万元",
-      "{{reserve_ratio}}": "1%",
-      "{{reserve_adequacy}}": "125%",
-      "{{business_income}}": "12,345 万元",
-      "{{income_growth}}": "15.6%",
-      "{{profit_margin}}": "28.5%",
-      "{{roe}}": "8.9%",
-      "{{net_profit}}": "6,789 万元",
-      "{{profit_growth}}": "18.9%"
-    },
-    "table_placeholders": {
-      "{{table_overview}}": "table_1",
-      "{{table_product_structure}}": "table_2",
-      "{{table_industry_structure}}": "table_3",
-      "{{table_region_structure}}": "table_4",
-      "{{table_bank_cooperation}}": "table_5",
-      "{{table_compensation}}": "table_6",
-      "{{table_recovery}}": "table_7",
-      "{{table_reserve}}": "table_8",
-      "{{table_benefit}}": "table_9",
-      "{{table_new_business}}": "table_10",
-      "{{table_customer}}": "table_11",
-      "{{table_reinsurance}}": "table_12"
-    }
+  "meta": {
+    "issue_number": "第15期",
+    "total_issue": "87",
+    "publish_date": "2025年7月15日"
   },
-  "template_mapping": {
-    "word_template": "brief-template.docx",
-    "output_format": "docx",
-    "encoding": "utf-8"
+  "overview": {
+    "total_guarantee_amount": "693.92",
+    "yoy_growth_pct": "18.42",
+    "customer_count": "29.57",
+    "customer_yoy_growth_pct": "20.15",
+    "re_guarantee_amount": "335.67",
+    "re_guarantee_yoy": "21.05",
+    "nfgf_amount": "280.57",
+    "nfgf_yoy": "25.33",
+    "member_count": "65",
+    "total_capital": "286.54",
+    "leverage_ratio": "2.42",
+    "leverage_yoy": "0.15"
+  },
+  "focus": {
+    "operational_amount": "652.34",
+    "operational_customers": "28.92",
+    "operational_ratio_amt": "94.01",
+    "operational_ratio_cust": "97.80",
+    "sme_agri_amount": "638.76",
+    "sme_agri_ratio": "97.92",
+    "agri_re_amount": "42.35",
+    "agri_re_count": "1862"
+  },
+  "risk_sharing": {
+    "total_amount": "308.26",
+    "yoy": "33.65",
+    "share_ratio": "91.83",
+    "institutions_with_risk_sharing": "41",
+    "institutions_over_90pct": "29",
+    "institutions_100pct": "19"
+  },
+  "zdz": {
+    "total_amount": "280.57",
+    "share_ratio": "91.02",
+    "national_amount": "77.49",
+    "local_amount": "203.08"
+  },
+  "cost": {
+    "avg_guarantee_rate": "0.72",
+    "rate_reduction": "0.18",
+    "saving_amount": "12.54",
+    "avg_total_cost": "4.55",
+    "cost_reduction": "0.55",
+    "avg_loan_rate": "3.83",
+    "loan_rate_reduction": "0.48",
+    "banks_with_lower_rate": "39"
+  },
+  "industry": {
+    "service_amount": "86.42",
+    "service_count": "3856",
+    "tech_amount": "52.37",
+    "tech_count": "2104",
+    "innovation_amount": "11.55",
+    "innovation_count": "487",
+    "entrepreneurship_amount": "15.51",
+    "entrepreneurship_count": "682",
+    "first_loan_amount": "98.63",
+    "first_loan_count": "4215"
+  },
+  "employment": {
+    "total_employment": "42.8",
+    "major_industry_ratio": "68.24",
+    "major_employment_ratio": "71.36",
+    "industry_amount": "128.45",
+    "industry_employment": "18.6",
+    "industry_ratio": "38.28",
+    "industry_employment_ratio": "43.46",
+    "avg_per_deal": "12"
+  },
+  "compensation": {
+    "project_count": "186",
+    "total_compensation": "8642.35",
+    "default_rate": "1.24",
+    "default_rate_increase": "0.12"
+  },
+  "inst_summary": {
+    "institutions_over_5b": "5",
+    "positive_growth_count": "48",
+    "growth_over_20_count": "27",
+    "negative_growth_count": "17"
+  },
+  "re_guarantee_summary": {
+    "avg_per_customer": "113.51",
+    "high_filing_count": "6",
+    "mid_filing_count": "27"
+  },
+  "bank_cooperation": {
+    "national_amount": "259.56",
+    "local_amount": "76.11",
+    "national_ratio": "77.32",
+    "local_ratio": "22.68",
+    "national_ratio_increase": "5.78"
+  },
+  "top3_risk_sharing": {
+    "first_name": "西安小微担保",
+    "first_amount": "83.21",
+    "second_name": "省再担保公司",
+    "second_amount": "53.38",
+    "third_name": "西安财金担保",
+    "third_amount": "43.58"
+  },
+  "bank_risk_sharing": {
+    "national_amount": "243.40",
+    "national_ratio": "78.96",
+    "local_amount": "64.86",
+    "local_ratio": "21.04"
+  },
+  "top3_bank_risk": {
+    "first_name": "农业银行",
+    "first_amount": "85.26",
+    "second_name": "工商银行",
+    "second_amount": "68.15",
+    "third_name": "陕西农信",
+    "third_amount": "39.01"
+  },
+  "region_summary": {
+    "total_cities": "11",
+    "cities_over_80pct": "8",
+    "cities_with_growth": "7",
+    "high_growth_cities": "榆林市、西安市",
+    "growth_threshold": "35"
+  },
+  "national_zdz_summary": {
+    "total_amount": "77.49"
+  },
+  "national_zdz_top3": {
+    "first_name": "西安小微担保",
+    "first_amount": "30.52",
+    "second_name": "西安财金担保",
+    "second_amount": "18.08",
+    "third_name": "延安担保",
+    "third_amount": "6.44"
+  },
+  "local_zdz_summary": {
+    "total_amount": "203.08"
+  },
+  "local_zdz_top3": {
+    "first_name": "省再担保公司",
+    "first_amount": "53.06",
+    "second_name": "西安小微担保",
+    "second_amount": "48.93",
+    "third_name": "榆林担保",
+    "third_amount": "28.63"
+  },
+  "bank_zdz_summary": {
+    "total_amount": "280.57",
+    "share_ratio": "83.59"
+  },
+  "bank_zdz_top3": {
+    "first_name": "农业银行",
+    "first_amount": "85.26",
+    "second_name": "工商银行",
+    "second_amount": "68.15",
+    "third_name": "陕西农信",
+    "third_amount": "39.01"
+  },
+  "chuangye_summary": {
+    "institution_count": "23",
+    "total_amount": "15.51"
+  },
+  "chuangye_top3": {
+    "first_name": "安康担保",
+    "first_amount": "4.26",
+    "second_name": "汉中担保",
+    "second_amount": "4.06",
+    "third_name": "宝鸡担保",
+    "third_amount": "2.06"
+  },
+  "tech_guarantee_summary": {
+    "institution_count": "13",
+    "total_amount": "11.55"
+  },
+  "tech_guarantee_top3": {
+    "first_name": "咸阳担保",
+    "first_amount": "3.22",
+    "second_name": "西安财金担保",
+    "second_amount": "2.69",
+    "third_name": "西安小微担保",
+    "third_amount": "2.69"
   }
 }

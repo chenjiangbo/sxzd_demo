@@ -1,38 +1,18 @@
 'use client';
 
-import { Calendar, Download, FileText, RefreshCw, Table2 } from 'lucide-react';
+import { Calendar, Download, FileText, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
-import BriefTableViewer from './BriefTableViewer';
-
-interface TableData {
-  id: string;
-  name: string;
-  category: string;
-  data: Record<string, any>[];
-}
 
 export default function BriefGenerator() {
   const [selectedPeriod, setSelectedPeriod] = useState<'first-half' | 'second-half' | 'custom'>('first-half');
   const [customYear, setCustomYear] = useState('2026');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedFile, setGeneratedFile] = useState<string | null>(null);
-  const [selectedTable, setSelectedTable] = useState<string | null>(null);
-  const [tablesData, setTablesData] = useState<TableData[]>([]);
-
-  // 模拟加载数据
-  const loadTablesData = async () => {
-    try {
-      const response = await fetch('/data/brief-tables.json');
-      const data = await response.json();
-      setTablesData(data.tables);
-    } catch (error) {
-      console.error('加载表格数据失败:', error);
-    }
-  };
 
   // 生成简报
   const handleGenerateBrief = async () => {
     setIsGenerating(true);
+    setGeneratedFile(null);
     try {
       // 调用后端 API 生成简报
       const periodText = selectedPeriod === 'first-half' ? '上半年' : '下半年';
@@ -66,7 +46,7 @@ export default function BriefGenerator() {
     if (generatedFile) {
       const a = document.createElement('a');
       a.href = generatedFile;
-      a.download = `业务一部担保业务简报-${customYear}年${selectedPeriod === 'first-half' ? '上半年' : '下半年'}.docx`;
+      a.download = `担保业务简报-${customYear}年${selectedPeriod === 'first-half' ? '上半年' : '下半年'}.docx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -81,17 +61,7 @@ export default function BriefGenerator() {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-black text-primary">担保业务简报生成</h1>
-            <p className="mt-1 text-sm text-on-surface-variant">选择报告期间，自动生成业务一部担保业务简报</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-              <FileText className="h-4 w-4" />
-              12 张数据表格
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-secondary/10 px-3 py-1 text-xs font-bold text-secondary">
-              <Table2 className="h-4 w-4" />
-              Word 模板填充
-            </span>
+            <p className="mt-1 text-sm text-on-surface-variant">选择报告期间，自动生成担保业务简报</p>
           </div>
         </div>
 
@@ -148,16 +118,8 @@ export default function BriefGenerator() {
 
           <div className="ml-auto flex gap-3">
             <button
-              onClick={loadTablesData}
-              disabled={isGenerating}
-              className="flex items-center gap-2 rounded-lg bg-surface-container px-4 py-2 text-sm font-bold text-on-surface transition-all hover:bg-surface-container-high disabled:opacity-50"
-            >
-              <RefreshCw className="h-4 w-4" />
-              加载数据
-            </button>
-            <button
               onClick={handleGenerateBrief}
-              disabled={isGenerating || tablesData.length === 0}
+              disabled={isGenerating}
               className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2 text-sm font-bold text-white transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isGenerating ? (
@@ -175,15 +137,6 @@ export default function BriefGenerator() {
           </div>
         </div>
       </section>
-
-      {/* 表格查看器 */}
-      {tablesData.length > 0 && (
-        <BriefTableViewer
-          tables={tablesData}
-          selectedTableId={selectedTable}
-          onSelectTable={setSelectedTable}
-        />
-      )}
 
       {/* 生成结果提示 */}
       {generatedFile && (
@@ -216,9 +169,7 @@ export default function BriefGenerator() {
         <h3 className="mb-3 text-sm font-bold text-primary">📋 使用说明</h3>
         <ol className="list-inside list-decimal space-y-2 text-sm text-on-surface-variant">
           <li>点击上方时间选择按钮，选择报告期间（上半年/下半年/自定义）</li>
-          <li>点击"加载数据"按钮，从本地 JSON 文件读取 12 张业务表格</li>
-          <li>点击表格名称可以查看该表的详细数据</li>
-          <li>点击"生成简报"按钮，系统自动填充 Word 模板并生成文档</li>
+          <li>点击"生成简报"按钮，系统自动从本地 JSON 文件读取数据并填充 Word 模板</li>
           <li>生成成功后，点击下载按钮获取 Word 文档</li>
         </ol>
       </section>

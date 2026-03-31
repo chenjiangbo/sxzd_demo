@@ -1,0 +1,138 @@
+陕西省政府性融资担保体系
+简   报
+
+{{meta.issue_number}}（总第{{meta.total_issue}}期）
+
+陕西省信用再担保有限责任公司编     {{meta.publish_date}}
+
+2025年上半年再担保业务开展情况通报上半年，省再担保公司牵头全省政府性融资担保体系坚持以习近平新时代中国特色社会主义思想为指导，深入贯彻党的二十大和二十届二中、三中全会及习近平总书记历次来陕考察重要讲话重要指示精神，认真落实中央经济工作会议、省委十四届七次全会暨省委经济工作会议、全省财政工作会议和全省金融系统工作会议要求，牢牢把握高质量发展这个首要任务，坚持“稳中求进、以进促稳”工作总基调，不断完善体系建设，持续优化业务结构，更加突出国家政策导向，不断提升服务效率，努力缓解小微企业和“三农”等普惠领域融资难、融资贵问题，政策性功能作用得到有效发挥。现将有关情况通报如下：
+一、总体情况 
+上半年，全省政府性融资担保体系新增全口径担保业务规模{{overview.total_guarantee_amount}}亿元，同比增长{{overview.yoy_growth_pct}}%；服务市场主体{{overview.customer_count}}万户，同比增长{{overview.customer_yoy_growth_pct}}%；开展再担保合作业务（含国担银担“总对总”批量担保业务）规模{{overview.re_guarantee_amount}}亿元，同比增长{{overview.re_guarantee_yoy}}%；新增国家融资担保基金合作业务规模{{overview.nfgf_amount}}亿元，同比增长{{overview.nfgf_yoy}}%。截至6月末，体系成员{{overview.member_count}}家，实收资本合计{{overview.total_capital}}亿元，平均担保放大倍数{{overview.leverage_ratio}}倍，同比上升了{{overview.leverage_yoy}}倍。 
+（一）不断聚焦主责主业，精准服务实体经济。省再担保公司不断完善合作机制，持续引导合作担保机构聚焦支小支农主体，加大普惠领域支持力度。上半年，体系新增经营性融资担保业务（手工报送的数据）{{focus.operational_amount}}亿元、{{focus.operational_customers}}万户，分别占体系全口径担保业务总规模的{{focus.operational_ratio_amt}}%、{{focus.operational_ratio_cust}}%。体系新增支小支农业务（手工报送数据）规模{{focus.sme_agri_amount}}亿元，占经营性融资担保业务的{{focus.sme_agri_ratio}}%。省再担保公司持续响应国家乡村振兴战略，通过专项产品精准支持国家乡村振兴重点帮扶县业务发展，并鼓励各地结合自身情况开展特色担保业务。上半年，省再担保公司开展“三农”再担保业务{{focus.agri_re_amount}}亿元、{{focus.agri_re_count}}笔。
+（二）深化创新驱动发展，银担合作持续突破。上半年，省再担保公司牵头全省政府性融资担保体系积极强化科技赋能，加快拓展新版国担“总对总”批量担保业务，持续优化业务结构，提高再担保和银行参与分险业务占比。上半年，银行参与分险的再担保规模{{risk_sharing.total_amount}}亿元，同比增长{{risk_sharing.yoy}}%，占再担保总规模的{{risk_sharing.share_ratio}}%，实现了银行参与分险业务快速增长。在银行参与分险业务中，银担“总对总”批量担保业务{{zdz.total_amount}}亿元，占银行参与分险业务总规模的{{zdz.share_ratio}}%，其中国担“总对总”批量担保业务{{zdz.national_amount}}亿元；地方版“总对总”批量担保业务{{zdz.local_amount}}亿元。 
+（三）持续降低担保费率，有效减轻普惠领域负担。省再担保公司积极争取省财政支持，不断降低再担保收费标准，引导各合作担保机构加大降费让利力度，减轻小微企业等普惠领域负担。上半年，体系支小支农平均担保费率{{cost.avg_guarantee_rate}}%，较上年同期降低了{{cost.rate_reduction}}个百分点，平均担保费率符合“逐步将平均担保费率降至1%以下”（国办发〔2019〕6号）文件的政策要求。参照商业性融资担保机构2.5%的担保费率测算，上半年累计为小微企业和“三农”主体节省担保费超{{cost.saving_amount}}亿元。
+（四）不断发挥逆周期调节作用，精准支持重点领域和薄弱环节。上半年，省再担保公司引导全省政府性融资担保体系认真落实中省及省财政厅工作要求，努力扩大高新技术企业、科技型企业及首贷户业务规模，精准支持重点领域和薄弱环节市场主体解难纾困。上半年新增交通运输、餐饮、住宿、批发零售行业企业及个体工商户担保业务{{industry.service_amount}}亿元、{{industry.service_count}}笔；新增高新技术企业、科技型企业担保贷款{{industry.tech_amount}}亿元、{{industry.tech_count}}笔，其中“科技创新专项担保计划”（根据产品名称进行判断）{{industry.innovation_amount}}亿元、{{industry.innovation_count}}笔；新增创业担保贷款{{industry.entrepreneurship_amount}}亿元、{{industry.entrepreneurship_count}}笔；新增首贷户担保业务{{industry.first_loan_amount}}亿元、{{industry.first_loan_count}}笔，有效助力企业纾困。 
+（五）坚持突出就业优先服务导向，引导体系发挥稳就业功能。上半年新增再担保业务稳定市场就业主体（报送的企业人数）约{{employment.total_employment}}万人。从行业分布看，上半年再担保业务主要聚焦于工业、批发业、建筑、零售业和农林牧渔业，合作业务占比{{employment.major_industry_ratio}}%，上述涉及行业稳定就业人数占比{{employment.major_employment_ratio}}%。其中：工业合作业务规模占比和稳就业人数占比均最高，上半年合作业务规模{{employment.industry_amount}}亿元、稳就业人数{{employment.industry_employment}}万人，分别占比{{employment.industry_ratio}}%、{{employment.industry_employment_ratio}}%，笔均稳就业{{employment.avg_per_deal}}人。 
+（六）始终坚持业务发展与风险控制并进，引导体系可持续发展。省再担保公司坚持业务拓展和风险控制“两手抓”，通过建立风险预警、产品穿透式管理、担保代偿率动态监控、代偿补偿年度稽核审计等机制，引导各机构不断完善内控体系建设，重视风险防控，牢固树立风险防范意识，实现健康持续发展。上半年，省再担保公司为合作担保机构的{{compensation.project_count}}个项目支付代偿补偿资金合计{{compensation.total_compensation}}万元，合作业务担保代偿率{{compensation.default_rate}}%，较上年同期提升了{{compensation.default_rate_increase}}个百分点。自2018年体系构建以来，累计为24家担保机构的2447笔代偿项目拨付再担保代偿补偿资金4.02亿元，及时补充了合作担保机构流动性，有效发挥了再担保增信和分险的作用。
+二、体系业务开展情况
+   各级政府高度重视政府性融资担保体系建设及功能作用发挥，持续完善配套政策，优化绩效考核机制，担保机构不断探索创新业务模式，开展批量担保业务，业务规模实现了稳健增长，体系新增全口径担保业务规模{{overview.total_guarantee_amount}}亿元，同比增长{{overview.yoy_growth_pct}}%。省再担保公司积极发挥省级再担保机构创新引领作用，引导体系担保业务规模稳步发展，其中共{{inst_summary.institutions_over_5b}}家机构业务规模超50亿元。从业务规模增速看，{{inst_summary.positive_growth_count}}家机构较上年同期实现正增长，其中{{inst_summary.growth_over_20_count}}家机构增幅超过20%；{{inst_summary.negative_growth_count}}家机构较上年同期下降。详见表一。
+表一：合作担保机构全口径新增担保业务规模统计表
+表格                                     金额单位：万元
+序号‌	‌担保机构简称‌	‌实收资本‌	‌业务规模‌	‌规模占比‌	‌同比增减‌
+{{inst_table.index}}	{{inst_table.name}}	{{inst_table.capital}}	{{inst_table.amount}}	{{inst_table.ratio}}	{{inst_table.yoy}}
+备注：1.按各担保机构2024年新增业务规模降序排列
+2.规模占比=各合作担保机构新增业务规模/体系新增业务总规模*100%
+      3.表内“-”代表无同期比较数据，下同
+
+
+三、再担保业务开展情况
+（一）业务总体运行情况。
+上半年，省再担保公司新增再担保业务规模{{overview.re_guarantee_amount}}亿元，同比增长{{overview.re_guarantee_yoy}}%，户均担保额为{{re_guarantee_summary.avg_per_customer}}万元。从业务开展情况看，{{re_guarantee_summary.high_filing_count}}家机构再担保备案率超过了90%，{{re_guarantee_summary.mid_filing_count}}家机构超过了50%，较好地发挥了财政担保政策功能作用。详见表二。
+
+表二：担保机构再担保业务统计表
+                                  金额单位：万元
+序号	担保机构简称	业务规模	再担保备案率
+{{re_guarantee_table.index}}	{{re_guarantee_table.name}}	{{re_guarantee_table.amount}}	{{re_guarantee_table.filing_rate}}%
+合计		{{re_guarantee_table_total.total_amount}}	{{re_guarantee_table_total.avg_filing_rate}}%
+备注：1.合作担保机构按上半年合作业务规模降序排列
+2.再担保备案率=单个担保机构再担保业务规模/全部担保业务规模*100%
+（二）银行合作情况。上半年，我省政府性融资担保体系与全国性银行、地方法人银行合作开展政策性融资担保业务规模分别为{{bank_cooperation.national_amount}}亿元、{{bank_cooperation.local_amount}}亿元，规模占比分别为{{bank_cooperation.national_ratio}}%和{{bank_cooperation.local_ratio}}%。和上年同期相比，全国性银行合作业务占比上升了{{bank_cooperation.national_ratio_increase}}个百分点。详见表三。
+表三：合作银行业务统计表
+表格                                   金额单位：万元
+序号	合作银行简称	合作业务规模（万元）	规模占比（%）
+（一）	全国性银行	{{bank_table_national.total_amount}}	{{bank_table_national.total_ratio}}%
+{{bank_table_national.index}}	{{bank_table_national.name}}	{{bank_table_national.amount}}	{{bank_table_national.ratio}}%
+（二）	地方性银行	{{bank_table_local.total_amount}}	{{bank_table_local.total_ratio}}%
+{{bank_table_local.index}}	{{bank_table_local.name}}	{{bank_table_local.amount}}	{{bank_table_local.ratio}}%
+备注：1.合作银行按上半年合作业务规模降序排列
+2.规模占比=各合作银行合作业务规模/体系合作业务总规模 *100%
+（三）综合融资成本及担保费率情况。上半年，省再担保公司再担保业务平均综合融资成本{{cost.avg_total_cost}}%，较上年同期下降{{cost.cost_reduction}}个百分点。平均贷款利率为{{cost.avg_loan_rate}}%，较上年同期下降{{cost.loan_rate_reduction}}个百分点，其中{{cost.banks_with_lower_rate}}家合作担保机构平均贷款利率较上年有所下降。平均担保费率{{cost.avg_guarantee_rate}}%，所有合作担保机构均不超过1%。整体来看，体系平均担保费率已降至较低水平。详见表四。
+表四：再担保业务综合融资成本统计表
+                                             单位：%
+序号	担保机构简称	平均担保费率	平均贷款利率	综合融资成本
+{{cost_table.index}}	{{cost_table.name}}	{{cost_table.guarantee_rate}}%	{{cost_table.loan_rate}}%	{{cost_table.total_cost}}%
+合计		{{cost_table_total.avg_guarantee_rate}}%	{{cost_table_total.avg_loan_rate}}%	{{cost_table_total.avg_total_cost}}%
+备注：合作担保机构按上半年再担保业务综合融资成本升序排列
+四、银行参与分险业务开展情况
+为提高我省银行参与分险业务比例，省再担保公司持续探索试点银担批量担保模式，引领体系分险业务规模稳步增长，上半年体系新增银行参与分险业务规模{{risk_sharing.total_amount}}亿元，较上年同期增长{{risk_sharing.yoy}}%，占全部再担保业务的{{risk_sharing.share_ratio}}%。
+（一）担保机构分险业务开展情况。上半年，{{risk_sharing.institutions_with_risk_sharing}}家合作担保机构开展了银行参与分险业务，{{risk_sharing.institutions_over_90pct}}家合作担保机构分险业务规模占比超过90%，其中{{risk_sharing.institutions_100pct}}家合作担保机构实现银行参与分险业务规模占比100%，落实银担风险分担机制取得良好成效。业务规模排名在前三位的分别是{{top3_risk_sharing.first_name}}{{top3_risk_sharing.first_amount}}亿元、{{top3_risk_sharing.second_name}}{{top3_risk_sharing.second_amount}}亿元、{{top3_risk_sharing.third_name}}{{top3_risk_sharing.third_amount}}亿元。详见表五。
+表五：银行参与分险再担保业务统计表
+                                      金额单位：万元
+序号	担保机构简称	分险业务规模	同比增减	分险业务占比
+{{risk_sharing_table.index}}	{{risk_sharing_table.name}}	{{risk_sharing_table.amount}}	{{risk_sharing_table.yoy}}%	{{risk_sharing_table.share_ratio}}%
+合计		{{risk_sharing_table_total.total_amount}}	{{risk_sharing_table_total.total_yoy}}%	{{risk_sharing_table_total.overall_share_ratio}}%
+
+备注：1.各合作担保机构按上半年合作业务规模降序排列
+2.分险规模占比=担保机构分险业务规模/再担保业务总规模*100%
+（二）合作银行分险业务开展情况。上半年，全国性银行参与分险业务规模{{bank_risk_sharing.national_amount}}亿元，占同期合作业务规模的{{bank_risk_sharing.national_ratio}}%，业务主要集中在农业银行、工商银行和邮储银行；地方法人银行参与分险业务规模{{bank_risk_sharing.local_amount}}亿元，占同期合作业务规模的{{bank_risk_sharing.local_ratio}}%，业务主要集中在陕西农信、西安银行和长安银行。银行参与分险业务规模排名在前三位的银行分别是：{{top3_bank_risk.first_name}}{{top3_bank_risk.first_amount}}亿元，{{top3_bank_risk.second_name}}{{top3_bank_risk.second_amount}}亿元，{{top3_bank_risk.third_name}}{{top3_bank_risk.third_amount}}亿元。详见表六。
+表六：合作银行分险业务统计表
+
+                                     金额单位：万元
+序号	合作银行简称	业务规模	规模占比
+（一）	全国性银行	{{bank_risk_table_national.total_amount}}	{{bank_risk_table_national.total_ratio}}%
+{{bank_risk_table_national.index}}	{{bank_risk_table_national.name}}	{{bank_risk_table_national.amount}}	{{bank_risk_table_national.ratio}}%
+（二）	地方性银行	{{bank_risk_table_local.total_amount}}	{{bank_risk_table_local.total_ratio}}%
+{{bank_risk_table_local.index}}	{{bank_risk_table_local.name}}	{{bank_risk_table_local.amount}}	{{bank_risk_table_local.ratio}}%
+
+备注：1.合作银行按上半年合作业务规模降序排列
+2.规模占比=各合作银行合作业务规模/体系合作业务总规模 *100%
+（三）各区域分险业务开展情况。上半年，{{region_summary.total_cities}}个地市全部实现了银行参与分险业务落地，{{region_summary.cities_over_80pct}}个地市银行参与分险业务规模占比超过80%；{{region_summary.cities_with_growth}}个地市参与分险业务规模较上年同期有所增长，其中{{region_summary.high_growth_cities}}在推进银行参与分险业务方面取得较好成效，分险规模同比增长超过{{region_summary.growth_threshold}}个百分点。详见表七。
+
+表七：地市银行参与分险业务规模统计表
+                                      金额单位：万元
+序号	所属区域	分险规模	同比增减	分险规模占比（%）
+{{region_risk_table.index}}	{{region_risk_table.name}}	{{region_risk_table.amount}}	{{region_risk_table.yoy}}%	{{region_risk_table.share_ratio}}%
+合计		{{region_risk_table_total.total_amount}}	{{region_risk_table_total.total_yoy}}%	{{region_risk_table_total.overall_share_ratio}}%
+备注：1.各地市按上半年分险业务规模降序排列
+2.规模占比=各地市机构分险业务规模/各市（区）备案总规模 *100%
+
+五、专项业务开展情况
+（一）银担“总对总”批量业务情况。
+1.国担银担“总对总”批量业务情况。上半年，体系新增国担银担“总对总”批量担保业务{{national_zdz_summary.total_amount}}亿元。业务规模排名在前三位的担保机构分别是：{{national_zdz_top3.first_name}}{{national_zdz_top3.first_amount}}亿元、{{national_zdz_top3.second_name}}{{national_zdz_top3.second_amount}}亿元、{{national_zdz_top3.third_name}}{{national_zdz_top3.third_amount}}亿元。详见表八。
+
+表八：国担基金“总对总”批量担保业务统计表
+                                         金额单位：万元
+序号	担保机构简称	业务规模	规模占比
+{{national_zdz_table.index}}	{{national_zdz_table.name}}	{{national_zdz_table.amount}}	{{national_zdz_table.share_ratio}}%
+合计		{{national_zdz_table_total.total_amount}}	100.00%
+备注：1.合作担保机构按上半年合作业务规模降序排列
+2.规模占比=各担保机构国担“总对总”业务规模/国担“总对总”业务总规模*100%
+2.地方版银担“总对总”批量业务情况。上半年，体系新增地方版银担“总对总”批量担保业务{{local_zdz_summary.total_amount}}亿元。业务规模排名在前三位的担保机构分别是：{{local_zdz_top3.first_name}}{{local_zdz_top3.first_amount}}亿元、{{local_zdz_top3.second_name}}{{local_zdz_top3.second_amount}}亿元、{{local_zdz_top3.third_name}}{{local_zdz_top3.third_amount}}亿元。详见表九。
+
+表九：地方版“总对总”批量担保业务统计表
+                                      金额单位：万元
+序号	担保机构简称	业务规模	规模占比
+{{local_zdz_table.index}}	{{local_zdz_table.name}}	{{local_zdz_table.amount}}	{{local_zdz_table.share_ratio}}%
+合计		{{local_zdz_table_total.total_amount}}	100.00%
+备注：1.合作担保机构按上半年合作业务规模降序排列
+2.规模占比=各担保机构地方版“总对总”业务规模/地方版“总对总”业务总规模*100%
+
+3.银行开展银担“总对总”批量担保业务情况。上半年，银担“总对总”批量担保业务总计{{bank_zdz_summary.total_amount}}亿元，占体系合作业务的{{bank_zdz_summary.share_ratio}}%。主要集中在{{bank_zdz_top3.first_name}}、{{bank_zdz_top3.second_name}}和{{bank_zdz_top3.third_name}}，业务规模分别为{{bank_zdz_top3.first_amount}}亿元、{{bank_zdz_top3.second_amount}}亿元和{{bank_zdz_top3.third_amount}}亿元。详见表十。
+
+表十：合作银行“总对总”批量担保业务统计表
+序号	合作银行简称	业务规模	业务占比
+{{bank_zdz_table.index}}	{{bank_zdz_table.name}}	{{bank_zdz_table.amount}}	{{bank_zdz_table.business_ratio}}%
+合计		{{bank_zdz_table_total.total_amount}}	{{bank_zdz_table_total.overall_share_ratio}}%
+备注：1.各合作银行按上半年合作业务规模降序排列
+  2.规模占比=合作银行“总对总”批量业务规模/合作银行合作业务规模 *100%
+（二）创业担保贷款业务开展情况。上半年，体系内{{chuangye_summary.institution_count}}家担保机构累计开展创业担保贷款业务{{chuangye_summary.total_amount}}亿元。合作业务规模排名在前三位的分别是：{{chuangye_top3.first_name}}{{chuangye_top3.first_amount}}亿元、{{chuangye_top3.second_name}}{{chuangye_top3.second_amount}}亿元、{{chuangye_top3.third_name}}{{chuangye_top3.third_amount}}亿元。详见表十一。
+
+表十一：创业担保贷款再担保业务统计表
+序号	担保机构简称	合作业务规模	规模占比
+{{chuangye_table.index}}	{{chuangye_table.name}}	{{chuangye_table.amount}}	{{chuangye_table.share_ratio}}%
+合计		{{chuangye_table_total.total_amount}}	100.00%
+备注：1.合作担保机构按上半年合作业务规模降序排列
+2.规模占比=各担保机构创业担保贷款业务规模/创业担保贷款总规模*100%
+（三）科技创新担保计划业务开展情况。上半年，体系内{{tech_guarantee_summary.institution_count}}家担保机构累计开展科技创新担保计划业务{{tech_guarantee_summary.total_amount}}亿元。合作业务规模排名在前三位的分别是：{{tech_guarantee_top3.first_name}}{{tech_guarantee_top3.first_amount}}亿元、{{tech_guarantee_top3.second_name}}{{tech_guarantee_top3.second_amount}}亿元、{{tech_guarantee_top3.third_name}}{{tech_guarantee_top3.third_amount}}亿元。
+
+表十二：“科技创新专项担保计划”业务统计表
+序号	担保机构简称	合作业务规模	规模占比
+{{tech_guarantee_table.index}}	{{tech_guarantee_table.name}}	{{tech_guarantee_table.amount}}	{{tech_guarantee_table.share_ratio}}%
+合计		{{tech_guarantee_table_total.total_amount}}	100.00%
+备注：1.合作担保机构按上半年合作业务规模降序排列
+2.规模占比=各担保机构科技创新担保计划贷款业务规模/科技创新担保计划贷款总规模*100%
+
+报送：国家融资担保基金、中国融资担保业协会；省财政厅、省地方金融管理局、省工信厅、人行陕西分行、国家金融监督管理总局陕西监管局。
+发送：各市县（区）政府、各国家级省级园区管委会、各银行业金融机构，全省政府性融资担保公司。
+
+
