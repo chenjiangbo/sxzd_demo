@@ -1,17 +1,12 @@
-import {
-  Document,
-  Packer,
-  Paragraph,
-  TextRun,
-  HeadingLevel,
-} from 'docx';
 import PizZip from 'pizzip';
 import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { parseCSV, createWordTableXML, replaceTablePlaceholder } from './word-table-generator';
 
 /**
  * 生成担保业务简报 Word 文档
  * @param templatePath - Word 模板文件路径
- * @param data - 要填充的数据
+ * @param data - 要填充的数据（包含 placeholder-mapping.json 的数据）
  * @returns 生成的 Word 文档 Buffer
  */
 export async function generateBriefDocument(
@@ -31,21 +26,41 @@ export async function generateBriefDocument(
       throw new Error('无法读取 Word 文档内容');
     }
     
+    let replacedXml = documentXml;
+    
     // 4. 扁平化数据，将嵌套对象转换为 key-value 对
     const flatData: Record<string, string> = {};
     flattenObject(data, '', flatData);
     
-    // 5. 替换所有占位符 {{key}} -> value
-    let replacedXml = documentXml;
+    // 5. 替换所有文本占位符 {{key}} -> value
     Object.entries(flatData).forEach(([key, value]) => {
       const placeholder = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
       replacedXml = replacedXml.replace(placeholder, String(value ?? ''));
     });
     
-    // 6. 更新 xml 文件
+    // 6. 处理表格占位符 - 从 CSV 读取数据并生成 Word 表格
+    const csvPath = path.join(process.cwd(), 'data', 'GuaranteeBusinessBriefTableData.csv');
+    try {
+      const csvContent = await fs.readFile(csvPath, 'utf-8');
+      const { headers, rows } = parseCSV(csvContent);
+      
+      // 按顺序分割表格数据（根据空行分割）
+      const tables = splitCSVToTables(csvContent);
+      
+      // 替换表格占位符（table_1, table_2, ...）
+      for (let i = 0; i < tables.length; i++) {
+        const placeholder = `table_${i + 1}`;
+        const tableXML = createWordTableXML(tables[i].headers, tables[i].rows, 9000);
+        replacedXml = replaceTablePlaceholder(replacedXml, placeholder, tableXML);
+      }
+    } catch (error) {
+      console.warn('CSV 表格数据加载失败，将跳过表格生成:', error instanceof Error ? error.message : error);
+    }
+    
+    // 7. 更新 xml 文件
     zip.file('word/document.xml', replacedXml);
     
-    // 7. 生成 buffer
+    // 8. 生成 buffer
     const buf = zip.generate({
       type: 'nodebuffer',
       compression: 'DEFLATE',
@@ -81,4 +96,26 @@ function flattenObject(
       }
     }
   }
+}
+
+/**
+ * 将 CSV 内容按空行分割成多个表格
+ */
+interface TableData {
+  headers: string[];
+  rows: string[][];
+}
+
+function splitCSVToTables(csvContent: string): TableData[] {
+  const sections = csvContent.split(/\n\s*\n/).filter(section => section.trim().length > 0);
+  const tables: TableData[] = [];
+  
+  for (const section of sections) {
+    const { headers, rows } = parseCSV(section);
+    if (headers.length > 0 && rows.length > 0) {
+      tables.push({ headers, rows });
+    }
+  }
+  
+  return tables;
 }

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{report_title}}</title>
+    <style>
+        /* 打印样式 */
+        @page {
+            margin: 3.7cm 2.6cm 3.5cm 2.8cm;
+            size: A4;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: "SimSun", "宋体", serif;
+            line-height: 1.6;
+            color: #000;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: "SimHei", "黑体", sans-serif;
+            margin-bottom: 1em;
+        }
+        
+        h1 {
+            font-size: 22pt;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h2 {
+            font-size: 16pt;
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+        
+        p {
+            margin-bottom: 1em;
+            text-indent: 2em;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 10.5pt;
+        }
+        
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        td:first-child {
+            text-align: left;
+        }
+        
+        .meta-info {
+            text-align: right;
+            margin-bottom: 40px;
+            font-size: 10.5pt;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .remark {
+            margin-top: 40px;
+            font-size: 9pt;
+            color: #666;
+        }
+        
+        /* 打印时隐藏的元素 */
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 报告标题 -->
+    <h1>{{report_title}}</h1>
+    
+    <!-- 元信息 -->
+    <div class="meta-info">
+        <p>期号：{{meta.issue_number}} | 总第 {{meta.total_issue}} 期</p>
+        <p>发布日期：{{meta.publish_date}}</p>
+    </div>
+    
+    <!-- 第一部分：总体概况 -->
+    <div class="section">
+        <h2>一、总体概况</h2>
+        <p>
+            截至{{overview.period}}末，在保余额{{overview.total_guarantee_amount}}亿元，
+            较年初增长{{overview.yoy_growth_pct}}%；在保户数{{overview.customer_count}}万户，
+            同比增长{{overview.customer_yoy_growth_pct}}%。
+        </p>
+        <p>
+            再担保业务规模{{overview.re_guarantee_amount}}亿元，同比增长{{overview.re_guarantee_yoy}}%；
+            国担基金业务规模{{overview.nfgf_amount}}亿元，同比增长{{overview.nfgf_yoy}}%。
+        </p>
+        
+        <!-- 表格 1：合作银行业务规模统计表 -->
+        <%- table_1 %>
+    </div>
+    
+    <!-- 第二部分：合作机构统计 -->
+    <div class="section">
+        <h2>二、合作机构统计</h2>
+        <p>
+            全系统共有成员机构{{overview.member_count}}家，实收资本总额{{overview.total_capital}}亿元，
+            平均杠杆倍数{{overview.leverage_ratio}}倍，较去年同期增长{{overview.leverage_yoy}}。
+        </p>
+        
+        <!-- 表格 2：担保机构业务规模统计表 -->
+        <%- table_2 %>
+    </div>
+    
+    <!-- 第三部分：再担保业务 -->
+    <div class="section">
+        <h2>三、再担保业务情况</h2>
+        <p>
+            再担保业务覆盖{{re_guarantee_summary.province_count}}个省份，备案项目{{re_guarantee_summary.filing_count}}个，
+            备案金额{{re_guarantee_summary.filing_amount}}亿元。
+        </p>
+        
+        <!-- 表格 3：合作银行再担保业务统计表 -->
+        <%- table_3 %>
+        
+        <!-- 表格 4：担保机构再担保业务统计表 -->
+        <%- table_4 %>
+    </div>
+    
+    <!-- 第四部分：分险业务 -->
+    <div class="section">
+        <h2>四、分险业务统计</h2>
+        <p>
+            风险分担业务总规模{{risk_sharing.total_amount}}亿元，同比增长{{risk_sharing.yoy}}%，
+            平均风险分担比例{{risk_sharing.share_ratio}}%。
+        </p>
+        
+        <!-- 表格 5：担保机构备案业务统计表 -->
+        <%- table_5 %>
+        
+        <!-- 表格 6：担保机构分险业务占比分析表 -->
+        <%- table_6 %>
+    </div>
+    
+    <!-- 第五部分：合作银行 -->
+    <div class="section">
+        <h2>五、合作银行统计</h2>
+        <p>
+            与{{bank_cooperation.total_banks}}家银行开展合作，其中国有大型银行{{bank_cooperation.national_banks}}家，
+            地方法人银行{{bank_cooperation.local_banks}}家。
+        </p>
+        
+        <!-- 表格 7：合作银行分险业务统计表 -->
+        <%- table_7 %>
+    </div>
+    
+    <!-- 第六部分：机构实力 -->
+    <div class="section">
+        <h2>六、担保机构综合实力</h2>
+        <p>
+            注册资本超过 5 亿元的机构有{{inst_summary.institutions_over_5b}}家，
+            实现正增长的机构{{inst_summary.positive_growth_count}}家。
+        </p>
+        
+        <!-- 表格 8：担保机构综合实力排名表 -->
+        <%- table_8 %>
+    </div>
+    
+    <!-- 第七部分：创业担保 -->
+    <div class="section">
+        <h2>七、创业担保贷款</h2>
+        <p>
+            创业担保贷款业务规模{{chuangye_summary.total_amount}}亿元，参与机构{{chuangye_summary.institution_count}}家。
+        </p>
+        
+        <!-- 表格 9：创业担保贷款机构排名表 -->
+        <%- table_9 %>
+    </div>
+    
+    <!-- 第八部分：科创担保 -->
+    <div class="section">
+        <h2>八、科技创新担保</h2>
+        <p>
+            科技创新担保业务规模{{tech_guarantee_summary.total_amount}}亿元，
+            服务科技型企业{{tech_guarantee_summary.enterprise_count}}家。
+        </p>
+        
+        <!-- 表格 10：科技创新担保机构排名表 -->
+        <%- table_10 %>
+    </div>
+    
+    <!-- 第九部分：成本分析 -->
+    <div class="section">
+        <h2>九、融资成本分析</h2>
+        <p>
+            平均担保费率{{cost.avg_guarantee_rate}}%，较去年同期下降{{cost.rate_reduction}}个百分点；
+            平均贷款利率{{cost.avg_loan_rate}}%，下降{{cost.loan_rate_reduction}}个百分点。
+        </p>
+        
+        <!-- 表格 11：融资成本分析表 -->
+        <%- table_11 %>
+    </div>
+    
+    <!-- 第十部分：区域分布 -->
+    <div class="section">
+        <h2>十、区域分布情况</h2>
+        <p>
+            业务覆盖{{region_summary.total_cities}}个地市，其中{{region_summary.cities_over_80pct}}个地市覆盖率超过 80%。
+        </p>
+        
+        <!-- 表格 12：区域分布情况表 -->
+        <%- table_12 %>
+    </div>
+    
+    <!-- 备注 -->
+    <div class="remark">
+        <p>备注：{{remark}}</p>
+        <p>数据来源：业务系统 | 统计截止日期：{{report_date}}</p>
+    </div>
+</body>
+</html>

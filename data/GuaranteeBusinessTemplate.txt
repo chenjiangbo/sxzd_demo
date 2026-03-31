@@ -18,8 +18,9 @@
    各级政府高度重视政府性融资担保体系建设及功能作用发挥，持续完善配套政策，优化绩效考核机制，担保机构不断探索创新业务模式，开展批量担保业务，业务规模实现了稳健增长，体系新增全口径担保业务规模{{overview.total_guarantee_amount}}亿元，同比增长{{overview.yoy_growth_pct}}%。省再担保公司积极发挥省级再担保机构创新引领作用，引导体系担保业务规模稳步发展，其中共{{inst_summary.institutions_over_5b}}家机构业务规模超50亿元。从业务规模增速看，{{inst_summary.positive_growth_count}}家机构较上年同期实现正增长，其中{{inst_summary.growth_over_20_count}}家机构增幅超过20%；{{inst_summary.negative_growth_count}}家机构较上年同期下降。详见表一。
 表一：合作担保机构全口径新增担保业务规模统计表
 表格                                     金额单位：万元
-序号‌	‌担保机构简称‌	‌实收资本‌	‌业务规模‌	‌规模占比‌	‌同比增减‌
-{{inst_table.index}}	{{inst_table.name}}	{{inst_table.capital}}	{{inst_table.amount}}	{{inst_table.ratio}}	{{inst_table.yoy}}
+序号	担保机构简称	实收资本	业务规模	规模占比	同比增减
+{{inst_table.index}}	{{inst_table.name}}	{{inst_table.capital}}	{{inst_table.amount}}	{{inst_table.ratio}}%	{{inst_table.yoy}}%
+合计		{{inst_table_total.total_capital}}	{{inst_table_total.total_amount}}	100.00%	{{inst_table_total.total_yoy}}%
 备注：1.按各担保机构2024年新增业务规模降序排列
 2.规模占比=各合作担保机构新增业务规模/体系新增业务总规模*100%
       3.表内“-”代表无同期比较数据，下同
