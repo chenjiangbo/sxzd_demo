@@ -1,0 +1,50 @@
+{
+  "placeholders": {
+    "single_indicators": {
+      "{{report_title}}": "业务一部担保业务简报",
+      "{{report_period}}": "2026 年上半年",
+      "{{total_balance}}": "125.6 亿元",
+      "{{total_balance_growth}}": "8.5%",
+      "{{total_accounts}}": "1,245 户",
+      "{{total_accounts_growth}}": "12.3%",
+      "{{total_guarantee_amount}}": "89.3 亿元",
+      "{{total_guarantee_growth}}": "15.7%",
+      "{{average_rate}}": "1.8%",
+      "{{rate_change}}": "-0.2%",
+      "{{compensation_amount}}": "3,456 万元",
+      "{{compensation_growth}}": "12.5%",
+      "{{compensation_rate}}": "2.75%",
+      "{{overdue_rate}}": "3.12%",
+      "{{recovery_amount}}": "1,234 万元",
+      "{{recovery_rate}}": "35.7%",
+      "{{reserve_amount}}": "15,678 万元",
+      "{{reserve_ratio}}": "1%",
+      "{{reserve_adequacy}}": "125%",
+      "{{business_income}}": "12,345 万元",
+      "{{income_growth}}": "15.6%",
+      "{{profit_margin}}": "28.5%",
+      "{{roe}}": "8.9%",
+      "{{net_profit}}": "6,789 万元",
+      "{{profit_growth}}": "18.9%"
+    },
+    "table_placeholders": {
+      "{{table_overview}}": "table_1",
+      "{{table_product_structure}}": "table_2",
+      "{{table_industry_structure}}": "table_3",
+      "{{table_region_structure}}": "table_4",
+      "{{table_bank_cooperation}}": "table_5",
+      "{{table_compensation}}": "table_6",
+      "{{table_recovery}}": "table_7",
+      "{{table_reserve}}": "table_8",
+      "{{table_benefit}}": "table_9",
+      "{{table_new_business}}": "table_10",
+      "{{table_customer}}": "table_11",
+      "{{table_reinsurance}}": "table_12"
+    }
+  },
+  "template_mapping": {
+    "word_template": "brief-template.docx",
+    "output_format": "docx",
+    "encoding": "utf-8"
+  }
+}
