@@ -10,7 +10,7 @@ const env = blackwhiteEnvSchema.parse({
   BLACKWHITH_KEY: process.env.BLACKWHITH_KEY,
 });
 
-type ChatMessage =
+export type ChatMessage =
   | { role: 'system' | 'user' | 'assistant'; content: string }
   | {
       role: 'system' | 'user' | 'assistant';
@@ -20,10 +20,14 @@ type ChatMessage =
       >;
     };
 
-type ChatOptions = {
+export type ChatOptions = {
   model?: string;
   temperature?: number;
   timeoutMs?: number;
+};
+
+type ChatStreamOptions = ChatOptions & {
+  stream?: boolean;
 };
 
 type ChatCompletionResponse = {
@@ -54,6 +58,18 @@ function extractJsonBlock(text: string) {
 }
 
 export async function blackwhiteChat(messages: ChatMessage[], options: ChatOptions = {}) {
+  const response = await createBlackwhiteChatResponse(messages, options);
+  const data = (await response.json()) as ChatCompletionResponse;
+  const content = data.choices?.[0]?.message?.content?.trim();
+
+  if (!content) {
+    throw new Error('blackwhite returned empty content');
+  }
+
+  return content;
+}
+
+export async function createBlackwhiteChatResponse(messages: ChatMessage[], options: ChatStreamOptions = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 120_000);
 
@@ -67,7 +83,7 @@ export async function blackwhiteChat(messages: ChatMessage[], options: ChatOptio
       },
       body: JSON.stringify({
         model: options.model ?? 'google/gemini-2.5-flash-lite',
-        stream: false,
+        stream: options.stream ?? false,
         temperature: options.temperature ?? 0.1,
         messages,
       }),
@@ -79,14 +95,7 @@ export async function blackwhiteChat(messages: ChatMessage[], options: ChatOptio
       throw new Error(`blackwhite request failed: ${response.status} ${await response.text()}`);
     }
 
-    const data = (await response.json()) as ChatCompletionResponse;
-    const content = data.choices?.[0]?.message?.content?.trim();
-
-    if (!content) {
-      throw new Error('blackwhite returned empty content');
-    }
-
-    return content;
+    return response;
   } finally {
     clearTimeout(timeout);
   }
