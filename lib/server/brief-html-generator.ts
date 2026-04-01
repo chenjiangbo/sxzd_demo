@@ -90,11 +90,27 @@ function prepareRenderData(mappingData: Record<string, any>, csvPath: string): R
   
   console.log(`CSV 解析完成，共 ${tables.length} 个表格`);
   
-  // 将表格添加到上下文中
+  // 按照模板需要的名字映射表格
+  const tableNames = [
+    'inst_table',           // 表一：合作担保机构全口径新增担保业务规模统计表
+    're_guarantee_table',   // 表二：担保机构再担保业务统计表
+    'bank_table',           // 表三：合作银行业务统计表
+    'cost_table',           // 表四：再担保业务综合融资成本统计表
+    'risk_sharing_table',   // 表五：银行参与分险再担保业务统计表
+    'bank_risk_table',      // 表六：合作银行分险业务统计表
+    'region_risk_table',    // 表七：地市银行参与分险业务规模统计表
+    'national_zdz_table',   // 表八：国担基金"总对总"批量担保业务统计表
+    'local_zdz_table',      // 表九：地方版"总对总"批量担保业务统计表
+    'bank_zdz_table',       // 表十：合作银行"总对总"批量担保业务统计表
+    'chuangye_table',       // 表十一：创业担保贷款再担保业务统计表
+    'tech_guarantee_table'  // 表十二："科技创新专项担保计划"业务统计表
+  ];
+  
   for (let i = 0; i < tables.length; i++) {
     const table = tables[i];
-    flatData[`table_${i + 1}`] = createHTMLTable(table.headers, table.rows);
-    console.log(`表格 ${i + 1}: ${table.headers.length} 列，${table.rows.length} 行`);
+    const tableName = tableNames[i] || `table_${i + 1}`;
+    flatData[tableName] = createHTMLTable(table.headers, table.rows);
+    console.log(`${tableName}: ${table.headers.length} 列，${table.rows.length} 行`);
   }
   
   // 添加报告标题和日期
@@ -115,7 +131,7 @@ function flattenObject(obj: Record<string, any>, prefix: string, result: Record<
   for (const key in obj) {
     if (obj.hasOwnProperty(key)) {
       const value = obj[key];
-      const newKey = prefix ? `${prefix}.${key}` : key;
+      const newKey = prefix ? `${prefix}_${key}` : key;
       
       if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
         flattenObject(value, newKey, result);
