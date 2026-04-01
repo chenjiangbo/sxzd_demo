@@ -1,12 +1,13 @@
 'use client';
 
-import { BotMessageSquare, ClipboardList, FileStack, Gauge, Settings, ShieldCheck, User } from 'lucide-react';
+import { BotMessageSquare, ClipboardList, FileStack, Gauge, Presentation, Settings, ShieldCheck, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const items = [
   { href: '#', label: '首页', icon: Gauge },
   { href: '/', label: '代偿补偿', icon: ClipboardList },
+  { href: '/brief', label: '简报生成', icon: Presentation },
   { href: '#', label: '场景中心', icon: BotMessageSquare },
   { href: '/credit-report', label: '授信报告', icon: FileStack },
   { href: '#', label: '文书中心', icon: FileStack },
@@ -29,8 +30,8 @@ export default function Sidebar() {
         {items.map(({ href, label, icon: Icon }) => {
           const active =
             (href === '/' && (pathname === '/' || pathname.startsWith('/cases/') || pathname === '/review' || pathname === '/verify')) ||
+            (href === '/brief' && pathname === '/brief') ||
             (href === '/credit-report' && pathname.startsWith('/credit-report'));
-          const disabled = href === '#';
           return (
             <Link
               key={label}
@@ -38,9 +39,7 @@ export default function Sidebar() {
               className={
                 active
                   ? 'flex items-center gap-3 rounded-l-lg border-r-4 border-[#002B5B] bg-white px-3 py-3 font-bold text-[#002B5B] shadow-sm transition-colors dark:bg-slate-800 dark:text-blue-300'
-                  : disabled
-                    ? 'flex cursor-default items-center gap-3 rounded-lg px-3 py-3 text-slate-500 opacity-70 dark:text-slate-400'
-                    : 'flex items-center gap-3 rounded-lg px-3 py-3 text-slate-500 transition-colors hover:bg-surface-container-low hover:text-[#002B5B] dark:text-slate-400 dark:hover:bg-slate-800/80'
+                  : 'flex items-center gap-3 rounded-lg px-3 py-3 text-slate-500 transition-colors hover:bg-surface-container-low hover:text-[#002B5B] dark:text-slate-400 dark:hover:bg-slate-800/80'
               }
             >
               <Icon className="h-5 w-5" />

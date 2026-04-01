@@ -1,136 +1,99 @@
 'use client';
 
-import { ChevronRight, Table } from 'lucide-react';
+import { useState } from 'react';
 
-interface TableData {
-  id: string;
+type TableData = {
   name: string;
-  category: string;
-  data: Record<string, any>[];
-}
+  caption: string;
+  headers: string[];
+  rows: string[][];
+};
 
-interface BriefTableViewerProps {
+type Props = {
   tables: TableData[];
-  selectedTableId: string | null;
-  onSelectTable: (tableId: string | null) => void;
-}
+};
 
-export default function BriefTableViewer({ tables, selectedTableId, onSelectTable }: BriefTableViewerProps) {
-  // 按类别分组表格
-  const groupedTables = tables.reduce((acc, table) => {
-    if (!acc[table.category]) {
-      acc[table.category] = [];
-    }
-    acc[table.category].push(table);
-    return acc;
-  }, {} as Record<string, TableData[]>);
+export default function BriefTableViewer({ tables }: Props) {
+  const [activeTab, setActiveTab] = useState(0);
+
+  // 如果没有表格数据，显示提示
+  if (!tables || !Array.isArray(tables) || tables.length === 0) {
+    return (
+      <div className="rounded-3xl bg-white p-6 text-center shadow-sm">
+        <p className="text-lg font-bold text-on-surface-variant">暂无表格数据</p>
+        <p className="mt-2 text-sm text-on-surface-variant">请检查 CSV 文件是否存在或格式正确</p>
+      </div>
+    );
+  }
+
+  const currentTable = tables[activeTab];
+  if (!currentTable) {
+    return (
+      <div className="rounded-3xl bg-white p-6 text-center shadow-sm">
+        <p className="text-lg font-bold text-on-surface-variant">无当前表格数据</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* 左侧菜单式表格列表 */}
-      <section className="rounded-xl bg-surface-container-lowest p-6 shadow-sm">
-        <div className="mb-4 flex items-center gap-2">
-          <Table className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-bold text-primary">数据表格列表</h2>
-          <span className="ml-auto text-xs font-medium text-on-surface-variant">共 {tables.length} 张表格</span>
+    <div>
+      {/* Tab 导航 */}
+      <div className="mb-6 flex gap-2 overflow-x-auto">
+        {tables.map((table, index) => (
+          <button
+            key={index}
+            onClick={() => setActiveTab(index)}
+            className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-black transition ${
+              activeTab === index
+                ? 'bg-primary text-white'
+                : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
+            }`}
+          >
+            表{index + 1}
+          </button>
+        ))}
+      </div>
+
+      {/* 表格内容 */}
+      <section className="rounded-3xl bg-white p-6 shadow-sm">
+        <h2 className="mb-4 font-headline text-xl font-black text-primary">{currentTable.caption || ''}</h2>
+        
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse text-[11px] text-on-surface">
+            <thead>
+              <tr className="border-b border-outline-variant/15 text-left text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">
+                {(currentTable.headers || []).map((header, idx) => (
+                  <th key={idx} className="px-4 py-3 whitespace-nowrap">
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {(currentTable.rows || []).map((row, rowIdx) => (
+                <tr
+                  key={rowIdx}
+                  className={rowIdx % 2 === 0 ? 'bg-white' : 'bg-surface-container-low/40'}
+                >
+                  {(row || []).map((cell, cellIdx) => (
+                    <td key={cellIdx} className="px-4 py-3 whitespace-nowrap">
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
-        <div className="space-y-4">
-          {Object.entries(groupedTables).map(([category, categoryTables]) => (
-            <div key={category}>
-              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-on-surface-variant">{category}</h3>
-              <div className="space-y-1">
-                {categoryTables.map((table) => (
-                  <button
-                    key={table.id}
-                    onClick={() => onSelectTable(selectedTableId === table.id ? null : table.id)}
-                    className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-all ${
-                      selectedTableId === table.id
-                        ? 'bg-primary/10 font-bold text-primary'
-                        : 'hover:bg-surface-container-high'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <ChevronRight
-                        className={`h-4 w-4 transition-transform ${
-                          selectedTableId === table.id ? 'rotate-90' : ''
-                        }`}
-                      />
-                      <span>{table.name}</span>
-                    </div>
-                    <span className="text-xs text-on-surface-variant">
-                      {table.data.length} 行数据
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+        {/* 表格说明 */}
+        <div className="mt-4 rounded-xl bg-surface-container-low p-4">
+          <p className="text-[10px] font-medium text-on-surface-variant">
+            <span className="font-bold">备注：</span>
+            数据来源：业务系统 | 统计截止日期为报告期末最后一个工作日
+          </p>
         </div>
       </section>
-
-      {/* 右侧表格详情 */}
-      {selectedTableId && (
-        <section className="rounded-xl bg-white p-6 shadow-sm">
-          {(() => {
-            const table = tables.find((t) => t.id === selectedTableId);
-            if (!table) return null;
-
-            return (
-              <div>
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-primary">{table.name}</h3>
-                  <span className="rounded-full bg-surface-container px-3 py-1 text-xs font-bold text-on-surface-variant">
-                    {table.category}
-                  </span>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="min-w-full border-collapse text-sm">
-                    <thead>
-                      <tr className="border-b-2 border-primary bg-primary/5">
-                        {Object.keys(table.data[0]).map((key) => (
-                          <th
-                            key={key}
-                            className="border-b border-slate-200 px-4 py-3 text-left font-bold text-primary"
-                          >
-                            {key}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {table.data.map((row, index) => (
-                        <tr
-                          key={index}
-                          className={`transition-colors ${
-                            index % 2 === 0 ? 'bg-white' : 'bg-slate-50'
-                          } hover:bg-primary/5`}
-                        >
-                          {Object.values(row).map((value, cellIndex) => (
-                            <td
-                              key={cellIndex}
-                              className="border-b border-slate-100 px-4 py-3 text-on-surface"
-                            >
-                              {value}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="mt-4 rounded-lg bg-surface-container-low p-4">
-                  <p className="text-xs text-on-surface-variant">
-                    💡 此表格数据将自动填充到 Word 模板的对应占位符位置
-                  </p>
-                </div>
-              </div>
-            );
-          })()}
-        </section>
-      )}
     </div>
   );
 }

@@ -77,6 +77,52 @@ function splitCSVToTables(csvContent: string): Array<{ headers: string[]; rows: 
 }
 
 /**
+ * 获取简报表格数据（用于前端展示）
+ */
+export function getBriefTableData() {
+  try {
+    const csvPath = path.join(process.cwd(), 'data', 'GuaranteeBusinessBriefTableData.csv');
+    console.log('读取 CSV 文件:', csvPath);
+    
+    if (!fs.existsSync(csvPath)) {
+      console.error('CSV 文件不存在:', csvPath);
+      return [];
+    }
+    
+    const csvContent = fs.readFileSync(csvPath, 'utf-8');
+    console.log('CSV 文件读取成功，长度:', csvContent.length);
+    
+    const tables = splitCSVToTables(csvContent);
+    console.log('CSV 解析完成，共', tables.length, '个表格');
+
+    const tableNames = [
+      '合作担保机构全口径新增担保业务规模统计表',
+      '担保机构再担保业务统计表',
+      '合作银行业务统计表',
+      '再担保业务综合融资成本统计表',
+      '银行参与分险再担保业务统计表',
+      '合作银行分险业务统计表',
+      '地市银行参与分险业务规模统计表',
+      '国担基金"总对总"批量担保业务统计表',
+      '地方版"总对总"批量担保业务统计表',
+      '合作银行"总对总"批量担保业务统计表',
+      '创业担保贷款再担保业务统计表',
+      '"科技创新专项担保计划"业务统计表',
+    ];
+
+    return tables.map((table, index) => ({
+      name: tableNames[index] || `表${index + 1}`,
+      caption: `表${index + 1}：${tableNames[index] || ''}`,
+      headers: table.headers || [],
+      rows: table.rows || [],
+    }));
+  } catch (error) {
+    console.error('获取简报表格数据失败:', error);
+    return [];
+  }
+}
+
+/**
  * 准备渲染数据
  */
 function prepareRenderData(mappingData: Record<string, any>, csvPath: string): Record<string, any> {
