@@ -10,6 +10,7 @@ type Props = {
   searchParams?: Promise<{
     group?: string;
     year?: string;
+    page?: string;
     [key: string]: string | undefined;
   }>;
 };
@@ -26,7 +27,18 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
   const params = await searchParams;
   const data = await getEvaluationReportData();
   const selectedGroup = typeof params?.group === 'string' ? params.group : undefined;
-  const institutions = selectedGroup ? data.institutions.filter((item) => item.overallStatus === selectedGroup) : data.institutions;
+  const currentPage = parseInt(params?.page ?? '1');
+  const pageSize = 10;
+  
+  const institutions = selectedGroup 
+    ? data.institutions.filter((item) => item.overallStatus === selectedGroup) 
+    : data.institutions;
+  
+  // 分页计算
+  const totalPages = Math.ceil(institutions.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, institutions.length);
+  const paginatedInstitutions = institutions.slice(startIndex, endIndex);
 
   return (
     <>
@@ -130,31 +142,25 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
               <thead>
                 <tr className="border-b border-outline-variant/15 text-left text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">
                   <th className="px-4 py-3">机构名称</th>
-                  <th className="px-3 py-3">简称</th>
                   <th className="px-3 py-3">区域</th>
-                  <th className="px-3 py-3">评级</th>
                   <th className="px-3 py-3 text-right">规模完成率</th>
                   <th className="px-3 py-3 text-right">客户完成率</th>
                   <th className="px-3 py-3 text-right">再担保完成率</th>
                   <th className="px-3 py-3 text-right">分险完成率</th>
                   <th className="px-3 py-3 text-right">杠杆完成率</th>
                   <th className="px-3 py-3 text-right">代偿率状态</th>
-                  <th className="px-3 py-3 text-right">返还完成率</th>
-                  <th className="px-3 py-3 text-right">备案完成率</th>
-                  <th className="px-3 py-3 text-right">政策打分</th>
                   <th className="px-3 py-3">综合评价</th>
                   <th className="px-3 py-3">操作</th>
                 </tr>
               </thead>
               <tbody>
-                {institutions.map((item, index) => (
+                {paginatedInstitutions.map((item, index) => (
                   <tr key={item.id} className={index % 2 === 0 ? 'bg-white' : 'bg-surface-container-low/40'}>
                     <td className="px-4 py-3">
                       <div>
                         <p className="font-bold text-primary">{item.name}</p>
                       </div>
                     </td>
-                    <td className="px-3 py-3 text-on-surface-variant">{item.shortName}</td>
                     <td className="px-3 py-3">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                         item.regionLevel === '省级' ? 'bg-primary/10 text-primary' :
@@ -164,7 +170,6 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
                         {item.regionLevel}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-on-surface-variant">{item.rating}</td>
                     <td className="px-3 py-3 text-right">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                         item.scaleCompletionRate >= 1.0 ? 'bg-emerald-100 text-emerald-700' :
@@ -186,9 +191,6 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
                         {item.compensationRateStatus}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.recoveryRateCompletionRate)}</td>
-                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.filingRate || 0)}</td>
-                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatNumber(item.policyScore, 1)}</td>
                     <td className="px-3 py-3">
                       <span className={`rounded-full bg-surface-container px-2 py-0.5 text-[10px] font-bold ${
                         item.overallStatus === '优秀' ? 'bg-emerald-100 text-emerald-700' :
@@ -211,7 +213,65 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
                 ))}
               </tbody>
             </table>
-              </div>
+          </div>
+          
+          {/* 分页导航 */}
+          <div className="mt-4 flex items-center justify-between gap-4">
+            <div className="text-xs text-on-surface-variant">
+              第 {currentPage} 页，共 {totalPages} 页 · 显示 {startIndex + 1}-{endIndex} 条，共 {institutions.length} 条
+            </div>
+            <div className="flex gap-2">
+              {currentPage > 1 && (
+                <Link
+                  href={{
+                    pathname: '/evaluation-report',
+                    query: {
+                      ...(selectedGroup && { group: selectedGroup }),
+                      page: currentPage - 1,
+                    },
+                  }}
+                  className="rounded-lg border border-outline-variant/20 bg-white px-3 py-1.5 text-xs font-bold text-primary hover:bg-surface-container-low"
+                >
+                  上一页
+                </Link>
+              )}
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Link
+                  key={page}
+                  href={{
+                    pathname: '/evaluation-report',
+                    query: {
+                      ...(selectedGroup && { group: selectedGroup }),
+                      ...(page > 1 && { page }),
+                    },
+                  }}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
+                    currentPage === page
+                      ? 'bg-primary text-white'
+                      : 'border border-outline-variant/20 bg-white text-on-surface-variant hover:bg-surface-container-low'
+                  }`}
+                >
+                  {page}
+                </Link>
+              ))}
+              
+              {currentPage < totalPages && (
+                <Link
+                  href={{
+                    pathname: '/evaluation-report',
+                    query: {
+                      ...(selectedGroup && { group: selectedGroup }),
+                      page: currentPage + 1,
+                    },
+                  }}
+                  className="rounded-lg border border-outline-variant/20 bg-white px-3 py-1.5 text-xs font-bold text-primary hover:bg-surface-container-low"
+                >
+                  下一页
+                </Link>
+              )}
+            </div>
+          </div>
             </section>
           </main>
         </>
