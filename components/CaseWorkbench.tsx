@@ -3,6 +3,7 @@ import RebuildCacheButton from '@/components/RebuildCacheButton';
 import ClearStepArtifactsButton from '@/components/ClearStepArtifactsButton';
 import StepTransitionButton from '@/components/StepTransitionButton';
 import IntegrityChecklistTable from '@/components/IntegrityChecklistTable';
+import CompensationApprovalPreviewClient from '@/components/CompensationApprovalPreviewClient';
 import {
   AlertTriangle,
   ArrowRight,
@@ -27,6 +28,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import type { AnalysisDocument, CaseAnalysis, MaterialItem, RuleResult } from '@/lib/server/case-analysis';
+import type { GeneratedCompensationReport } from '@/lib/compensation-report-format';
 import type { StepArtifact } from '@/lib/server/step-artifacts';
 import { getStep, WORKBENCH_STEPS } from '@/lib/workbench';
 
@@ -38,6 +40,7 @@ type Props = {
   selectedRuleName?: string;
   selectedDraftKey?: 'worksheet' | 'approval' | 'oa';
   stepArtifact?: StepArtifact;
+  initialGeneratedReport?: GeneratedCompensationReport | null;
 };
 
 function stepStatusLabel(stepKey: string, analysis: CaseAnalysis) {
@@ -735,8 +738,47 @@ function VerifyContent({ analysis, stepArtifact }: { analysis: CaseAnalysis; ste
 
   return (
     <div className="space-y-6">
-      <section className="xl:max-w-[420px]">
-        <StepArtifactPanel title="本步分析结论" artifact={stepArtifact} tone="primary" />
+      <section className="grid gap-4 xl:grid-cols-[minmax(320px,0.7fr)_minmax(760px,1.6fr)]">
+        <div>
+          <StepArtifactPanel title="本步分析结论" artifact={stepArtifact} tone="primary" />
+        </div>
+
+        <section className="rounded-2xl border border-tertiary-fixed-dim/20 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center gap-2">
+            <Calculator className="h-5 w-5 text-tertiary-container" />
+            <h3 className="text-lg font-black text-primary">自动时效与金额计算</h3>
+          </div>
+          <div className="space-y-3">
+            <div className="grid gap-3 xl:grid-cols-3">
+              <div className="rounded-xl bg-surface-container-low p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">申报时效</p>
+                <p className="mt-2 text-3xl font-black text-primary">{reportDays ?? '--'} 天</p>
+                <p className="mt-1 text-[11px] text-on-surface-variant">
+                  {analysis.keyFacts.compensationDate} 至 {analysis.keyFacts.reportDate}
+                </p>
+              </div>
+              <div className="rounded-xl bg-surface-container-low p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">补偿责任比例</p>
+                <p className="mt-2 text-3xl font-black text-primary">{analysis.keyFacts.reGuaranteeRatio}</p>
+                <p className="mt-1 text-[11px] text-on-surface-variant">按省级再担责任比例计算</p>
+              </div>
+              <div className="rounded-xl bg-tertiary-fixed-dim/10 p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-secondary">补偿金额计算</p>
+                <p className="mt-2 text-3xl font-black text-secondary">{analysis.keyFacts.compensationAmount} 元</p>
+                <p className="mt-2 text-xs text-on-surface-variant">
+                  {analysis.keyFacts.uncompensatedPrincipal} × {analysis.keyFacts.reGuaranteeRatio} ={' '}
+                  {analysis.keyFacts.compensationAmount}
+                </p>
+              </div>
+            </div>
+            <div className="rounded-xl bg-slate-50 p-3">
+              <p className="text-[11px] leading-relaxed text-on-surface-variant">
+                当前按解保台账 `tmp解保台账数据_1772421102442.xlsx` 的“操作日期”作为时效截止点计算，因此这里显示到{' '}
+                {analysis.keyFacts.reportDate}。
+              </p>
+            </div>
+          </div>
+        </section>
       </section>
 
       <section className="rounded-2xl bg-white p-6 shadow-sm">
@@ -744,21 +786,21 @@ function VerifyContent({ analysis, stepArtifact }: { analysis: CaseAnalysis; ste
           <GanttChartSquare className="h-5 w-5 text-primary" />
           <h3 className="text-lg font-black text-primary">规则命中结果</h3>
         </div>
-        <div className="space-y-4">
+        <div className="grid gap-4 xl:grid-cols-2">
           {analysis.rules.map((item) => {
             const evidence = buildRuleEvidence(item, analysis);
             return (
-              <div key={item.name} className="rounded-2xl border border-slate-100 bg-surface-container-low p-4">
+              <div key={item.name} className="rounded-2xl border border-slate-100 bg-surface-container-low p-3.5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="text-base font-black text-primary">{item.name}</p>
-                    <p className="mt-2 text-sm font-semibold text-secondary">{item.value}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">{item.explanation}</p>
+                    <p className="text-[15px] font-black leading-snug text-primary">{item.name}</p>
+                    <p className="mt-1.5 text-sm font-semibold text-secondary">{item.value}</p>
+                    <p className="mt-1 text-[13px] leading-relaxed text-on-surface-variant">{item.explanation}</p>
                   </div>
                   <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${formatRuleStatus(item.conclusion)}`}>{item.conclusion}</span>
                 </div>
 
-                <details className="mt-4 rounded-xl bg-white px-4 py-3">
+                <details className="mt-3 rounded-xl bg-white px-3.5 py-3">
                   <summary className="cursor-pointer list-none text-xs font-black uppercase tracking-[0.14em] text-on-surface-variant">
                     查看支撑依据
                   </summary>
@@ -784,192 +826,18 @@ function VerifyContent({ analysis, stepArtifact }: { analysis: CaseAnalysis; ste
           })}
         </div>
       </section>
-
-      <section className="rounded-2xl border border-tertiary-fixed-dim/20 bg-white p-6 shadow-sm">
-        <div className="mb-4 flex items-center gap-2">
-          <Calculator className="h-5 w-5 text-tertiary-container" />
-          <h3 className="text-lg font-black text-primary">自动时效与金额计算</h3>
-        </div>
-        <div className="grid gap-4 xl:grid-cols-3">
-          <div className="rounded-xl bg-surface-container-low p-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">申报时效</p>
-            <p className="mt-2 text-3xl font-black text-primary">{reportDays ?? '--'} 天</p>
-            <p className="mt-1 text-[11px] text-on-surface-variant">{analysis.keyFacts.compensationDate} 至 {analysis.keyFacts.reportDate}</p>
-            <p className="mt-2 text-[11px] leading-relaxed text-on-surface-variant">当前按解保台账 `tmp解保台账数据_1772421102442.xlsx` 的“操作日期”作为时效截止点计算，因此这里显示到 {analysis.keyFacts.reportDate}。</p>
-          </div>
-          <div className="rounded-xl bg-surface-container-low p-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">补偿责任比例</p>
-            <p className="mt-2 text-3xl font-black text-primary">{analysis.keyFacts.reGuaranteeRatio}</p>
-            <p className="mt-1 text-[11px] text-on-surface-variant">按省级再担责任比例计算</p>
-          </div>
-          <div className="rounded-xl bg-tertiary-fixed-dim/10 p-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-secondary">补偿金额计算</p>
-            <p className="mt-2 text-3xl font-black text-secondary">{analysis.keyFacts.compensationAmount} 元</p>
-            <p className="mt-2 text-xs text-on-surface-variant">
-              {analysis.keyFacts.uncompensatedPrincipal} × {analysis.keyFacts.reGuaranteeRatio} = {analysis.keyFacts.compensationAmount}
-            </p>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
 
 function DocumentContent({
   analysis,
-  selectedDraftKey = 'approval',
-  stepArtifact,
+  initialGeneratedReport,
 }: {
   analysis: CaseAnalysis;
-  selectedDraftKey?: 'worksheet' | 'approval' | 'oa';
-  stepArtifact?: StepArtifact;
+  initialGeneratedReport?: GeneratedCompensationReport | null;
 }) {
-  const draftCards = [
-    ['worksheet', analysis.drafts.worksheet, '主报告', '合规性自查工作底稿'],
-    ['approval', analysis.drafts.approval, '主报告', '再担保代偿补偿审批表'],
-  ] as const;
-  const activeDraft = selectedDraftKey === 'worksheet' ? analysis.drafts.worksheet : analysis.drafts.approval;
-  const oaDraft = analysis.drafts.oa;
-  return (
-    <div className="grid gap-6 xl:grid-cols-12">
-      <section className="space-y-6 xl:col-span-8">
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-secondary">Report Center</p>
-            <h3 className="mt-1 text-2xl font-black text-primary">核心审查报告</h3>
-          </div>
-          <span className="rounded-full bg-surface-container-low px-3 py-1 text-[11px] font-bold text-on-surface-variant">已生成 2 份主报告 / 1 份 OA 草稿</span>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          {draftCards.map(([key, draft, tag, shortName]) => (
-            <Link
-              href={`/cases/workbench?step=document&draft=${key}`}
-              key={key}
-              className={`relative block overflow-hidden rounded-2xl border bg-white p-5 shadow-sm transition-all ${selectedDraftKey === key ? 'border-secondary/30 ring-2 ring-secondary/10' : 'border-slate-100 hover:border-slate-200'}`}
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <span className={`rounded-full px-2 py-1 text-[10px] font-black ${selectedDraftKey === key ? 'bg-primary text-white' : 'bg-tertiary-fixed-dim/15 text-on-tertiary-container'}`}>{tag}</span>
-                <FileText className="h-4 w-4 text-slate-300" />
-              </div>
-              <h3 className="text-base font-black leading-relaxed text-primary">{draft.title || shortName}</h3>
-              <p className="mt-3 text-xs leading-relaxed text-on-surface-variant">
-                {draft.manualReviewPoints.length > 0 ? `${draft.manualReviewPoints.length} 处人工复核提示` : '无额外人工复核提示'}
-              </p>
-              <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
-                <span className={`text-xs font-bold ${selectedDraftKey === key ? 'text-secondary' : 'text-on-surface-variant'}`}>{shortName}</span>
-                <span className="text-xs font-bold text-secondary">查看预览</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        <div className="rounded-2xl border border-slate-100 bg-white p-8 shadow-sm">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-black text-primary">报告预览</h3>
-              <p className="text-xs text-on-surface-variant">当前预览的是系统根据前序审查结果生成的正式报告草稿。</p>
-            </div>
-            <div className="flex gap-2">
-              <button className="rounded-lg bg-surface-container-high px-4 py-2 text-sm font-bold text-primary transition-colors hover:bg-surface-container-highest">
-                修改
-              </button>
-              <Link href={`/cases/workbench?step=document&draft=${selectedDraftKey}&refresh=1`} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50">
-                重生成
-              </Link>
-              <a href={`/api/export-draft?kind=${selectedDraftKey}`} className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-primary/90">
-                导出
-              </a>
-            </div>
-          </div>
-
-          <div className="space-y-5 rounded-2xl bg-surface-container-low p-6">
-            <div className="text-center">
-              <p className="text-xl font-black leading-relaxed tracking-[0.08em] text-primary">{activeDraft.title}</p>
-              <p className="mt-2 text-xs text-on-surface-variant">案件编号：{analysis.summary.id} / 借款企业：{analysis.summary.company}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="rounded-xl bg-white p-4">
-                <p className="text-xs text-on-surface-variant">借款企业</p>
-                <p className="mt-1 font-bold text-primary">{analysis.summary.company}</p>
-              </div>
-              <div className="rounded-xl bg-white p-4">
-                <p className="text-xs text-on-surface-variant">担保机构</p>
-                <p className="mt-1 font-bold text-primary">{analysis.summary.guarantor}</p>
-              </div>
-              <div className="rounded-xl bg-white p-4">
-                <p className="text-xs text-on-surface-variant">未清偿本金</p>
-                <p className="mt-1 font-bold text-primary">{analysis.keyFacts.uncompensatedPrincipal} 元</p>
-              </div>
-              <div className="rounded-xl bg-white p-4">
-                <p className="text-xs text-on-surface-variant">申请补偿金额</p>
-                <p className="mt-1 font-bold text-secondary">{analysis.summary.compensationAmount}</p>
-              </div>
-            </div>
-            <div className="rounded-xl bg-white p-6 shadow-inner">
-              <pre className="whitespace-pre-wrap font-body text-[14px] leading-8 text-on-surface">{activeDraft.body}</pre>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="space-y-6 xl:col-span-4">
-        <StepArtifactPanel title="本步生成结论" artifact={stepArtifact} tone="primary" />
-
-        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-secondary" />
-            <span className="text-sm font-black text-primary">报告生成说明</span>
-          </div>
-          <div className="space-y-3 text-sm leading-relaxed text-on-surface-variant">
-            <p>当前主生成对象是《宝鸡三家村餐饮管理有限公司项目代偿补偿合规性自查工作底稿》和《宝鸡三家村餐饮管理有限公司项目再担保代偿补偿审批表》。</p>
-            <p>两份主报告都基于材料清单、一致性核验、规则命中和风险项生成；OA 草稿作为后续提交辅助材料单独保留。</p>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
-          <div className="mb-3 flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-700" />
-            <span className="text-sm font-black text-amber-700">人工复核点</span>
-          </div>
-          <ul className="space-y-2 text-sm leading-relaxed text-amber-800">
-            {activeDraft.manualReviewPoints.length > 0 ? (
-              activeDraft.manualReviewPoints.map((item) => <li key={item}>{item}</li>)
-            ) : (
-              <li>当前这份报告未返回额外人工复核点，可直接进入下一步复核与提交。</li>
-            )}
-          </ul>
-        </div>
-
-        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center gap-2">
-            <ClipboardCheck className="h-4 w-4 text-secondary" />
-            <span className="text-sm font-black text-primary">OA 草稿摘要</span>
-          </div>
-          <p className="text-sm font-semibold text-primary">{oaDraft.title}</p>
-          <p className="mt-3 line-clamp-6 whitespace-pre-wrap text-sm leading-relaxed text-on-surface-variant">{oaDraft.body}</p>
-        </div>
-
-        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center gap-2">
-            <ListChecks className="h-4 w-4 text-secondary" />
-            <span className="text-sm font-black text-primary">快捷操作</span>
-          </div>
-          <div className="grid gap-3">
-            <a href={`/api/export-draft?kind=${selectedDraftKey}`} className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50">
-              导出当前报告
-            </a>
-            <Link href={`/cases/workbench?step=document&draft=${selectedDraftKey}&refresh=1`} className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50">
-              重新生成当前报告
-            </Link>
-            <a href="/api/oa-payload" className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-primary/90">
-              预览 OA 提交数据
-            </a>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
+  return <CompensationApprovalPreviewClient analysis={analysis} initialReport={initialGeneratedReport ?? null} />;
 }
 
 function ReviewContent({ analysis, stepArtifact }: { analysis: CaseAnalysis; stepArtifact?: StepArtifact }) {
@@ -1109,6 +977,7 @@ function ContentByStep({
   selectedRuleName,
   selectedDraftKey,
   stepArtifact,
+  initialGeneratedReport,
 }: {
   currentStepKey: string;
   analysis: CaseAnalysis;
@@ -1117,10 +986,11 @@ function ContentByStep({
   selectedRuleName?: string;
   selectedDraftKey?: 'worksheet' | 'approval' | 'oa';
   stepArtifact?: StepArtifact;
+  initialGeneratedReport?: GeneratedCompensationReport | null;
 }) {
   if (currentStepKey === 'integrity') return <IntegrityContent analysis={analysis} stepArtifact={stepArtifact} />;
   if (currentStepKey === 'verify') return <VerifyContent analysis={analysis} stepArtifact={stepArtifact} />;
-  if (currentStepKey === 'document') return <DocumentContent analysis={analysis} selectedDraftKey={selectedDraftKey} stepArtifact={stepArtifact} />;
+  if (currentStepKey === 'document') return <DocumentContent analysis={analysis} initialGeneratedReport={initialGeneratedReport} />;
   if (currentStepKey === 'review') return <ReviewContent analysis={analysis} stepArtifact={stepArtifact} />;
   return <OverviewContent analysis={analysis} />;
 }
@@ -1141,16 +1011,18 @@ export default function CaseWorkbench({
   selectedRuleName,
   selectedDraftKey,
   stepArtifact,
+  initialGeneratedReport,
 }: Props) {
   const currentStep = getStep(currentStepKey);
   const content = titleMap[currentStep.key];
   const currentIndex = WORKBENCH_STEPS.findIndex((step) => step.key === currentStep.key);
   const previousStep = currentIndex > 0 ? WORKBENCH_STEPS[currentIndex - 1] : null;
   const overviewFooter = currentStep.key === 'overview';
+  const contentWidthClass = currentStep.key === 'document' ? 'max-w-[1880px]' : 'max-w-[1560px]';
 
   return (
     <main data-page-shell="true" className="ml-48 min-h-screen bg-background p-6 pb-24 pt-20 font-body transition-[padding-right] duration-200">
-      <div className="mx-auto max-w-[1560px] space-y-6">
+      <div className={`mx-auto ${contentWidthClass} space-y-6`}>
         <section className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
             <div>
@@ -1190,6 +1062,7 @@ export default function CaseWorkbench({
             selectedRuleName={selectedRuleName}
             selectedDraftKey={selectedDraftKey}
             stepArtifact={stepArtifact}
+            initialGeneratedReport={initialGeneratedReport}
           />
         </section>
       </div>
@@ -1215,7 +1088,13 @@ export default function CaseWorkbench({
             </a>
           ) : null}
           {content.next ? (
-            <StepTransitionButton href={`/cases/workbench?step=${content.next}`} label={content.nextLabel ?? '下一步'} stepKey={content.next} />
+            currentStep.key === 'verify' && content.next === 'document' ? (
+              <a href={`/cases/workbench?step=${content.next}`} className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-bold text-white shadow-lg shadow-primary/15 transition-colors hover:bg-primary/90">
+                {content.nextLabel ?? '下一步'}
+              </a>
+            ) : (
+              <StepTransitionButton href={`/cases/workbench?step=${content.next}`} label={content.nextLabel ?? '下一步'} stepKey={content.next} />
+            )
           ) : (
             <button className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-bold text-white shadow-lg shadow-primary/15 transition-colors hover:bg-primary/90">
               采纳并提交 OA

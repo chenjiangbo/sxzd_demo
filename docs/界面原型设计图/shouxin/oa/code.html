@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-bright": "#f8f9ff",
+              "on-surface": "#0b1c30",
+              "on-error": "#ffffff",
+              "tertiary-fixed": "#89f5e7",
+              "tertiary-container": "#00322d",
+              "background": "#f8f9ff",
+              "on-primary-fixed-variant": "#264778",
+              "outline": "#747780",
+              "secondary-container": "#708cfd",
+              "surface-container-low": "#eff4ff",
+              "surface-container-highest": "#d3e4fe",
+              "error": "#ba1a1a",
+              "tertiary-fixed-dim": "#6bd8cb",
+              "on-tertiary-fixed": "#00201d",
+              "primary-fixed": "#d6e3ff",
+              "surface-tint": "#405f91",
+              "on-secondary-fixed-variant": "#173bab",
+              "on-secondary-container": "#00217a",
+              "primary-container": "#002b5b",
+              "surface-dim": "#cbdbf5",
+              "surface-container": "#e5eeff",
+              "secondary-fixed": "#dde1ff",
+              "on-tertiary-fixed-variant": "#005049",
+              "primary": "#001736",
+              "inverse-surface": "#213145",
+              "on-secondary": "#ffffff",
+              "on-error-container": "#93000a",
+              "primary-fixed-dim": "#a9c7ff",
+              "inverse-on-surface": "#eaf1ff",
+              "on-secondary-fixed": "#001453",
+              "on-primary-container": "#7594ca",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-container": "#2ca397",
+              "inverse-primary": "#a9c7ff",
+              "outline-variant": "#c4c6d0",
+              "on-surface-variant": "#43474f",
+              "secondary-fixed-dim": "#b8c4ff",
+              "secondary": "#3755c3",
+              "on-tertiary": "#ffffff",
+              "on-primary-fixed": "#001b3d",
+              "tertiary": "#001b18",
+              "on-primary": "#ffffff",
+              "surface-variant": "#d3e4fe",
+              "on-background": "#0b1c30",
+              "error-container": "#ffdad6",
+              "surface-container-high": "#dce9ff",
+              "surface": "#f8f9ff"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #f8f9ff;
+            color: #0b1c30;
+            font-family: 'Inter', sans-serif;
+        }
+        .report-shadow {
+            box-shadow: 0 20px 40px rgba(11, 28, 48, 0.06);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(211, 228, 254, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body antialiased">
+<!-- SideNavBar (from JSON) -->
+<aside class="h-full w-64 fixed left-0 top-0 border-r-0 bg-slate-100 dark:bg-slate-900 flex flex-col py-6 px-4 z-50">
+<div class="mb-10 px-2">
+<h1 class="text-lg font-bold text-blue-950 dark:text-white tracking-tight font-headline">Institutional Architect</h1>
+<p class="text-xs text-slate-500 font-medium">Surety &amp; Guarantee Portal</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Active Tab: 授信报告 -->
+<a class="flex items-center gap-3 px-4 py-3 text-blue-900 dark:text-blue-200 font-bold bg-white dark:bg-slate-800 rounded-l-lg ml-2 shadow-sm translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="text-sm tracking-tight">授信报告</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all" href="#">
+<span class="material-symbols-outlined">business_center</span>
+<span class="text-sm tracking-tight">业务管理</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all" href="#">
+<span class="material-symbols-outlined">warning</span>
+<span class="text-sm tracking-tight">风险预警</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all" href="#">
+<span class="material-symbols-outlined">psychology</span>
+<span class="text-sm tracking-tight">智能分析</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm tracking-tight">系统设置</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-200/30">
+<button class="w-full bg-primary text-on-primary py-2.5 rounded-md text-sm font-semibold mb-6 shadow-md flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                New Application
+            </button>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-500 text-sm hover:text-blue-800 transition-colors" href="#">
+<span class="material-symbols-outlined">help</span>
+<span>Help Center</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar (from JSON) -->
+<header class="fixed top-0 right-0 left-64 h-16 z-40 bg-white dark:bg-slate-950 border-b border-slate-200/20 dark:border-slate-800/20 flex items-center justify-between px-8 w-full shadow-sm dark:shadow-none">
+<div class="flex items-center gap-6">
+<span class="text-xl font-black text-blue-950 dark:text-white font-headline">Guarantee Platform</span>
+<div class="relative group">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border-none rounded-full text-xs w-64 focus:ring-2 ring-blue-500/20 outline-none transition-all" placeholder="Global Search" type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-5">
+<button class="text-slate-500 hover:text-blue-600 transition-colors flex items-center">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-500 hover:text-blue-600 transition-colors flex items-center">
+<span class="material-symbols-outlined">apps</span>
+</button>
+<div class="flex items-center gap-3 ml-2 pl-5 border-l border-slate-200/50">
+<div class="text-right">
+<p class="text-xs font-bold text-on-surface">Chen Wei</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest">Senior Analyst</p>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="professional male portrait avatar with glasses and navy suit for a financial professional" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzALF-DwbLC3jB4ND2SRYUsZgp2RhXVPUGb1uzQfYbRzqm4fcj-nrM0j36qIOHmtx-nH_yKdArSACL5D0t-NITpT6A8A9V5xue7YQo6_2WFkgzRY3-d9gMrC53p9pWYbQi3lb6qYqjQbanqZZHGnv2WSyZ5uMRUU8tifcb-exwmcLSzPKSKOUIGj3lMY1FSD11NwmWFXXPTiFP5dBBh99MxT4Hi_5MusOssgax-Gwv--LwwC43ahX2gGx1-2goUti8K6fYLINq6PQ"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-24 pb-32 px-10 min-h-screen">
+<!-- Page Header -->
+<header class="mb-10 flex justify-between items-end">
+<div>
+<nav class="flex items-center gap-2 text-xs text-on-surface-variant mb-3 font-medium">
+<span>业务管理</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span>再担保业务授信</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-secondary font-bold">成文预览</span>
+</nav>
+<h2 class="text-3xl font-extrabold text-primary font-headline tracking-tight">授信报告成文预览</h2>
+</div>
+<div class="flex items-center gap-2 bg-tertiary-fixed/10 px-4 py-2 rounded-lg border border-tertiary-fixed/20">
+<span class="material-symbols-outlined text-on-tertiary-container text-sm" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="text-xs font-bold text-on-tertiary-container">AI 已根据最新风控口径优化建议</span>
+</div>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-8 items-start">
+<!-- Left: Report Preview (Col 8) -->
+<section class="col-span-8">
+<div class="bg-surface-container-lowest rounded-xl report-shadow overflow-hidden border border-outline-variant/10">
+<!-- Report Header Toolbar -->
+<div class="bg-surface-container-low px-8 py-4 flex justify-between items-center border-b border-outline-variant/5">
+<div class="flex items-center gap-4">
+<span class="text-xs font-bold text-on-surface-variant">PAGE 1 OF 12</span>
+<div class="h-4 w-[1px] bg-outline-variant/30"></div>
+<span class="text-xs text-on-surface-variant">Zoom: 100%</span>
+</div>
+<div class="flex gap-2">
+<button class="p-1.5 hover:bg-white rounded transition-colors">
+<span class="material-symbols-outlined text-lg">zoom_out</span>
+</button>
+<button class="p-1.5 hover:bg-white rounded transition-colors">
+<span class="material-symbols-outlined text-lg">zoom_in</span>
+</button>
+</div>
+</div>
+<!-- Page Canvas -->
+<div class="p-16 min-h-[1000px] bg-white">
+<div class="max-w-2xl mx-auto">
+<!-- Title -->
+<h3 class="text-center text-2xl font-bold text-primary mb-12 leading-relaxed">关于 2025 年度合作担保机构<br/>再担保业务授信的报告</h3>
+<!-- Metadata -->
+<div class="grid grid-cols-2 gap-y-4 mb-10 text-sm">
+<div class="flex gap-2"><span class="text-on-surface-variant">申报单位：</span><span class="font-semibold">风险管理部</span></div>
+<div class="flex gap-2"><span class="text-on-surface-variant">保密级别：</span><span class="font-semibold">内部公开</span></div>
+<div class="flex gap-2"><span class="text-on-surface-variant">报告编号：</span><span class="font-semibold">SURETY-2025-089</span></div>
+<div class="flex gap-2"><span class="text-on-surface-variant">日期：</span><span class="font-semibold">2024年11月24日</span></div>
+</div>
+<!-- Content Sections -->
+<div class="space-y-8 text-on-surface text-[15px] leading-8 font-body">
+<div>
+<h4 class="font-bold text-lg mb-3 flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                                        一、 综合授信情况概述
+                                    </h4>
+<p class="indent-8">
+                                        基于 2024 年度全省政府性融资担保体系运行数据及 2025 年宏观经济预测，本年度拟对 48 家合作机构进行再担保业务授信。总规模预计达到人民币 <span class="font-bold border-b border-primary">1,240.50</span> 亿元，较上年度实际执行总额增长 <span class="font-bold text-secondary">8.4%</span>。
+                                    </p>
+</div>
+<div>
+<h4 class="font-bold text-lg mb-3 flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                                        二、 产品分项额度建议
+                                    </h4>
+<div class="overflow-hidden rounded-lg border border-outline-variant/20 mb-4">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-4 py-3 text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">产品种类</th>
+<th class="px-4 py-3 text-[11px] font-bold text-on-surface-variant uppercase tracking-wider text-right">拟授信额度(亿元)</th>
+<th class="px-4 py-3 text-[11px] font-bold text-on-surface-variant uppercase tracking-wider text-right">占比</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="px-4 py-3 font-medium">传统融资担保</td>
+<td class="px-4 py-3 text-right font-semibold">850.00</td>
+<td class="px-4 py-3 text-right text-on-surface-variant">68.5%</td>
+</tr>
+<tr class="bg-surface-container-lowest/50">
+<td class="px-4 py-3 font-medium">科技型融资担保</td>
+<td class="px-4 py-3 text-right font-semibold">220.50</td>
+<td class="px-4 py-3 text-right text-on-surface-variant">17.8%</td>
+</tr>
+<tr>
+<td class="px-4 py-3 font-medium">“三农”专项担保</td>
+<td class="px-4 py-3 text-right font-semibold">170.00</td>
+<td class="px-4 py-3 text-right text-on-surface-variant">13.7%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div>
+<h4 class="font-bold text-lg mb-3 flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                                        三、 风险管控及执行要点
+                                    </h4>
+<p class="indent-8">
+                                        严格落实“压降、控额、提质”的总体原则。针对风险等级评定为 C 级及以下的机构，其新增业务规模必须严格控制在上一年度结余的 90% 以内。
+                                    </p>
+</div>
+</div>
+<!-- Footer Signature -->
+<div class="mt-20 flex justify-end">
+<div class="text-right space-y-1">
+<p class="font-bold">湖北再担保集团有限公司</p>
+<p class="text-on-surface-variant">风险管理部（代章）</p>
+<p class="text-on-surface-variant">2024 年 11 月 24 日</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right: Summary & AI Insights (Col 4) -->
+<aside class="col-span-4 space-y-6">
+<!-- Summary Card -->
+<div class="bg-surface-container-lowest rounded-xl p-6 report-shadow border border-outline-variant/5">
+<h5 class="text-xs font-black text-primary uppercase tracking-widest mb-6 flex items-center justify-between">
+                        本次采用口径摘要
+                        <span class="material-symbols-outlined text-secondary-container">summarize</span>
+</h5>
+<div class="space-y-5">
+<div class="p-4 rounded-lg bg-surface-container-low border-l-4 border-secondary">
+<p class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">风险压降原则</p>
+<p class="text-sm font-semibold text-primary">C级以下机构授信额度强制压降 10%</p>
+</div>
+<div class="p-4 rounded-lg bg-surface-container-low border-l-4 border-primary">
+<p class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">年度总量限制</p>
+<p class="text-sm font-semibold text-primary">全系统总额度不超过 1,300 亿元</p>
+</div>
+<div class="p-4 rounded-lg bg-surface-container-low border-l-4 border-tertiary-fixed-dim">
+<p class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">科技金融倾斜</p>
+<p class="text-sm font-semibold text-primary">单户 1000 万以下业务免除专项报备</p>
+</div>
+</div>
+</div>
+<!-- AI Analysis Card (Glassmorphism) -->
+<div class="glass-panel rounded-xl p-6 border border-tertiary-fixed/30 relative overflow-hidden">
+<div class="absolute -right-8 -top-8 w-24 h-24 bg-tertiary-fixed/10 rounded-full blur-2xl"></div>
+<div class="relative z-10">
+<div class="flex items-center gap-2 mb-4">
+<div class="w-8 h-8 rounded-lg bg-tertiary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-lg">psychology</span>
+</div>
+<div>
+<h6 class="text-sm font-bold text-primary">智能合规性检查</h6>
+<p class="text-[10px] text-on-tertiary-container">基于最新监管指引（2024）</p>
+</div>
+</div>
+<ul class="space-y-3">
+<li class="flex gap-3 text-xs leading-5">
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-sm mt-0.5">check_circle</span>
+<span class="text-on-surface-variant">报告内容符合《再担保机构授信管理办法》第四章要求。</span>
+</li>
+<li class="flex gap-3 text-xs leading-5">
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-sm mt-0.5">check_circle</span>
+<span class="text-on-surface-variant">数据引用已与 2024Q3 财务系统同步，误差率 &lt; 0.01%。</span>
+</li>
+<li class="flex gap-3 text-xs leading-5">
+<span class="material-symbols-outlined text-on-tertiary-container text-sm mt-0.5">info</span>
+<span class="text-on-surface-variant font-medium">建议：增加对“专精特新”小巨人企业的专项保障计划描述。</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Export Preview Section -->
+<div class="p-6 bg-surface-container rounded-xl border border-outline-variant/5">
+<h6 class="text-[10px] font-black text-primary uppercase tracking-widest mb-4">相关附件 (3)</h6>
+<div class="space-y-2">
+<div class="flex items-center justify-between p-2 bg-white rounded border border-outline-variant/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-red-500">picture_as_pdf</span>
+<span class="text-xs font-medium">机构信用评级表.pdf</span>
+</div>
+<span class="text-[10px] text-on-surface-variant">2.4MB</span>
+</div>
+<div class="flex items-center justify-between p-2 bg-white rounded border border-outline-variant/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-blue-500">table_chart</span>
+<span class="text-xs font-medium">授信测算底表.xlsx</span>
+</div>
+<span class="text-[10px] text-on-surface-variant">1.1MB</span>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Bottom Action Bar (Fixed) -->
+<footer class="fixed bottom-0 right-0 left-64 h-20 bg-white/90 backdrop-blur-md border-t border-outline-variant/10 flex items-center justify-between px-10 z-40">
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 px-6 py-2.5 rounded-md border border-outline-variant/30 text-sm font-semibold text-on-surface hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined text-lg">refresh</span>
+                重新生成
+            </button>
+<button class="flex items-center gap-2 px-6 py-2.5 rounded-md border border-outline-variant/30 text-sm font-semibold text-on-surface hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined text-lg">description</span>
+                导出 Word
+            </button>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3">
+<div class="flex -space-x-2">
+<img alt="Approver 1" class="w-8 h-8 rounded-full border-2 border-white ring-2 ring-transparent" data-alt="Female professional business portrait avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuzt2jf1lrKYAnJXCBb1Nz1d11vAxC6P9vFie-UX3-AlStOUzr7qG5i8CecfFUUqxkGy_vuVdeV0xJwPOfsz90pSCSuXZnEFj9OdCQH2Be9MKFxT0FVY9OY3ZW8oG0rcPk-Rz1kxk9z-YQ6P-ZHGDNNIPAMrFDy5mmt1iBZ4VC7ReKLyLEDyXbv8m4LVhThfAZpSfgo_UUifP9emqZUfmQVxQ1TBafQBKBmI4VDB6ER_acHzTh2WcIuxn_G52uuUTbLycXND_ljss"/>
+<img alt="Approver 2" class="w-8 h-8 rounded-full border-2 border-white ring-2 ring-transparent" data-alt="Male professional financial advisor portrait avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7ld1ots8HficPXpjN_8DnTIo60X8zC2SNCdcmFciRpCntov7HPJo76ZsctJfT3tqKRfL02SD0jKXXUpmv_argJZgu-4wIhMfWDCsY624Tr3of_Ji_BE6cpN9B00ujxM4AO4BHBIYrMvfi-5l2Upl8D64VC8RyMpaiAd67KUaRgwo4M0_42XdslTMvZS72QOJHOUWc5lzyxY9uKZTDBs5O4tDB5jygNIZtEdqiZw_yRtk1aZQ_Q9RUi0zsyyxr5kMpgQmh2Qz3c4U"/>
+</div>
+<div class="text-[10px] text-on-surface-variant leading-tight">
+<p class="font-bold">下一步审批人</p>
+<p>风险总监、总经理</p>
+</div>
+</div>
+<button class="flex items-center gap-2 px-10 py-3 rounded-md bg-primary text-white text-sm font-black shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+<span>提交 OA 审核</span>
+<span class="material-symbols-outlined text-lg">send</span>
+</button>
+</div>
+</footer>
+</body></html>
