@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>年度授信任务 - Institutional Architect</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-bright": "#f8f9ff",
+              "on-surface": "#0b1c30",
+              "on-error": "#ffffff",
+              "tertiary-fixed": "#89f5e7",
+              "tertiary-container": "#00322d",
+              "background": "#f8f9ff",
+              "on-primary-fixed-variant": "#264778",
+              "outline": "#747780",
+              "secondary-container": "#708cfd",
+              "surface-container-low": "#eff4ff",
+              "surface-container-highest": "#d3e4fe",
+              "error": "#ba1a1a",
+              "tertiary-fixed-dim": "#6bd8cb",
+              "on-tertiary-fixed": "#00201d",
+              "primary-fixed": "#d6e3ff",
+              "surface-tint": "#405f91",
+              "on-secondary-fixed-variant": "#173bab",
+              "on-secondary-container": "#00217a",
+              "primary-container": "#002b5b",
+              "surface-dim": "#cbdbf5",
+              "surface-container": "#e5eeff",
+              "secondary-fixed": "#dde1ff",
+              "on-tertiary-fixed-variant": "#005049",
+              "primary": "#001736",
+              "inverse-surface": "#213145",
+              "on-secondary": "#ffffff",
+              "on-error-container": "#93000a",
+              "primary-fixed-dim": "#a9c7ff",
+              "inverse-on-surface": "#eaf1ff",
+              "on-secondary-fixed": "#001453",
+              "on-primary-container": "#7594ca",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-container": "#2ca397",
+              "inverse-primary": "#a9c7ff",
+              "outline-variant": "#c4c6d0",
+              "on-surface-variant": "#43474f",
+              "secondary-fixed-dim": "#b8c4ff",
+              "secondary": "#3755c3",
+              "on-tertiary": "#ffffff",
+              "on-primary-fixed": "#001b3d",
+              "tertiary": "#001b18",
+              "on-primary": "#ffffff",
+              "surface-variant": "#d3e4fe",
+              "on-background": "#0b1c30",
+              "error-container": "#ffdad6",
+              "surface-container-high": "#dce9ff",
+              "surface": "#f8f9ff"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f8f9ff;
+      }
+      .glass-ai {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(0, 50, 45, 0.05);
+      }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- SideNavBar Integration -->
+<aside class="h-full w-64 fixed left-0 top-0 border-r-0 bg-slate-100 flex flex-col py-6 px-4 z-50">
+<div class="mb-10 px-2">
+<h1 class="text-lg font-bold text-blue-950 tracking-tight font-headline">Institutional Architect</h1>
+<p class="text-xs text-slate-500 font-medium">Surety &amp; Guarantee Portal</p>
+</div>
+<nav class="flex-1 space-y-2">
+<!-- Active: 授信报告 (Maps to main mission) -->
+<a class="flex items-center space-x-3 px-4 py-3 text-blue-900 font-bold bg-white rounded-l-lg ml-2 shadow-sm translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-headline tracking-tight">授信报告</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-500 hover:text-blue-800 transition-colors hover:bg-slate-200/50" href="#">
+<span class="material-symbols-outlined">business_center</span>
+<span class="font-headline tracking-tight">业务管理</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-500 hover:text-blue-800 transition-colors hover:bg-slate-200/50" href="#">
+<span class="material-symbols-outlined">warning</span>
+<span class="font-headline tracking-tight">风险预警</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-500 hover:text-blue-800 transition-colors hover:bg-slate-200/50" href="#">
+<span class="material-symbols-outlined">psychology</span>
+<span class="font-headline tracking-tight">智能分析</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-500 hover:text-blue-800 transition-colors hover:bg-slate-200/50" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-headline tracking-tight">系统设置</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-200/50">
+<button class="w-full py-3 mb-4 bg-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/10 hover:opacity-90 transition-all">
+                New Application
+            </button>
+<a class="flex items-center space-x-3 px-4 py-2 text-slate-500 hover:text-blue-800 transition-colors" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-headline tracking-tight">Help Center</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar Integration -->
+<header class="fixed top-0 right-0 left-64 h-16 z-40 bg-white border-b border-slate-200/20 shadow-sm flex items-center justify-between px-8">
+<div class="flex items-center flex-1">
+<div class="relative w-96 group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600">search</span>
+<input class="w-full bg-slate-50 border-none rounded-full pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none" placeholder="Global Search..." type="text"/>
+</div>
+</div>
+<div class="flex items-center space-x-6">
+<span class="text-xl font-black text-blue-950 font-headline">Guarantee Platform</span>
+<div class="h-6 w-px bg-slate-200"></div>
+<div class="flex items-center space-x-4">
+<button class="p-2 text-slate-500 hover:text-blue-600 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:text-blue-600 transition-colors">
+<span class="material-symbols-outlined">apps</span>
+</button>
+<div class="flex items-center space-x-2 pl-2">
+<div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="professional portrait of a senior financial architect in a corporate setting with soft ambient office lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAupUfBeZKJ6noXRlmFLviF0NLUVlhshNXIfQ7xWF2nvvqdepfOiP9j1ToEGgmA31U62LlXB1rtpPUNtkpNjKjdEsO6FPNWlfPA_AbDUtROh9z-GVihLgNi_a-N48X1pvGLmyePPqVz7SjzzuDRcyry_Xw8S5GpY9QoVt8T4SYjYvSLke7SCBhF0ldSJ3GlLUeJV16vamKWwbfwSCuDVY2w2OqFy3v1cJclvN5QvAFfHpDKcfQPIPT-GWcF2Mn8XTenZjtUq7h8E1Y"/>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-24 px-10 pb-12 bg-surface">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-10">
+<div>
+<nav class="flex items-center space-x-2 text-xs font-medium text-on-surface-variant mb-2 uppercase tracking-widest">
+<span>Admin</span>
+<span class="material-symbols-outlined text-[10px]">chevron_right</span>
+<span>Task Center</span>
+</nav>
+<h2 class="text-[3.5rem] font-black font-headline text-primary leading-none tracking-tight">年度授信任务</h2>
+<p class="mt-4 text-on-surface-variant max-w-xl">2025年度全国合作机构授信额度综合核定与配置任务，包含银担及非银担风险分担结构优化。</p>
+</div>
+<div class="flex space-x-4">
+<button class="flex items-center space-x-2 px-6 py-4 bg-primary text-on-primary rounded-xl font-bold shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined">analytics</span>
+<span>读取统计表并生成授信结论</span>
+</button>
+</div>
+</div>
+<!-- Bento Grid Statistics -->
+<section class="grid grid-cols-12 gap-6 mb-12">
+<!-- Main Hero Stat -->
+<div class="col-span-12 md:col-span-5 bg-surface-container-lowest rounded-xl p-8 flex flex-col justify-between group overflow-hidden relative">
+<div class="relative z-10">
+<span class="text-xs font-bold text-secondary uppercase tracking-widest mb-1 block">申请总额</span>
+<div class="flex items-baseline space-x-2">
+<span class="text-5xl font-extrabold text-primary font-headline">489.3</span>
+<span class="text-xl font-medium text-on-surface-variant">亿元</span>
+</div>
+</div>
+<div class="mt-8 relative z-10 flex items-center space-x-6">
+<div>
+<span class="text-[10px] text-on-surface-variant uppercase font-bold block mb-1">拟授信总额</span>
+<span class="text-xl font-bold text-primary">451.3 <small class="text-xs font-normal">亿元</small></span>
+</div>
+<div class="w-px h-8 bg-outline-variant/30"></div>
+<div>
+<span class="text-[10px] text-on-surface-variant uppercase font-bold block mb-1">合作机构</span>
+<span class="text-xl font-bold text-primary">41 <small class="text-xs font-normal">家</small></span>
+</div>
+</div>
+<!-- Abstract visual element -->
+<div class="absolute -right-10 -bottom-10 w-64 h-64 bg-surface-container-low rounded-full opacity-50 group-hover:scale-110 transition-transform duration-700"></div>
+</div>
+<!-- Risk Distribution Stats -->
+<div class="col-span-12 md:col-span-7 grid grid-cols-2 gap-6">
+<div class="bg-surface-container-low rounded-xl p-6 flex flex-col justify-center">
+<div class="flex items-center space-x-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container text-xl" data-weight="fill">account_balance</span>
+</div>
+<span class="text-sm font-bold text-primary tracking-tight">银担分险额度</span>
+</div>
+<div class="flex items-baseline space-x-1">
+<span class="text-3xl font-extrabold text-primary font-headline tracking-tighter">375.6</span>
+<span class="text-sm font-medium text-on-surface-variant">亿元</span>
+</div>
+<div class="w-full bg-outline-variant/20 h-1.5 rounded-full mt-4 overflow-hidden">
+<div class="bg-secondary h-full rounded-full" style="width: 76.8%"></div>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-6 flex flex-col justify-center">
+<div class="flex items-center space-x-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl" data-weight="fill">shield</span>
+</div>
+<span class="text-sm font-bold text-primary tracking-tight">非银担分险额度</span>
+</div>
+<div class="flex items-baseline space-x-1">
+<span class="text-3xl font-extrabold text-primary font-headline tracking-tighter">75.7</span>
+<span class="text-sm font-medium text-on-surface-variant">亿元</span>
+</div>
+<div class="w-full bg-outline-variant/20 h-1.5 rounded-full mt-4 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 15.5%"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Institution List Section -->
+<section class="bg-surface-container-lowest rounded-xl p-8 mb-12">
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-xl font-bold text-primary font-headline">合作机构年度额度配置</h3>
+<div class="flex space-x-2">
+<button class="px-4 py-2 bg-surface-container text-primary font-bold text-xs rounded-lg hover:bg-surface-container-high transition-colors">
+                        导出清单
+                    </button>
+<button class="px-4 py-2 bg-surface-container text-primary font-bold text-xs rounded-lg hover:bg-surface-container-high transition-colors">
+                        筛选口径
+                    </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="border-b border-outline-variant/20">
+<th class="pb-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest pl-4">机构名称</th>
+<th class="pb-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-right">申请额度 (亿)</th>
+<th class="pb-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-right">拟授信额度 (亿)</th>
+<th class="pb-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-center">口径类别</th>
+<th class="pb-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-right pr-4">分险状态</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="group hover:bg-surface-container-low/50 transition-colors">
+<td class="py-6 pl-4">
+<span class="font-bold text-primary block">工商银行省级分行</span>
+<span class="text-[10px] text-on-surface-variant uppercase">ID: ICBC-2025-001</span>
+</td>
+<td class="py-6 text-right font-medium text-primary">120.0</td>
+<td class="py-6 text-right font-extrabold text-secondary">110.0</td>
+<td class="py-6 text-center">
+<span class="px-3 py-1 bg-surface-container text-on-primary-container text-[10px] font-bold rounded-full">按申请额度配置</span>
+</td>
+<td class="py-6 text-right pr-4">
+<span class="px-2 py-1 bg-tertiary-fixed text-on-tertiary-fixed text-[10px] font-bold rounded-lg uppercase">低风险</span>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-low/50 transition-colors">
+<td class="py-6 pl-4">
+<span class="font-bold text-primary block">农业银行省级分行</span>
+<span class="text-[10px] text-on-surface-variant uppercase">ID: ABC-2025-002</span>
+</td>
+<td class="py-6 text-right font-medium text-primary">95.0</td>
+<td class="py-6 text-right font-extrabold text-secondary">88.5</td>
+<td class="py-6 text-center">
+<span class="px-3 py-1 bg-surface-container text-on-primary-container text-[10px] font-bold rounded-full">按净资产比例</span>
+</td>
+<td class="py-6 text-right pr-4">
+<span class="px-2 py-1 bg-tertiary-fixed text-on-tertiary-fixed text-[10px] font-bold rounded-lg uppercase">低风险</span>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-low/50 transition-colors">
+<td class="py-6 pl-4">
+<span class="font-bold text-primary block">建设银行省级分行</span>
+<span class="text-[10px] text-on-surface-variant uppercase">ID: CCB-2025-003</span>
+</td>
+<td class="py-6 text-right font-medium text-primary">105.0</td>
+<td class="py-6 text-right font-extrabold text-secondary">95.0</td>
+<td class="py-6 text-center">
+<span class="px-3 py-1 bg-surface-container text-on-primary-container text-[10px] font-bold rounded-full">按申请额度配置</span>
+</td>
+<td class="py-6 text-right pr-4">
+<span class="px-2 py-1 bg-error-container text-on-error-container text-[10px] font-bold rounded-lg uppercase">中高风险</span>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-low/50 transition-colors">
+<td class="py-6 pl-4">
+<span class="font-bold text-primary block">交通银行省级分行</span>
+<span class="text-[10px] text-on-surface-variant uppercase">ID: BOCOM-2025-004</span>
+</td>
+<td class="py-6 text-right font-medium text-primary">60.0</td>
+<td class="py-6 text-right font-extrabold text-secondary">55.0</td>
+<td class="py-6 text-center">
+<span class="px-3 py-1 bg-surface-container text-on-primary-container text-[10px] font-bold rounded-full">定制口径</span>
+</td>
+<td class="py-6 text-right pr-4">
+<span class="px-2 py-1 bg-tertiary-fixed text-on-tertiary-fixed text-[10px] font-bold rounded-lg uppercase">低风险</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+<!-- Side Drawer (Right) - Collapsed State -->
+<div class="fixed right-0 top-16 bottom-0 w-16 bg-white border-l border-outline-variant/10 flex flex-col items-center py-8 z-30 shadow-2xl">
+<div class="mb-8">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">chevron_left</span>
+</div>
+<div class="flex-1 flex flex-col space-y-8 items-center">
+<!-- Institutional Intelligence Icon -->
+<div class="group relative">
+<div class="w-10 h-10 rounded-xl glass-ai flex items-center justify-center cursor-pointer hover:shadow-lg transition-all border border-tertiary-fixed">
+<span class="material-symbols-outlined text-on-tertiary-container" style="font-variation-settings: 'FILL' 1;">psychology_alt</span>
+</div>
+<!-- Label for vertical orientation -->
+<div class="absolute right-14 top-1/2 -translate-y-1/2 whitespace-nowrap bg-on-surface text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none uppercase tracking-widest font-bold">
+                    制度口径助手
+                </div>
+<div class="mt-4 [writing-mode:vertical-lr] text-[10px] font-bold text-on-tertiary-container uppercase tracking-widest opacity-60">制度口径助手</div>
+</div>
+<div class="w-8 h-px bg-outline-variant/20"></div>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">history_edu</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">bookmarks</span>
+</button>
+</div>
+</div>
+<!-- AI Glass Floating Component (Contextual) -->
+<div class="fixed bottom-10 right-24 w-80 glass-ai rounded-2xl p-6 shadow-2xl border-l-4 border-tertiary-fixed animate-fade-in z-50">
+<div class="flex items-center space-x-3 mb-4">
+<div class="w-8 h-8 rounded-full bg-tertiary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary-fixed text-lg">auto_awesome</span>
+</div>
+<span class="text-xs font-bold text-on-tertiary-container uppercase tracking-widest">智能洞察</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+            根据 2025 年制度导向，当前配置中 <span class="text-on-surface font-bold">银担分险</span> 比例已达 76.8%，建议针对“建设银行”分行增加非银担分险项以对冲区域性流动风险。
+        </p>
+<button class="mt-4 w-full py-2 bg-tertiary-container text-tertiary-fixed text-[10px] font-bold rounded-lg uppercase tracking-widest hover:bg-tertiary-container/90 transition-all">
+            应用优化建议
+        </button>
+</div>
+</body></html>

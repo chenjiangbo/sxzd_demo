@@ -13,7 +13,7 @@ const execFileAsync = promisify(execFile);
 const WORKSPACE_ROOT = getWorkspaceRoot();
 const CASE_ROOT = path.join(WORKSPACE_ROOT, 'docs', '代偿补偿');
 const CACHE_ROOT = getDemoCacheRoot();
-const ANALYSIS_CACHE_VERSION = '2026-03-28-deep-analysis-v4';
+const ANALYSIS_CACHE_VERSION = '2026-03-31-deep-analysis-v5';
 const EXTRACTION_CACHE_VERSION = '2026-03-28-fulltext-v1';
 
 const materialMatchSchema = z.object({
@@ -168,6 +168,12 @@ const draftSchema = z.object({
 
 const reviewSummarySchema = z.object({
   summary: z.string(),
+});
+
+const relationRuleSchema = z.object({
+  conclusion: z.enum(['通过', '待确认', '不通过']),
+  value: z.string(),
+  explanation: z.string(),
 });
 
 export type CaseSummary = {
@@ -453,6 +459,21 @@ function buildTextDigest(text: string, maxLength = 1600) {
   return digest;
 }
 
+function buildTextSnippet(text: string | null | undefined, keywords: string[], fallbackLength = 220) {
+  const normalized = text?.replace(/\s+/g, ' ').trim();
+  if (!normalized) return '';
+
+  for (const keyword of keywords.filter(Boolean)) {
+    const index = normalized.indexOf(keyword);
+    if (index < 0) continue;
+    const start = Math.max(0, index - 60);
+    const end = Math.min(normalized.length, index + Math.max(keyword.length + 120, 180));
+    return normalized.slice(start, end);
+  }
+
+  return normalized.slice(0, fallbackLength);
+}
+
 async function extractDocumentContent(document: AnalysisDocument, options: { force?: boolean } = {}) {
   const hash = createHash('md5').update(`${EXTRACTION_CACHE_VERSION}:${document.absolutePath}`).digest('hex');
   const outDir = path.join(CACHE_ROOT, 'extracted-documents');
@@ -500,11 +521,110 @@ function buildCaseSummary(record: SpreadsheetRow, compensationAmount: number): C
   };
 }
 
-function buildRuleResults(keyFacts: CaseAnalysis['keyFacts'], record: SpreadsheetRow, materials: MaterialItem[]): RuleResult[] {
+async function buildExtensionRelationRule(params: {
+  summary: CaseSummary;
+  keyFacts: CaseAnalysis['keyFacts'];
+  firstRecord: SpreadsheetRow | undefined;
+  latestRecord: SpreadsheetRow;
+  documents: AnalysisDocument[];
+}) {
+  const { summary, keyFacts, firstRecord, latestRecord, documents } = params;
+  const relationDocuments = documents.filter((document) =>
+    ['5.1 展期协议-2024.pdf', 'tmp备案数据_1772420814804.xlsx'].includes(document.name),
+  );
+
+  return blackwhiteJson(
+    relationRuleSchema,
+    [
+      {
+        role: 'system',
+        content:
+          '你是担保行业代偿补偿审查专家，熟悉融资担保展期、首次备案、展期备案、借款合同续接和再担业务链识别。你的任务是判断当前业务是否应视为首次备案业务的延续展期，而不是新的独立业务。必须严格返回 JSON，不要输出额外文本。',
+      },
+      {
+        role: 'user',
+        content: JSON.stringify(
+          {
+            case_name: summary.company,
+            task: '判断“首次备案与展期记录是否可关联”这条规则的结论。',
+            structured_facts: {
+              product_name: keyFacts.productName,
+              initial_business_no: keyFacts.initialBusinessNo,
+              current_business_no: keyFacts.businessNo,
+              initial_contract_no: keyFacts.initialContractNo,
+              current_contract_no: keyFacts.contractNo,
+              extension_start_date: keyFacts.extensionStartDate,
+              province_confirm_date: keyFacts.provinceConfirmDate,
+              debt_start_date: keyFacts.debtStartDate,
+              debt_maturity_date: keyFacts.debtMaturityDate,
+            },
+            record_compare: {
+              first_record: {
+                business_type: firstRecord?.['业务类型'] ?? null,
+                business_no: firstRecord?.['唯一业务编号'] ?? null,
+                contract_no: firstRecord?.['借款合同号'] ?? null,
+                province_confirm_time: firstRecord?.['省再确认时间'] ?? null,
+                product_name: firstRecord?.['省再产品'] ?? firstRecord?.['产品类别'] ?? null,
+              },
+              current_record: {
+                business_type: latestRecord['业务类型'] ?? null,
+                business_no: latestRecord['唯一业务编号'] ?? null,
+                contract_no: latestRecord['借款合同号'] ?? null,
+                extension_start_date: latestRecord['展期起始日期'] ?? null,
+                province_confirm_time: latestRecord['省再确认时间'] ?? null,
+                product_name: latestRecord['省再产品'] ?? latestRecord['产品类别'] ?? null,
+              },
+            },
+            source_documents: relationDocuments.map((document) => ({
+              file_name: document.name,
+              relative_path: document.relativePath,
+              text_digest: document.previewText,
+              extracted_text_excerpt: buildTextSnippet(document.extractedText ?? document.previewText, [
+                summary.company,
+                keyFacts.initialContractNo ?? '',
+                keyFacts.contractNo ?? '',
+                '展期',
+                '借款展期协议',
+              ], 260),
+            })),
+            output_requirements: [
+              '如果材料足以说明当前业务是首次备案业务的展期延续，则 conclusion 返回“通过”。',
+              '如果材料显示大概率可关联，但仍有关键点无法完全确认，则返回“待确认”。',
+              '如果材料明显不支持关联，或显示应视为独立新业务，则返回“不通过”。',
+              'value 用一行短语概括判断依据，例如“首次备案编号 + 展期协议 + 当前备案记录”。',
+              'explanation 用 1 到 2 句人话，直接说明为什么这样判断，必须引用台账或展期协议这一类具体依据。',
+              '返回格式：{"conclusion":"...","value":"...","explanation":"..."}',
+            ],
+          },
+          null,
+          2,
+        ),
+      },
+    ],
+    { temperature: 0.1 },
+  );
+}
+
+async function buildRuleResults(
+  summary: CaseSummary,
+  keyFacts: CaseAnalysis['keyFacts'],
+  record: SpreadsheetRow,
+  materials: MaterialItem[],
+  firstRecord: SpreadsheetRow | undefined,
+  latestRecord: SpreadsheetRow,
+  documents: AnalysisDocument[],
+): Promise<RuleResult[]> {
   const reportDays = diffDaysInclusive(keyFacts.compensationDate, keyFacts.reportDate) ?? 49;
   const ratio = 0.4;
   const expected = Number((Number(record['债务人未清偿本金（含债权人部分）（万元）']) * 10000 * ratio).toFixed(2));
   const actual = Number(keyFacts.compensationAmount.replace(/,/g, ''));
+  const relationRule = await buildExtensionRelationRule({
+    summary,
+    keyFacts,
+    firstRecord,
+    latestRecord,
+    documents,
+  });
   const results: RuleResult[] = [
     {
       name: '债务人名称一致',
@@ -550,9 +670,9 @@ function buildRuleResults(keyFacts: CaseAnalysis['keyFacts'], record: Spreadshee
     },
     {
       name: '首次备案与展期记录是否可关联',
-      conclusion: '待确认',
-      value: keyFacts.productName,
-      explanation: '可关联到同一业务链，但建议人工确认不是独立新业务。',
+      conclusion: relationRule.conclusion,
+      value: relationRule.value,
+      explanation: relationRule.explanation,
     },
     {
       name: '材料缺失是否影响继续',
@@ -780,7 +900,7 @@ async function buildCaseFromBaoji(options: { forceReextract?: boolean } = {}) {
     manualAttention: null,
   });
 
-  const rules = buildRuleResults(keyFacts, latestResolve, materials);
+  const rules = await buildRuleResults(summary, keyFacts, latestResolve, materials, firstRecord, latestRecord, documentsWithPreview);
 
   const risks = await blackwhiteJson(
     riskSummarySchema,
