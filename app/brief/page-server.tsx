@@ -1,48 +1,18 @@
-'use client';
-
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import BriefTableViewer from '@/components/BriefTableViewer';
+import { getBriefTableData } from '@/lib/server/brief-html-generator';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 
-type TableData = {
-  name: string;
-  caption: string;
-  headers: string[];
-  rows: string[][];
-};
+export const dynamic = 'force-dynamic';
 
-export default function BriefPage() {
-  const [tableData, setTableData] = useState<TableData[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/brief-tables')
-      .then((res) => res.json())
-      .then((data) => {
-        setTableData(data || []);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('加载表格数据失败:', error);
-        setTableData([]);
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading) {
-    return (
-      <>
-        <Sidebar />
-        <Header />
-        <main className="ml-48 min-h-screen bg-surface px-8 pb-32 pt-20">
-          <div className="flex items-center justify-center py-20">
-            <p className="text-lg font-bold text-on-surface-variant">正在加载表格数据...</p>
-          </div>
-        </main>
-      </>
-    );
+export default async function BriefPage() {
+  let tableData: any[] = [];
+  try {
+    tableData = await getBriefTableData() || [];
+  } catch (error) {
+    console.error('加载表格数据失败:', error);
+    tableData = [];
   }
 
   return (
@@ -66,7 +36,7 @@ export default function BriefPage() {
           </div>
           <div className="flex gap-3">
             <Link
-              href="/brief/preview"
+              href="/api/generate-brief"
               className="flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-black text-white shadow-[0_14px_28px_rgba(11,28,48,0.16)] transition hover:-translate-y-0.5"
             >
               生成简报
