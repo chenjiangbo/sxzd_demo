@@ -290,6 +290,13 @@ async function extractDocText(filePath: string, cacheName: string) {
     return await fs.readFile(cachePath, 'utf8');
   } catch {}
 
+  // Windows 环境下直接返回空文本，避免调用 macOS 的 textutil
+  if (process.platform === 'win32') {
+    const emptyText = '';
+    await fs.writeFile(cachePath, emptyText, 'utf8');
+    return emptyText;
+  }
+
   const { stdout } = await execFileAsync('textutil', ['-convert', 'txt', '-stdout', filePath], {
     timeout: 120_000,
     env: process.env,

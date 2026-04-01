@@ -61,7 +61,7 @@ export default function BriefPage() {
             </nav>
             <h1 className="font-headline text-[3.1rem] font-black leading-none tracking-tight text-primary">担保业务简报</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-on-surface-variant">
-              2026 年度全国合作担保机构业务数据统计简报，包含 12 张核心业务统计表。
+              2025 年度全国合作担保机构业务数据统计简报，包含 12 张核心业务统计表。
             </p>
           </div>
           <div className="flex gap-3">
@@ -82,8 +82,8 @@ export default function BriefPage() {
               <span className="rounded-full bg-surface-container-low px-3 py-1 text-[11px] font-black text-secondary">2026 Task</span>
             </div>
             <div className="flex items-end gap-2">
-              <span className="font-headline text-[3.25rem] font-black leading-none text-primary">2026</span>
-              <span className="mb-1 text-base font-bold text-on-surface-variant">年上半年</span>
+              <span className="font-headline text-[3.25rem] font-black leading-none text-primary">2025</span>
+              <span className="mb-1 text-base font-bold text-on-surface-variant">年全年</span>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-4">
               <div>
@@ -92,7 +92,7 @@ export default function BriefPage() {
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">数据截止</p>
-                <p className="mt-1 text-lg font-black text-primary">6 月 30 日<span className="text-xs font-semibold text-on-surface-variant"></span></p>
+                <p className="mt-1 text-lg font-black text-primary">12 月 31 日<span className="text-xs font-semibold text-on-surface-variant"></span></p>
               </div>
             </div>
           </div>
@@ -134,8 +134,8 @@ export default function BriefPage() {
               <div className="flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-surface-container-low px-3 py-2">
                 <span className="text-[11px] font-black text-on-surface-variant">年份</span>
                 <div className="flex items-center gap-1.5">
-                  <button className="rounded-full bg-primary px-2.5 py-1 text-[11px] font-black text-white">2026</button>
-                  <button className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-primary">2025</button>
+                  <button className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-primary">2026</button>
+                  <button className="rounded-full bg-primary px-2.5 py-1 text-[11px] font-black text-white">2025</button>
                 </div>
               </div>
             </div>

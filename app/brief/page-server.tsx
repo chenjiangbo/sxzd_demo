@@ -49,7 +49,7 @@ export default async function BriefPage() {
           <div className="col-span-12 rounded-3xl bg-white p-5 shadow-sm md:col-span-4">
             <div className="mb-3 flex items-center justify-between">
               <span className="text-xs font-black uppercase tracking-[0.18em] text-secondary">报告期间</span>
-              <span className="rounded-full bg-surface-container-low px-3 py-1 text-[11px] font-black text-secondary">2026 Task</span>
+              <span className="rounded-full bg-surface-container-low px-3 py-1 text-[11px] font-black text-secondary"></span>
             </div>
             <div className="flex items-end gap-2">
               <span className="font-headline text-[3.25rem] font-black leading-none text-primary">2026</span>
