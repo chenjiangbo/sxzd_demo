@@ -315,6 +315,13 @@ async function extractPolicyText() {
     return parsed.pages.map((page) => page.text).join('\n\n');
   } catch {}
 
+  // Windows 环境下直接返回空文本，避免调用 macOS 的 Swift OCR
+  if (process.platform === 'win32') {
+    const emptyText = '';
+    await fs.writeFile(cachePath, JSON.stringify({ pageCount: 0, pages: [] }), 'utf8');
+    return emptyText;
+  }
+
   const scriptPath = path.join(WORKSPACE_ROOT, 'scripts', 'pdf_vision_ocr.swift');
   const { stdout } = await execFileAsync('swift', [scriptPath, CREDIT_POLICY_PDF], {
     timeout: 600_000,

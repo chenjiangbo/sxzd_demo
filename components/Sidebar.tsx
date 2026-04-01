@@ -8,7 +8,7 @@ const items = [
   { href: '#', label: '首页', icon: Gauge },
   { href: '/', label: '代偿补偿', icon: ClipboardList },
   { href: '/brief', label: '简报生成', icon: Presentation },
-  { href: '#', label: '场景中心', icon: BotMessageSquare },
+  { href: '/evaluation-report', label: '机构评价报告', icon: BotMessageSquare },
   { href: '/credit-report', label: '授信报告', icon: FileStack },
   { href: '#', label: '文书中心', icon: FileStack },
   { href: '#', label: '审计与风控', icon: ShieldCheck },
@@ -18,6 +18,7 @@ const items = [
 export default function Sidebar() {
   const pathname = usePathname();
   const isCreditRoute = pathname.startsWith('/credit-report');
+  const isEvaluationRoute = pathname.startsWith('/evaluation-report');
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-full w-48 flex-col bg-slate-50 font-headline text-sm font-semibold tracking-tight dark:bg-slate-900">
@@ -31,7 +32,8 @@ export default function Sidebar() {
           const active =
             (href === '/' && (pathname === '/' || pathname.startsWith('/cases/') || pathname === '/review' || pathname === '/verify')) ||
             (href === '/brief' && pathname === '/brief') ||
-            (href === '/credit-report' && pathname.startsWith('/credit-report'));
+            (href === '/credit-report' && pathname.startsWith('/credit-report')) ||
+            (href === '/evaluation-report' && pathname.startsWith('/evaluation-report'));
           return (
             <Link
               key={label}
@@ -55,12 +57,12 @@ export default function Sidebar() {
             <User className="h-5 w-5" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-bold text-primary">{isCreditRoute ? '业务一部 / 授信岗' : '业务一部 / 代偿岗'}</span>
-            <span className="text-[10px] text-slate-400">{isCreditRoute ? '年度授信任务模式' : '单案件审查模式'}</span>
+            <span className="text-xs font-bold text-primary">{isCreditRoute || isEvaluationRoute ? '业务一部 / 授信岗' : '业务一部 / 代偿岗'}</span>
+            <span className="text-[10px] text-slate-400">{isCreditRoute || isEvaluationRoute ? '年度授信任务模式' : '单案件审查模式'}</span>
           </div>
         </div>
         <div className="rounded-lg bg-white/70 px-3 py-2 text-[11px] font-medium text-on-surface-variant dark:bg-slate-900/40">
-          {isCreditRoute ? '当前任务：2025 年度合作担保机构再担保业务授信' : '当前演示案件：宝鸡三家村餐饮管理有限公司'}
+          {isCreditRoute || isEvaluationRoute ? '当前任务：2025 年度合作担保机构再担保业务授信' : '当前演示案件：宝鸡三家村餐饮管理有限公司'}
         </div>
       </div>
     </aside>
