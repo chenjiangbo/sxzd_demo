@@ -6,178 +6,258 @@
     <title><%= report_title %></title>
     <style>
         @page {
-            margin: 3.7cm 2.6cm 3.5cm 2.8cm;
+            margin: 3.7cm 3.18cm 3.5cm 3.18cm;
             size: A4;
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: "SimSun", "宋体", serif;
             line-height: 1.8;
             color: #000;
             max-width: 210mm;
             margin: 0 auto;
-            padding: 20px;
+            padding: 0;
+            background-color: #fff;
         }
-        
+
+        /* A4 纸张效果 */
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 3.7cm 3.18cm 3.5cm 3.18cm;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* 红头文件样式 */
+        .red-header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-bottom: 10px;
+        }
+
+        .red-header-top {
+            font-family: "SimSun", "宋体", serif;
+            font-size: 24pt;
+            font-weight: bold;
+            color: #ff0000;
+            letter-spacing: 0.3em;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        .red-header-main {
+            font-family: "SimHei", "黑体", sans-serif;
+            font-size: 48pt;
+            font-weight: bold;
+            color: #ff0000;
+            letter-spacing: 0.5em;
+            margin-bottom: 30px;
+            line-height: 1.2;
+        }
+
+        .red-header-issue {
+            font-size: 12pt;
+            font-weight: normal;
+            color: #000;
+            margin-bottom: 40px;
+            letter-spacing: 0.2em;
+        }
+
+        .red-header-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12pt;
+            color: #000;
+            margin-bottom: 8px;
+        }
+
+        .red-header-line {
+            height: 2px;
+            background-color: #ff0000;
+            margin-top: 0;
+        }
+
         .report-header {
             text-align: center;
             margin-bottom: 40px;
         }
-        
+
         .report-title {
             font-size: 22pt;
             font-weight: bold;
             letter-spacing: 0.5em;
             margin-bottom: 20px;
         }
-        
+
         .report-meta {
             font-size: 10.5pt;
             margin-bottom: 10px;
         }
-        
+
         .report-date {
             font-size: 10.5pt;
             text-align: right;
             margin-bottom: 30px;
         }
-        
+
         .content {
             font-size: 10.5pt;
             text-indent: 2em;
             margin-bottom: 20px;
             text-align: justify;
+            line-height: 28pt;
         }
-        
+
         .section {
             margin-top: 30px;
             margin-bottom: 40px;
         }
-        
+
         .section-title {
             font-size: 14pt;
             font-weight: bold;
             margin-bottom: 15px;
             text-indent: 0;
+            line-height: 28pt;
         }
-        
+
         .subsection-title {
             font-size: 12pt;
             font-weight: bold;
             margin-top: 20px;
             margin-bottom: 10px;
             text-indent: 0;
+            line-height: 28pt;
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
             font-size: 9pt;
+            page-break-inside: avoid;
         }
-        
+
         th, td {
             border: 1px solid #000;
             padding: 6px 8px;
             text-align: center;
+            word-break: break-all;
         }
-        
+
         th {
             background-color: #f0f0f0;
             font-weight: bold;
         }
-        
+
         td:first-child {
             text-align: left;
         }
-        
+
         .table-caption {
             font-size: 10.5pt;
             font-weight: bold;
             text-align: center;
             margin-top: 20px;
             margin-bottom: 10px;
+            line-height: 28pt;
         }
-        
+
         .table-note {
             font-size: 9pt;
             margin-top: 10px;
             text-indent: 0;
+            line-height: 24pt;
         }
-        
+
         .remark {
             margin-top: 40px;
             font-size: 9pt;
             text-indent: 0;
+            line-height: 24pt;
         }
     </style>
 </head>
 <body>
-    <!-- 报告标题 -->
-    <div class="report-header">
-        <div class="report-title"><%= report_title %></div>
-        <div class="report-meta"><%= meta_issue_number %>（总第 <%= meta_total_issue %> 期）</div>
-        <div class="report-meta">陕西省信用再担保有限责任公司编     <%= meta_publish_date %></div>
+<div class="page">
+    <!-- 红头文件标题 -->
+    <div class="red-header">
+        <div class="red-header-top">陕西省政府性融资担保体系</div>
+        <div class="red-header-main">简 报</div>
+        <div class="red-header-issue">2026年 <%= meta_issue_number %>（总第 <%= meta_total_issue %> 期）</div>
+        <div class="red-header-meta">
+            <span>陕西省信用再担保有限责任公司编</span>
+            <span><%= meta_publish_date %></span>
+        </div>
+        <div class="red-header-line"></div>
     </div>
-    
+
+    <!-- 通报标题 -->
+    <div style="text-align: center; margin: 40px 0 30px 0;">
+        <h1 style="font-size: 22pt; font-weight: bold; margin: 0;">2025 年再担保业务开展情况通报</h1>
+    </div>
+
     <!-- 导语 -->
     <div class="content">
-        2025 年上半年再担保业务开展情况通报上半年，省再担保公司牵头全省政府性融资担保体系坚持以习近平新时代中国特色社会主义思想为指导，深入贯彻党的二十大和二十届二中、三中全会及习近平总书记历次来陕考察重要讲话重要指示精神，认真落实中央经济工作会议、省委十四届七次全会暨省委经济工作会议、全省财政工作会议和全省金融系统工作会议要求，牢牢把握高质量发展这个首要任务，坚持"稳中求进、以进促稳"工作总基调，不断完善体系建设，持续优化业务结构，更加突出国家政策导向，不断提升服务效率，努力缓解小微企业和"三农"等普惠领域融资难、融资贵问题，政策性功能作用得到有效发挥。现将有关情况通报如下：
+        2025 年再担保业务开展情况通报，省再担保公司牵头全省政府性融资担保体系坚持以习近平新时代中国特色社会主义思想为指导，深入贯彻党的二十大和二十届二中、三中全会及习近平总书记历次来陕考察重要讲话重要指示精神，认真落实中央经济工作会议、省委十四届七次全会暨省委经济工作会议、全省财政工作会议和全省金融系统工作会议要求，牢牢把握高质量发展这个首要任务，坚持"稳中求进、以进促稳"工作总基调，不断完善体系建设，持续优化业务结构，更加突出国家政策导向，不断提升服务效率，努力缓解小微企业和"三农"等普惠领域融资难、融资贵问题，政策性功能作用得到有效发挥。现将有关情况通报如下：
     </div>
-    
+
     <!-- 一、总体情况 -->
     <div class="section">
         <h2 class="section-title">一、总体情况</h2>
-        
+
         <div class="content">
-            上半年，全省政府性融资担保体系新增全口径担保业务规模 <%= overview_total_guarantee_amount %> 亿元，同比增长 <%= overview_yoy_growth_pct %>%；服务市场主体 <%= overview_customer_count %> 万户，同比增长 <%= overview_customer_yoy_growth_pct %>%；开展再担保合作业务（含国担银担"总对总"批量担保业务）规模 <%= overview_re_guarantee_amount %> 亿元，同比增长 <%= overview_re_guarantee_yoy %>%；新增国家融资担保基金合作业务规模 <%= overview_nfgf_amount %> 亿元，同比增长 <%= overview_nfgf_yoy %>%。截至 6 月末，体系成员 <%= overview_member_count %> 家，实收资本合计 <%= overview_total_capital %> 亿元，平均担保放大倍数 <%= overview_leverage_ratio %> 倍，同比上升了 <%= overview_leverage_yoy %> 倍。
+            全省政府性融资担保体系新增全口径担保业务规模 <%= overview_total_guarantee_amount %> 亿元，同比增长 <%= overview_yoy_growth_pct %>%；服务市场主体 <%= overview_customer_count %> 万户，同比增长 <%= overview_customer_yoy_growth_pct %>%；开展再担保合作业务（含国担银担"总对总"批量担保业务）规模 <%= overview_re_guarantee_amount %> 亿元，同比增长 <%= overview_re_guarantee_yoy %>%；新增国家融资担保基金合作业务规模 <%= overview_nfgf_amount %> 亿元，同比增长 <%= overview_nfgf_yoy %>%。截至 6 月末，体系成员 <%= overview_member_count %> 家，实收资本合计 <%= overview_total_capital %> 亿元，平均担保放大倍数 <%= overview_leverage_ratio %> 倍，同比上升了 <%= overview_leverage_yoy %> 倍。
         </div>
-        
+
         <div class="subsection-title">（一）不断聚焦主责主业，精准服务实体经济。</div>
         <div class="content">
-            省再担保公司不断完善合作机制，持续引导合作担保机构聚焦支小支农主体，加大普惠领域支持力度。上半年，体系新增经营性融资担保业务（手工报送的数据） <%= focus_operational_amount %> 亿元、 <%= focus_operational_customers %> 万户，分别占体系全口径担保业务总规模的 <%= focus_operational_ratio_amt %>%、 <%= focus_operational_ratio_cust %>%。体系新增支小支农业务（手工报送数据）规模 <%= focus_sme_agri_amount %> 亿元，占经营性融资担保业务的 <%= focus_sme_agri_ratio %>%。省再担保公司持续响应国家乡村振兴战略，通过专项产品精准支持国家乡村振兴重点帮扶县业务发展，并鼓励各地结合自身情况开展特色担保业务。上半年，省再担保公司开展"三农"再担保业务 <%= focus_agri_re_amount %> 亿元、 <%= focus_agri_re_count %> 笔。
+            省再担保公司不断完善合作机制，持续引导合作担保机构聚焦支小支农主体，加大普惠领域支持力度。体系新增经营性融资担保业务（手工报送的数据） <%= focus_operational_amount %> 亿元、 <%= focus_operational_customers %> 万户，分别占体系全口径担保业务总规模的 <%= focus_operational_ratio_amt %>%、 <%= focus_operational_ratio_cust %>%。体系新增支小支农业务（手工报送数据）规模 <%= focus_sme_agri_amount %> 亿元，占经营性融资担保业务的 <%= focus_sme_agri_ratio %>%。省再担保公司持续响应国家乡村振兴战略，通过专项产品精准支持国家乡村振兴重点帮扶县业务发展，并鼓励各地结合自身情况开展特色担保业务。省再担保公司开展"三农"再担保业务 <%= focus_agri_re_amount %> 亿元、 <%= focus_agri_re_count %> 笔。
         </div>
-        
+
         <div class="subsection-title">（二）深化创新驱动发展，银担合作持续突破。</div>
         <div class="content">
-            上半年，省再担保公司牵头全省政府性融资担保体系积极强化科技赋能，加快拓展新版国担"总对总"批量担保业务，持续优化业务结构，提高再担保和银行参与分险业务占比。上半年，银行参与分险的再担保规模 <%= risk_sharing_total_amount %> 亿元，同比增长 <%= risk_sharing_yoy %>%，占再担保总规模的 <%= risk_sharing_share_ratio %>%，实现了银行参与分险业务快速增长。在银行参与分险业务中，银担"总对总"批量担保业务 <%= zdz_total_amount %> 亿元，占银行参与分险业务总规模的 <%= zdz_share_ratio %>%，其中国担"总对总"批量担保业务 <%= zdz_national_amount %> 亿元；地方版"总对总"批量担保业务 <%= zdz_local_amount %> 亿元。
+            省再担保公司牵头全省政府性融资担保体系积极强化科技赋能，加快拓展新版国担"总对总"批量担保业务，持续优化业务结构，提高再担保和银行参与分险业务占比。银行参与分险的再担保规模 <%= risk_sharing_total_amount %> 亿元，同比增长 <%= risk_sharing_yoy %>%，占再担保总规模的 <%= risk_sharing_share_ratio %>%，实现了银行参与分险业务快速增长。在银行参与分险业务中，银担"总对总"批量担保业务 <%= zdz_total_amount %> 亿元，占银行参与分险业务总规模的 <%= zdz_share_ratio %>%，其中国担"总对总"批量担保业务 <%= zdz_national_amount %> 亿元；地方版"总对总"批量担保业务 <%= zdz_local_amount %> 亿元。
         </div>
-        
+
         <div class="subsection-title">（三）持续降低担保费率，有效减轻普惠领域负担。</div>
         <div class="content">
-            省再担保公司积极争取省财政支持，不断降低再担保收费标准，引导各合作担保机构加大降费让利力度，减轻小微企业等普惠领域负担。上半年，体系支小支农平均担保费率 <%= cost_avg_guarantee_rate %>%，较上年同期降低了 <%= cost_rate_reduction %> 个百分点，平均担保费率符合"国办发〔2019〕6 号"文件的政策要求。参照商业性融资担保机构 2.5% 的担保费率测算，上半年累计为小微企业和"三农"主体节省担保费超 <%= cost_saving_amount %> 亿元。
+            省再担保公司积极争取省财政支持，不断降低再担保收费标准，引导各合作担保机构加大降费让利力度，减轻小微企业等普惠领域负担。体系支小支农平均担保费率 <%= cost_avg_guarantee_rate %>%，较上年同期降低了 <%= cost_rate_reduction %> 个百分点，平均担保费率符合"国办发〔2019〕6 号"文件的政策要求。参照商业性融资担保机构 2.5% 的担保费率测算，累计为小微企业和"三农"主体节省担保费超 <%= cost_saving_amount %> 亿元。
         </div>
-        
+
         <div class="subsection-title">（四）不断发挥逆周期调节作用，精准支持重点领域和薄弱环节。</div>
         <div class="content">
-            上半年新增交通运输、餐饮、住宿、批发零售行业企业及个体工商户担保业务 <%= industry_service_amount %> 亿元、 <%= industry_service_count %> 笔；新增高新技术企业、科技型企业担保贷款 <%= industry_tech_amount %> 亿元、 <%= industry_tech_count %> 笔，其中"科技创新专项担保计划" <%= industry_innovation_amount %> 亿元、 <%= industry_innovation_count %> 笔；新增创业担保贷款 <%= industry_entrepreneurship_amount %> 亿元、 <%= industry_entrepreneurship_count %> 笔；新增首贷户担保业务 <%= industry_first_loan_amount %> 亿元、 <%= industry_first_loan_count %> 笔，有效助力企业纾困。
+            新增交通运输、餐饮、住宿、批发零售行业企业及个体工商户担保业务 <%= industry_service_amount %> 亿元、 <%= industry_service_count %> 笔；新增高新技术企业、科技型企业担保贷款 <%= industry_tech_amount %> 亿元、 <%= industry_tech_count %> 笔，其中"科技创新专项担保计划" <%= industry_innovation_amount %> 亿元、 <%= industry_innovation_count %> 笔；新增创业担保贷款 <%= industry_entrepreneurship_amount %> 亿元、 <%= industry_entrepreneurship_count %> 笔；新增首贷户担保业务 <%= industry_first_loan_amount %> 亿元、 <%= industry_first_loan_count %> 笔，有效助力企业纾困。
         </div>
-        
+
         <div class="subsection-title">（五）坚持突出就业优先服务导向，引导体系发挥稳就业功能。</div>
         <div class="content">
-            上半年新增再担保业务稳定市场就业主体约 <%= employment_total_employment %> 万人。从行业分布看，上半年再担保业务主要聚焦于工业、批发业、建筑、零售业和农林牧渔业，合作业务占比 <%= employment_major_industry_ratio %>%，上述涉及行业稳定就业人数占比 <%= employment_major_employment_ratio %>%。其中：工业合作业务规模占比和稳就业人数占比均最高，上半年合作业务规模 <%= employment_industry_amount %> 亿元、稳就业人数 <%= employment_industry_employment %> 万人，分别占比 <%= employment_industry_ratio %>%、 <%= employment_industry_employment_ratio %>%，笔均稳就业 <%= employment_avg_per_deal %> 人。
+            新增再担保业务稳定市场就业主体约 <%= employment_total_employment %> 万人。从行业分布看，再担保业务主要聚焦于工业、批发业、建筑、零售业和农林牧渔业，合作业务占比 <%= employment_major_industry_ratio %>%，上述涉及行业稳定就业人数占比 <%= employment_major_employment_ratio %>%。其中：工业合作业务规模占比和稳就业人数占比均最高，合作业务规模 <%= employment_industry_amount %> 亿元、稳就业人数 <%= employment_industry_employment %> 万人，分别占比 <%= employment_industry_ratio %>%、 <%= employment_industry_employment_ratio %>%，笔均稳就业 <%= employment_avg_per_deal %> 人。
         </div>
-        
+
         <div class="subsection-title">（六）始终坚持业务发展与风险控制并进，引导体系可持续发展。</div>
         <div class="content">
-            上半年，省再担保公司为合作担保机构的 <%= compensation_project_count %> 个项目支付代偿补偿资金合计 <%= compensation_total_compensation %> 万元，合作业务担保代偿率 <%= compensation_default_rate %>%，较上年同期提升了 <%= compensation_default_rate_increase %> 个百分点。自 2018 年体系构建以来，累计为 24 家担保机构的 2447 笔代偿项目拨付再担保代偿补偿资金 4.02 亿元，及时补充了合作担保机构流动性，有效发挥了再担保增信和分险的作用。
+            省再担保公司为合作担保机构的 <%= compensation_project_count %> 个项目支付代偿补偿资金合计 <%= compensation_total_compensation %> 万元，合作业务担保代偿率 <%= compensation_default_rate %>%，较上年同期提升了 <%= compensation_default_rate_increase %> 个百分点。自 2018 年体系构建以来，累计为 24 家担保机构的 2447 笔代偿项目拨付再担保代偿补偿资金 4.02 亿元，及时补充了合作担保机构流动性，有效发挥了再担保增信和分险的作用。
         </div>
     </div>
-    
+
     <!-- 二、体系业务开展情况 -->
     <div class="section">
         <h2 class="section-title">二、体系业务开展情况</h2>
-        
+
         <div class="content">
             各级政府高度重视政府性融资担保体系建设及功能作用发挥，持续完善配套政策，优化绩效考核机制，担保机构不断探索创新业务模式，开展批量担保业务，业务规模实现了稳健增长，体系新增全口径担保业务规模 <%= overview_total_guarantee_amount %> 亿元，同比增长 <%= overview_yoy_growth_pct %>%。省再担保公司积极发挥省级再担保机构创新引领作用，引导体系担保业务规模稳步发展，其中共 <%= inst_summary_institutions_over_5b %> 家机构业务规模超 50 亿元。从业务规模增速看， <%= inst_summary_positive_growth_count %> 家机构较上年同期实现正增长，其中 <%= inst_summary_growth_over_20_count %> 家机构增幅超过 20%； <%= inst_summary_negative_growth_count %> 家机构较上年同期下降。详见表一。
         </div>
-        
+
         <div class="table-caption">表一：合作担保机构全口径新增担保业务规模统计表</div>
         <%- inst_table %>
         <div class="table-note">
@@ -186,160 +266,161 @@
             3.表内"-"代表无同期比较数据，下同
         </div>
     </div>
-    
+
     <!-- 三、再担保业务开展情况 -->
     <div class="section">
         <h2 class="section-title">三、再担保业务开展情况</h2>
-        
+
         <div class="subsection-title">（一）业务总体运行情况。</div>
         <div class="content">
-            上半年，省再担保公司新增再担保业务规模 <%= overview_re_guarantee_amount %> 亿元，同比增长 <%= overview_re_guarantee_yoy %>%，户均担保额为 <%= re_guarantee_summary_avg_per_customer %> 万元。从业务开展情况看， <%= re_guarantee_summary_high_filing_count %> 家机构再担保备案率超过了 90%， <%= re_guarantee_summary_mid_filing_count %> 家机构超过了 50%，较好地发挥了财政担保政策功能作用。详见表二。
+            省再担保公司新增再担保业务规模 <%= overview_re_guarantee_amount %> 亿元，同比增长 <%= overview_re_guarantee_yoy %>%，户均担保额为 <%= re_guarantee_summary_avg_per_customer %> 万元。从业务开展情况看， <%= re_guarantee_summary_high_filing_count %> 家机构再担保备案率超过了 90%， <%= re_guarantee_summary_mid_filing_count %> 家机构超过了 50%，较好地发挥了财政担保政策功能作用。详见表二。
         </div>
-        
+
         <div class="table-caption">表二：担保机构再担保业务统计表</div>
         <%- re_guarantee_table %>
         <div class="table-note">
-            备注：1.合作担保机构按上半年合作业务规模降序排列<br>
+            备注：1.合作担保机构合作业务规模降序排列<br>
             2.再担保备案率=单个担保机构再担保业务规模/全部担保业务规模*100%
         </div>
-        
+
         <div class="subsection-title">（二）银行合作情况。</div>
         <div class="content">
-            上半年，我省政府性融资担保体系与全国性银行、地方法人银行合作开展政策性融资担保业务规模分别为 <%= bank_cooperation_national_amount %> 亿元、 <%= bank_cooperation_local_amount %> 亿元，规模占比分别为 <%= bank_cooperation_national_ratio %>% 和 <%= bank_cooperation_local_ratio %>%。和上年同期相比，全国性银行合作业务占比上升了 <%= bank_cooperation_national_ratio_increase %> 个百分点。详见表三。
+            我省政府性融资担保体系与全国性银行、地方法人银行合作开展政策性融资担保业务规模分别为 <%= bank_cooperation_national_amount %> 亿元、 <%= bank_cooperation_local_amount %> 亿元，规模占比分别为 <%= bank_cooperation_national_ratio %>% 和 <%= bank_cooperation_local_ratio %>%。和上年同期相比，全国性银行合作业务占比上升了 <%= bank_cooperation_national_ratio_increase %> 个百分点。详见表三。
         </div>
-        
+
         <div class="table-caption">表三：合作银行业务统计表</div>
         <%- bank_table %>
         <div class="table-note">
-            备注：1.合作银行按上半年合作业务规模降序排列<br>
+            备注：1.合作银行合作业务规模降序排列<br>
             2.规模占比=各合作银行合作业务规模/体系合作业务总规模 *100%
         </div>
-        
+
         <div class="subsection-title">（三）综合融资成本及担保费率情况。</div>
         <div class="content">
-            上半年，省再担保公司再担保业务平均综合融资成本 <%= cost_avg_total_cost %>%，较上年同期下降 <%= cost_cost_reduction %> 个百分点。平均贷款利率为 <%= cost_avg_loan_rate %>%，较上年同期下降 <%= cost_loan_rate_reduction %> 个百分点，其中 <%= cost_banks_with_lower_rate %> 家合作担保机构平均贷款利率较上年有所下降。平均担保费率 <%= cost_avg_guarantee_rate %>%，所有合作担保机构均不超过 1%。整体来看，体系平均担保费率已降至较低水平。详见表四。
+            省再担保公司再担保业务平均综合融资成本 <%= cost_avg_total_cost %>%，较上年同期下降 <%= cost_cost_reduction %> 个百分点。平均贷款利率为 <%= cost_avg_loan_rate %>%，较上年同期下降 <%= cost_loan_rate_reduction %> 个百分点，其中 <%= cost_banks_with_lower_rate %> 家合作担保机构平均贷款利率较上年有所下降。平均担保费率 <%= cost_avg_guarantee_rate %>%，所有合作担保机构均不超过 1%。整体来看，体系平均担保费率已降至较低水平。详见表四。
         </div>
-        
+
         <div class="table-caption">表四：再担保业务综合融资成本统计表</div>
         <%- cost_table %>
         <div class="table-note">
-            备注：合作担保机构按上半年再担保业务综合融资成本升序排列
+            备注：合作担保机构再担保业务综合融资成本升序排列
         </div>
     </div>
-    
+
     <!-- 四、银行参与分险业务开展情况 -->
     <div class="section">
         <h2 class="section-title">四、银行参与分险业务开展情况</h2>
-        
+
         <div class="content">
-            为提高我省银行参与分险业务比例，省再担保公司持续探索试点银担批量担保模式，引领体系分险业务规模稳步增长，上半年体系新增银行参与分险业务规模 <%= risk_sharing_total_amount %> 亿元，较上年同期增长 <%= risk_sharing_yoy %>%，占全部再担保业务的 <%= risk_sharing_share_ratio %>%。
+            为提高我省银行参与分险业务比例，省再担保公司持续探索试点银担批量担保模式，引领体系分险业务规模稳步增长，体系新增银行参与分险业务规模 <%= risk_sharing_total_amount %> 亿元，较上年同期增长 <%= risk_sharing_yoy %>%，占全部再担保业务的 <%= risk_sharing_share_ratio %>%。
         </div>
-        
+
         <div class="subsection-title">（一）担保机构分险业务开展情况。</div>
         <div class="content">
-            上半年， <%= risk_sharing_institutions_with_risk_sharing %> 家合作担保机构开展了银行参与分险业务， <%= risk_sharing_institutions_over_90pct %> 家合作担保机构分险业务规模占比超过 90%，其中 <%= risk_sharing_institutions_100pct %> 家合作担保机构实现银行参与分险业务规模占比 100%，落实银担风险分担机制取得良好成效。业务规模排名在前三位的分别是 <%= top3_risk_sharing_first_name %><%= top3_risk_sharing_first_amount %> 亿元、 <%= top3_risk_sharing_second_name %><%= top3_risk_sharing_second_amount %> 亿元、 <%= top3_risk_sharing_third_name %><%= top3_risk_sharing_third_amount %> 亿元。详见表五。
+             <%= risk_sharing_institutions_with_risk_sharing %> 家合作担保机构开展了银行参与分险业务， <%= risk_sharing_institutions_over_90pct %> 家合作担保机构分险业务规模占比超过 90%，其中 <%= risk_sharing_institutions_100pct %> 家合作担保机构实现银行参与分险业务规模占比 100%，落实银担风险分担机制取得良好成效。业务规模排名在前三位的分别是 <%= top3_risk_sharing_first_name %><%= top3_risk_sharing_first_amount %> 亿元、 <%= top3_risk_sharing_second_name %><%= top3_risk_sharing_second_amount %> 亿元、 <%= top3_risk_sharing_third_name %><%= top3_risk_sharing_third_amount %> 亿元。详见表五。
         </div>
-        
+
         <div class="table-caption">表五：银行参与分险再担保业务统计表</div>
         <%- risk_sharing_table %>
         <div class="table-note">
-            备注：1.各合作担保机构按上半年合作业务规模降序排列<br>
+            备注：1.各合作担保机构合作业务规模降序排列<br>
             2.分险规模占比=担保机构分险业务规模/再担保业务总规模*100%
         </div>
-        
+
         <div class="subsection-title">（二）合作银行分险业务开展情况。</div>
         <div class="content">
-            上半年，全国性银行参与分险业务规模 <%= bank_risk_sharing_national_amount %> 亿元，占同期合作业务规模的 <%= bank_risk_sharing_national_ratio %>%，业务主要集中在农业银行、工商银行和邮储银行；地方法人银行参与分险业务规模 <%= bank_risk_sharing_local_amount %> 亿元，占同期合作业务规模的 <%= bank_risk_sharing_local_ratio %>%，业务主要集中在陕西农信、西安银行和长安银行。银行参与分险业务规模排名在前三位的银行分别是： <%= top3_bank_risk_first_name %><%= top3_bank_risk_first_amount %> 亿元， <%= top3_bank_risk_second_name %><%= top3_bank_risk_second_amount %> 亿元， <%= top3_bank_risk_third_name %><%= top3_bank_risk_third_amount %> 亿元。详见表六。
+            全国性银行参与分险业务规模 <%= bank_risk_sharing_national_amount %> 亿元，占同期合作业务规模的 <%= bank_risk_sharing_national_ratio %>%，业务主要集中在农业银行、工商银行和邮储银行；地方法人银行参与分险业务规模 <%= bank_risk_sharing_local_amount %> 亿元，占同期合作业务规模的 <%= bank_risk_sharing_local_ratio %>%，业务主要集中在陕西农信、西安银行和长安银行。银行参与分险业务规模排名在前三位的银行分别是： <%= top3_bank_risk_first_name %><%= top3_bank_risk_first_amount %> 亿元， <%= top3_bank_risk_second_name %><%= top3_bank_risk_second_amount %> 亿元， <%= top3_bank_risk_third_name %><%= top3_bank_risk_third_amount %> 亿元。详见表六。
         </div>
-        
+
         <div class="table-caption">表六：合作银行分险业务统计表</div>
         <%- bank_risk_table %>
         <div class="table-note">
-            备注：1.合作银行按上半年合作业务规模降序排列<br>
+            备注：1.合作银行合作业务规模降序排列<br>
             2.规模占比=各合作银行合作业务规模/体系合作业务总规模 *100%
         </div>
-        
+
         <div class="subsection-title">（三）各区域分险业务开展情况。</div>
         <div class="content">
-            上半年， <%= region_summary_total_cities %> 个地市全部实现了银行参与分险业务落地， <%= region_summary_cities_over_80pct %> 个地市银行参与分险业务规模占比超过 80%； <%= region_summary_cities_with_growth %> 个地市参与分险业务规模较上年同期有所增长，其中 <%= region_summary_high_growth_cities %> 在推进银行参与分险业务方面取得较好成效，分险规模同比增长超过 <%= region_summary_growth_threshold %> 个百分点。详见表七。
+             <%= region_summary_total_cities %> 个地市全部实现了银行参与分险业务落地， <%= region_summary_cities_over_80pct %> 个地市银行参与分险业务规模占比超过 80%； <%= region_summary_cities_with_growth %> 个地市参与分险业务规模较上年同期有所增长，其中 <%= region_summary_high_growth_cities %> 在推进银行参与分险业务方面取得较好成效，分险规模同比增长超过 <%= region_summary_growth_threshold %> 个百分点。详见表七。
         </div>
-        
+
         <div class="table-caption">表七：地市银行参与分险业务规模统计表</div>
         <%- region_risk_table %>
         <div class="table-note">
-            备注：1.各地市按上半年分险业务规模降序排列<br>
+            备注：1.各地市分险业务规模降序排列<br>
             2.规模占比=各地市机构分险业务规模/各市（区）备案总规模 *100%
         </div>
     </div>
-    
+
     <!-- 五、专项业务开展情况 -->
     <div class="section">
         <h2 class="section-title">五、专项业务开展情况</h2>
-        
+
         <div class="subsection-title">（一）银担"总对总"批量业务情况。</div>
-        
+
         <div class="content">
-            1.国担银担"总对总"批量业务情况。上半年，体系新增国担银担"总对总"批量担保业务 <%= national_zdz_summary_total_amount %> 亿元。业务规模排名在前三位的担保机构分别是： <%= national_zdz_top3_first_name %><%= national_zdz_top3_first_amount %> 亿元、 <%= national_zdz_top3_second_name %><%= national_zdz_top3_second_amount %> 亿元、 <%= national_zdz_top3_third_name %><%= national_zdz_top3_third_amount %> 亿元。详见表八。
+            1.国担银担"总对总"批量业务情况。体系新增国担银担"总对总"批量担保业务 <%= national_zdz_summary_total_amount %> 亿元。业务规模排名在前三位的担保机构分别是： <%= national_zdz_top3_first_name %><%= national_zdz_top3_first_amount %> 亿元、 <%= national_zdz_top3_second_name %><%= national_zdz_top3_second_amount %> 亿元、 <%= national_zdz_top3_third_name %><%= national_zdz_top3_third_amount %> 亿元。详见表八。
         </div>
-        
+
         <div class="table-caption">表八：国担基金"总对总"批量担保业务统计表</div>
         <%- national_zdz_table %>
         <div class="table-note">
-            备注：1.合作担保机构按上半年合作业务规模降序排列<br>
+            备注：1.合作担保机构合作业务规模降序排列<br>
             2.规模占比=各担保机构国担"总对总"业务规模/国担"总对总"业务总规模*100%
         </div>
-        
+
         <div class="content">
-            2.地方版银担"总对总"批量业务情况。上半年，体系新增地方版银担"总对总"批量担保业务 <%= local_zdz_summary_total_amount %> 亿元。业务规模排名在前三位的担保机构分别是： <%= local_zdz_top3_first_name %><%= local_zdz_top3_first_amount %> 亿元、 <%= local_zdz_top3_second_name %><%= local_zdz_top3_second_amount %> 亿元、 <%= local_zdz_top3_third_name %><%= local_zdz_top3_third_amount %> 亿元。详见表九。
+            2.地方版银担"总对总"批量业务情况。体系新增地方版银担"总对总"批量担保业务 <%= local_zdz_summary_total_amount %> 亿元。业务规模排名在前三位的担保机构分别是： <%= local_zdz_top3_first_name %><%= local_zdz_top3_first_amount %> 亿元、 <%= local_zdz_top3_second_name %><%= local_zdz_top3_second_amount %> 亿元、 <%= local_zdz_top3_third_name %><%= local_zdz_top3_third_amount %> 亿元。详见表九。
         </div>
-        
+
         <div class="table-caption">表九：地方版"总对总"批量担保业务统计表</div>
         <%- local_zdz_table %>
         <div class="table-note">
-            备注：1.合作担保机构按上半年合作业务规模降序排列<br>
+            备注：1.合作担保机构合作业务规模降序排列<br>
             2.规模占比=各担保机构地方版"总对总"业务规模/地方版"总对总"业务总规模*100%
         </div>
-        
+
         <div class="content">
-            3.银行开展银担"总对总"批量担保业务情况。上半年，银担"总对总"批量担保业务总计 <%= bank_zdz_summary_total_amount %> 亿元，占体系合作业务的 <%= bank_zdz_summary_share_ratio %>%。主要集中在 <%= bank_zdz_top3_first_name %>、 <%= bank_zdz_top3_second_name %> 和 <%= bank_zdz_top3_third_name %>，业务规模分别为 <%= bank_zdz_top3_first_amount %> 亿元、 <%= bank_zdz_top3_second_amount %> 亿元和 <%= bank_zdz_top3_third_amount %> 亿元。详见表十。
+            3.银行开展银担"总对总"批量担保业务情况。银担"总对总"批量担保业务总计 <%= bank_zdz_summary_total_amount %> 亿元，占体系合作业务的 <%= bank_zdz_summary_share_ratio %>%。主要集中在 <%= bank_zdz_top3_first_name %>、 <%= bank_zdz_top3_second_name %> 和 <%= bank_zdz_top3_third_name %>，业务规模分别为 <%= bank_zdz_top3_first_amount %> 亿元、 <%= bank_zdz_top3_second_amount %> 亿元和 <%= bank_zdz_top3_third_amount %> 亿元。详见表十。
         </div>
-        
+
         <div class="table-caption">表十：合作银行"总对总"批量担保业务统计表</div>
         <%- bank_zdz_table %>
         <div class="table-note">
-            备注：1.各合作银行按上半年合作业务规模降序排列<br>
+            备注：1.各合作银行合作业务规模降序排列<br>
             2.规模占比=合作银行"总对总"批量业务规模/合作银行合作业务规模 *100%
         </div>
-        
+
         <div class="subsection-title">（二）创业担保贷款业务开展情况。</div>
         <div class="content">
-            上半年，体系内 <%= chuangye_summary_institution_count %> 家担保机构累计开展创业担保贷款业务 <%= chuangye_summary_total_amount %> 亿元。合作业务规模排名在前三位的分别是： <%= chuangye_top3_first_name %><%= chuangye_top3_first_amount %> 亿元、 <%= chuangye_top3_second_name %><%= chuangye_top3_second_amount %> 亿元、 <%= chuangye_top3_third_name %><%= chuangye_top3_third_amount %> 亿元。详见表十一。
+            体系内 <%= chuangye_summary_institution_count %> 家担保机构累计开展创业担保贷款业务 <%= chuangye_summary_total_amount %> 亿元。合作业务规模排名在前三位的分别是： <%= chuangye_top3_first_name %><%= chuangye_top3_first_amount %> 亿元、 <%= chuangye_top3_second_name %><%= chuangye_top3_second_amount %> 亿元、 <%= chuangye_top3_third_name %><%= chuangye_top3_third_amount %> 亿元。详见表十一。
         </div>
-        
+
         <div class="table-caption">表十一：创业担保贷款再担保业务统计表</div>
         <%- chuangye_table %>
         <div class="table-note">
-            备注：1.合作担保机构按上半年合作业务规模降序排列<br>
+            备注：1.合作担保机构合作业务规模降序排列<br>
             2.规模占比=各担保机构创业担保贷款业务规模/创业担保贷款总规模*100%
         </div>
-        
+
         <div class="subsection-title">（三）科技创新担保计划业务开展情况。</div>
         <div class="content">
-            上半年，体系内 <%= tech_guarantee_summary_institution_count %> 家担保机构累计开展科技创新担保计划业务 <%= tech_guarantee_summary_total_amount %> 亿元。合作业务规模排名在前三位的分别是： <%= tech_guarantee_top3_first_name %><%= tech_guarantee_top3_first_amount %> 亿元、 <%= tech_guarantee_top3_second_name %><%= tech_guarantee_top3_second_amount %> 亿元、 <%= tech_guarantee_top3_third_name %><%= tech_guarantee_top3_third_amount %> 亿元。详见表十二。
+            体系内 <%= tech_guarantee_summary_institution_count %> 家担保机构累计开展科技创新担保计划业务 <%= tech_guarantee_summary_total_amount %> 亿元。合作业务规模排名在前三位的分别是： <%= tech_guarantee_top3_first_name %><%= tech_guarantee_top3_first_amount %> 亿元、 <%= tech_guarantee_top3_second_name %><%= tech_guarantee_top3_second_amount %> 亿元、 <%= tech_guarantee_top3_third_name %><%= tech_guarantee_top3_third_amount %> 亿元。详见表十二。
         </div>
-        
+
         <div class="table-caption">表十二："科技创新专项担保计划"业务统计表</div>
         <%- tech_guarantee_table %>
         <div class="table-note">
-            备注：1.合作担保机构按上半年合作业务规模降序排列<br>
+            备注：1.合作担保机构合作业务规模降序排列<br>
             2.规模占比=各担保机构科技创新担保计划贷款业务规模/科技创新担保计划贷款总规模*100%
         </div>
     </div>
-    
+
     <!-- 备注 -->
     <div class="remark">
         <p>报送：国家融资担保基金、中国融资担保业协会；省财政厅、省地方金融管理局、省工信厅、人行陕西分行、国家金融监督管理总局陕西监管局。</p>
         <p>发送：各市县（区）政府、各国家级省级园区管委会、各银行业金融机构，全省政府性融资担保公司。</p>
     </div>
+</div>
 </body>
 </html>

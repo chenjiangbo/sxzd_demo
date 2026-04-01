@@ -152,11 +152,11 @@ export default function BriefPreviewClient() {
 
   const handleDownload = () => {
     if (!htmlContent) return;
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const blob = new Blob([htmlContent], { type: 'application/msword;charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `担保业务简报 -2026 年上半年.html`;
+    a.download = `担保业务简报 -2026 年上半年.doc`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -181,7 +181,7 @@ export default function BriefPreviewClient() {
   return (
     <div className="grid grid-cols-12 gap-8">
       {/* 左侧：进度和状态 */}
-      <div className="col-span-4">
+      <div className="col-span-3">
         <div className="sticky top-24 space-y-6">
           {/* 进度卡片 */}
           <div className="rounded-3xl bg-white p-6 shadow-sm">
@@ -189,7 +189,7 @@ export default function BriefPreviewClient() {
               <span className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">生成进度</span>
               <span className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-black text-primary">{progress}%</span>
             </div>
-            
+
             <div className="mb-4 h-2 overflow-hidden rounded-full bg-surface-container-low">
               <div
                 className="h-full rounded-full bg-primary transition-all duration-300"
@@ -210,13 +210,13 @@ export default function BriefPreviewClient() {
           {/* 操作按钮 */}
           {!loading && htmlContent && (
             <div className="space-y-3">
-              <button
-                onClick={handleDownload}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-4 text-sm font-black text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
-              >
-                <Download className="h-5 w-5" />
-                下载 HTML 简报
-              </button>
+              {/*<button*/}
+              {/*  onClick={handleDownload}*/}
+              {/*  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-4 text-sm font-black text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"*/}
+              {/*>*/}
+              {/*  <Download className="h-5 w-5" />*/}
+              {/*  下载 Word 简报*/}
+              {/*</button>*/}
               <button
                 onClick={() => void generate()}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl border border-outline-variant/20 bg-white px-5 py-4 text-sm font-bold text-primary transition hover:bg-surface-container-low"
@@ -230,7 +230,7 @@ export default function BriefPreviewClient() {
       </div>
 
       {/* 右侧：预览区域 */}
-      <div className="col-span-8">
+      <div className="col-span-9">
         <div className="rounded-3xl bg-white p-8 shadow-sm">
           {htmlContent ? (
             <div className="prose prose-slate max-w-none">
@@ -245,7 +245,7 @@ export default function BriefPreviewClient() {
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <LoaderCircle className="mb-4 h-12 w-12 animate-spin text-primary" />
               <p className="text-lg font-bold text-on-surface-variant">正在生成简报内容</p>
-              <p className="mt-2 text-sm text-on-surface-variant">请稍候，正在从本地数据源读取并渲染...</p>
+              <p className="mt-2 text-sm text-on-surface-variant">请稍候，正在读取数据并渲染...</p>
             </div>
           )}
         </div>
