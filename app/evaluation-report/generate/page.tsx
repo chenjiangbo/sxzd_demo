@@ -78,13 +78,8 @@ export default function EvaluationReportGeneratePage() {
   }, [institutionId]);
 
   const handleDownload = () => {
-    const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${institutionName || '机构'}评价报告.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    // 调用 API 下载 Word 文档
+    window.open(`/api/evaluation-report/export-html?id=${institutionId}`, '_blank');
   };
 
   if (loading) {
@@ -161,7 +156,7 @@ export default function EvaluationReportGeneratePage() {
             className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-2 text-xs font-black text-primary hover:bg-primary hover:text-white"
           >
             <Download className="h-4 w-4" />
-            下载 TXT
+            下载 Word
           </button>
         </div>
       </header>
