@@ -17,25 +17,35 @@ const spreadsheetInstitutionSchema = z.object({
   shortName: z.string(),
   regionLevel: z.enum(['省级', '市级', '县区']),
   rating: z.string(),
+  // 8 项核心指标
   targetScale: z.number(),
   actualScale: z.number(),
-  completionRate: z.number(),
-  targetCustomer: z.number(),
-  actualCustomer: z.number(),
-  customerCompletionRate: z.number(),
-  leverage: z.number(),
-  filingRate: z.number(),
-  riskShareRatio: z.number(),
-  inclusiveRatio: z.number(),
-  compensationRate: z.number(),
-  recoveryRate: z.number(),
+  scaleCompletionRate: z.number(),
+  targetCustomerRatio: z.number(),
+  actualCustomerRatio: z.number(),
+  customerRatioCompletionRate: z.number(),
+  targetReGuarantee: z.number(),
+  actualReGuarantee: z.number(),
+  reGuaranteeCompletionRate: z.number(),
+  targetRiskShare: z.number(),
+  actualRiskShare: z.number(),
+  riskShareCompletionRate: z.number(),
+  targetLeverage: z.number(),
+  actualLeverage: z.number(),
+  leverageCompletionRate: z.number(),
+  targetCompensationRate: z.number(),
+  actualCompensationRate: z.number(),
+  compensationRateStatus: z.string(),
+  targetRecoveryRate: z.number(),
+  actualRecoveryRate: z.number(),
+  recoveryRateCompletionRate: z.number(),
   policyScore: z.number(),
-  groupKey: z.enum(['excellent', 'good', 'qualified', 'improving']),
+  overallStatus: z.enum(['优秀', '良好', '达标', '待改进']),
 });
 
 type SpreadsheetInstitution = z.infer<typeof spreadsheetInstitutionSchema>;
 
-export type EvaluationGroupKey = SpreadsheetInstitution['groupKey'];
+export type EvaluationGroupKey = SpreadsheetInstitution['overallStatus'];
 
 export type EvaluationReportData = {
   availableYears: number[];
@@ -92,27 +102,27 @@ const GROUP_META: Record<
     members: string[];
   }
 > = {
-  excellent: {
-    title: '优秀（完成率≥100%）',
-    summary: '超额完成年度政策目标，业务规模与质量双优。',
+  '优秀': {
+    title: '优秀（8 项指标≥6 项达标）',
+    summary: '大部分政策目标完成良好，业务质量与风险控制均衡。',
     decisionBasis: '给予表彰并优先配置资源。',
     members: [],
   },
-  good: {
-    title: '良好（90%≤完成率<100%）',
-    summary: '基本完成年度目标，部分指标表现突出。',
+  '良好': {
+    title: '良好（8 项指标 4-5 项达标）',
+    summary: '部分指标完成较好，但仍有提升空间。',
     decisionBasis: '继续保持良好发展态势。',
     members: [],
   },
-  qualified: {
-    title: '达标（70%≤完成率<90%）',
-    summary: '完成大部分目标，但仍有提升空间。',
+  '达标': {
+    title: '达标（8 项指标 3 项达标）',
+    summary: '基本完成核心目标，需加强业务拓展与风险控制。',
     decisionBasis: '需加强业务拓展与风险控制。',
     members: [],
   },
-  improving: {
-    title: '待改进（完成率<70%）',
-    summary: '距离目标差距较大，需重点督导。',
+  '待改进': {
+    title: '待改进（8 项指标<3 项达标）',
+    summary: '多数指标未达标，需重点督导改进。',
     decisionBasis: '制定专项改进方案并限期整改。',
     members: [],
   },
@@ -126,11 +136,36 @@ function hash(input: string) {
   return createHash('sha1').update(input).digest('hex');
 }
 
-function detectGroup(completionRate: number): EvaluationGroupKey {
-  if (completionRate >= 1.0) return 'excellent';
-  if (completionRate >= 0.9) return 'good';
-  if (completionRate >= 0.7) return 'qualified';
-  return 'improving';
+function isTargetMet(completionRate: number, status?: string): boolean {
+  if (status) return status === '达标' || status.includes('达标');
+  return completionRate >= 1.0;
+}
+
+function detectOverallStatus(metrics: {
+  scaleRate: number;
+  customerRatioRate: number;
+  reGuaranteeRate: number;
+  riskShareRate: number;
+  leverageRate: number;
+  compensationStatus: string;
+  recoveryRate: number;
+  filingRate?: number;
+}): EvaluationGroupKey {
+  let metCount = 0;
+  
+  if (isTargetMet(metrics.scaleRate)) metCount++;
+  if (isTargetMet(metrics.customerRatioRate)) metCount++;
+  if (isTargetMet(metrics.reGuaranteeRate)) metCount++;
+  if (isTargetMet(metrics.riskShareRate)) metCount++;
+  if (isTargetMet(metrics.leverageRate)) metCount++;
+  if (isTargetMet(0, metrics.compensationStatus)) metCount++;
+  if (isTargetMet(metrics.recoveryRate)) metCount++;
+  if (metrics.filingRate && isTargetMet(metrics.filingRate)) metCount++;
+  
+  if (metCount >= 6) return '优秀';
+  if (metCount >= 4) return '良好';
+  if (metCount >= 3) return '达标';
+  return '待改进';
 }
 
 function normalizeRegionLevel(name: string): SpreadsheetInstitution['regionLevel'] {
@@ -157,45 +192,120 @@ const SHORT_NAME_MAP: Record<string, string> = {
 };
 
 async function buildInstitutions() {
+  console.log('[评价报告] 开始读取 Excel 文件:', EVALUATION_SPREADSHEET);
   const workbookBuffer = await fs.readFile(EVALUATION_SPREADSHEET);
+  console.log('[评价报告] Excel 文件读取成功，大小:', workbookBuffer.length, 'bytes');
   const workbook = XLSX.read(workbookBuffer, { type: 'buffer' });
+  console.log('[评价报告] Excel 解析成功，工作表:', workbook.SheetNames);
   const sheetName = workbook.SheetNames[0];
-  const rows = XLSX.utils.sheet_to_json<Array<string | number | null>>(workbook.Sheets[sheetName], {
+  const worksheet = workbook.Sheets[sheetName];
+  
+  // Excel 表头在第 15 行开始，前 3 行是复杂表头，第 4 行开始是数据
+  const rows = XLSX.utils.sheet_to_json<Array<string | number | null>>(worksheet, {
     header: 1,
-    defval: null,
+    defval: '',
+    raw: false,
+    range: 14, // 从第 15 行开始 (0-based)
   });
+  console.log('[评价报告] Excel 总行数:', rows.length);
 
-  const dataRows = rows.slice(4).filter((row) => typeof row[0] === 'number');
+  // 跳过前 3 行表头，从第 4 行开始是数据
+  const dataRows = rows.slice(3).filter((row) => {
+    const nameCell = row[1];
+    return nameCell && typeof nameCell === 'string' && nameCell.trim().length > 0;
+  });
+  console.log('[评价报告] 有效数据行数:', dataRows.length);
+  if (dataRows.length > 0) {
+    console.log('[评价报告] 第一条数据:', dataRows[0]);
+  }
 
-  return dataRows.map((row) => {
-    const name = String(row[1] ?? '');
-    const targetScale = Number(row[2]) || 0;
-    const actualScale = Number(row[3]) || 0;
-    const completionRate = targetScale > 0 ? actualScale / targetScale : 0;
-    const targetCustomer = Number(row[4]) || 0;
-    const actualCustomer = Number(row[5]) || 0;
-    const customerCompletionRate = targetCustomer > 0 ? actualCustomer / targetCustomer : 0;
-
+  return dataRows.map((row, index) => {
+    const name = String(row[1] ?? '').trim();
+    const shortName = String(row[2] ?? '').trim();
+    
+    // 8 项核心指标解析（根据实际 Excel 列位置）
+    // 新增担保业务规模（亿元）
+    const targetScale = parseFloat(String(row[6] ?? '0').replace(/,/g, '')) || 0;
+    const actualScale = parseFloat(String(row[7] ?? '0').replace(/,/g, '')) || 0;
+    const scaleCompletionRate = targetScale > 0 ? actualScale / targetScale : 0;
+    
+    // 小微三农融资担保占比
+    const targetCustomerRatio = parseFloat(String(row[9]?.toString().replace('%', '') ?? '0')) / 100 || 0;
+    const actualCustomerRatio = parseFloat(String(row[10]?.toString().replace('%', '') ?? '0')) / 100 || 0;
+    const customerRatioCompletionRate = targetCustomerRatio > 0 ? actualCustomerRatio / targetCustomerRatio : 0;
+    
+    // 再担保规模（亿元）
+    const targetReGuarantee = parseFloat(String(row[15] ?? '0').replace(/,/g, '')) || 0;
+    const actualReGuarantee = parseFloat(String(row[16] ?? '0').replace(/,/g, '')) || 0;
+    const reGuaranteeCompletionRate = targetReGuarantee > 0 ? actualReGuarantee / targetReGuarantee : 0;
+    
+    // 分险业务占比
+    const targetRiskShare = parseFloat(String(row[18]?.toString().replace('%', '') ?? '0')) / 100 || 0;
+    const actualRiskShare = parseFloat(String(row[19]?.toString().replace('%', '') ?? '0')) / 100 || 0;
+    const riskShareCompletionRate = targetRiskShare > 0 ? actualRiskShare / targetRiskShare : 0;
+    
+    // 担保放大倍数
+    const targetLeverage = parseFloat(String(row[21] ?? '0').replace(/,/g, '')) || 0;
+    const actualLeverage = parseFloat(String(row[22]?.toString().replace(/%/g, '').replace(/,/g, '')) ?? '0') || 0;
+    const leverageCompletionRate = targetLeverage > 0 ? actualLeverage / targetLeverage : 0;
+    
+    // 合作业务代偿率
+    const targetCompensationRate = parseFloat(String(row[24] ?? '0').replace(/,/g, '')) || 0;
+    const actualCompensationRate = parseFloat(String(row[25]?.toString().replace('%', '') ?? '0')) / 100 || 0;
+    const compensationRateStatus = actualCompensationRate <= targetCompensationRate ? '达标' : '超标';
+    
+    // 代偿补偿返还率
+    const targetRecoveryRate = parseFloat(String(row[27]?.toString().replace('%', '') ?? '0')) / 100 || 0;
+    const actualRecoveryRate = parseFloat(String(row[28]?.toString().replace('%', '') ?? '0')) / 100 || 0;
+    const recoveryRateCompletionRate = targetRecoveryRate > 0 ? actualRecoveryRate / targetRecoveryRate : 0;
+    
+    // 备案率（假设有这个字段）
+    const filingRate = 0; // 暂时设为 0
+    
+    // 政策打分（需要计算或从其他列读取）
+    const policyScore = 0; // 暂时设为 0
+    
+    // 评估总体状态
+    const overallStatus = detectOverallStatus({
+      scaleRate: scaleCompletionRate,
+      customerRatioRate: customerRatioCompletionRate,
+      reGuaranteeRate: reGuaranteeCompletionRate,
+      riskShareRate: riskShareCompletionRate,
+      leverageRate: leverageCompletionRate,
+      compensationStatus: compensationRateStatus,
+      recoveryRate: recoveryRateCompletionRate,
+      filingRate,
+    });
+    
     return spreadsheetInstitutionSchema.parse({
-      id: `eval-${String(row[0]).padStart(2, '0')}`,
+      id: `eval-${String(index + 1).padStart(2, '0')}`,
       name,
-      shortName: SHORT_NAME_MAP[name] ?? name.replace(/(融资担保股份有限公司 | 融资担保集团有限公司 | 融资担保有限责任公司 | 融资担保有限公司 | 中小企业融资担保有限责任公司)$/u, ''),
+      shortName: SHORT_NAME_MAP[name] ?? (shortName || name.replace(/(融资担保股份有限公司 | 融资担保集团有限公司 | 融资担保有限责任公司 | 融资担保有限公司 | 中小企业融资担保有限责任公司)$/u, '')),
       regionLevel: normalizeRegionLevel(name),
-      rating: String(row[14] ?? ''),
+      rating: '', // 暂时没有评级数据
       targetScale,
       actualScale,
-      completionRate,
-      targetCustomer,
-      actualCustomer,
-      customerCompletionRate,
-      leverage: Number(row[6]) || 0,
-      filingRate: Number(row[7]) || 0,
-      riskShareRatio: Number(row[8]) || 0,
-      inclusiveRatio: Number(row[9]) || 0,
-      compensationRate: Number(row[10]) || 0,
-      recoveryRate: Number(row[11]) || 0,
-      policyScore: Number(row[12]) || 0,
-      groupKey: detectGroup(completionRate),
+      scaleCompletionRate,
+      targetCustomerRatio,
+      actualCustomerRatio,
+      customerRatioCompletionRate,
+      targetReGuarantee,
+      actualReGuarantee,
+      reGuaranteeCompletionRate,
+      targetRiskShare,
+      actualRiskShare,
+      riskShareCompletionRate,
+      targetLeverage,
+      actualLeverage,
+      leverageCompletionRate,
+      targetCompensationRate,
+      actualCompensationRate,
+      compensationRateStatus,
+      targetRecoveryRate,
+      actualRecoveryRate,
+      recoveryRateCompletionRate,
+      policyScore,
+      overallStatus,
     });
   });
 }
@@ -204,8 +314,8 @@ function buildReport(data: {
   institutions: Array<SpreadsheetInstitution & { displayLabel: string; remark: string }>;
   groups: EvaluationReportData['groups'];
 }): EvaluationReportData['report'] {
-  const excellentCount = data.institutions.filter((i) => i.groupKey === 'excellent').length;
-  const goodCount = data.institutions.filter((i) => i.groupKey === 'good').length;
+  const excellentCount = data.institutions.filter((i) => i.overallStatus === '优秀').length;
+  const goodCount = data.institutions.filter((i) => i.overallStatus === '良好').length;
   const totalTarget = data.institutions.reduce((sum, i) => sum + i.targetScale, 0);
   const totalActual = data.institutions.reduce((sum, i) => sum + i.actualScale, 0);
   const overallRate = totalTarget > 0 ? totalActual / totalTarget : 0;
@@ -278,12 +388,12 @@ export async function getEvaluationReportData() {
 
   const institutions = (await buildInstitutions()).map((institution) => ({
     ...institution,
-    displayLabel: GROUP_META[institution.groupKey].title,
+    displayLabel: GROUP_META[institution.overallStatus].title,
     remark: '',
   }));
 
   const groups = (Object.entries(GROUP_META) as Array<[EvaluationGroupKey, (typeof GROUP_META)[EvaluationGroupKey]]>).map(([key, meta]) => {
-    const members = institutions.filter((institution) => institution.groupKey === key);
+    const members = institutions.filter((institution) => institution.overallStatus === key);
     const totalTarget = members.reduce((sum, m) => sum + m.targetScale, 0);
     const totalActual = members.reduce((sum, m) => sum + m.actualScale, 0);
     const avgCompletionRate = totalTarget > 0 ? totalActual / totalTarget : 0;
@@ -311,16 +421,16 @@ export async function getEvaluationReportData() {
       targetTotal,
       actualTotal,
       overallCompletionRate: targetTotal > 0 ? actualTotal / targetTotal : 0,
-      excellentCount: groups.find((g) => g.key === 'excellent')?.count ?? 0,
-      goodCount: groups.find((g) => g.key === 'good')?.count ?? 0,
+      excellentCount: groups.find((g) => g.key === '优秀')?.count ?? 0,
+      goodCount: groups.find((g) => g.key === '良好')?.count ?? 0,
     },
     institutions,
     groups,
     summary: {
       oneLiner: `2025 年度 ${institutions.length} 家机构累计完成 ${actualTotal.toFixed(2)} 亿元，完成率 ${((targetTotal > 0 ? actualTotal / targetTotal : 0) * 100).toFixed(1)}%。`,
       highlights: [
-        `优秀机构 ${groups.find((g) => g.key === 'excellent')?.count ?? 0} 家`,
-        `良好机构 ${groups.find((g) => g.key === 'good')?.count ?? 0} 家`,
+        `优秀机构 ${groups.find((g) => g.key === '优秀')?.count ?? 0} 家`,
+        `良好机构 ${groups.find((g) => g.key === '良好')?.count ?? 0} 家`,
         '整体完成率达标',
       ],
       executionNotes: [

@@ -26,7 +26,7 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
   const params = await searchParams;
   const data = await getEvaluationReportData();
   const selectedGroup = typeof params?.group === 'string' ? params.group : undefined;
-  const institutions = selectedGroup ? data.institutions.filter((item) => item.groupKey === selectedGroup) : data.institutions;
+  const institutions = selectedGroup ? data.institutions.filter((item) => item.overallStatus === selectedGroup) : data.institutions;
 
   return (
     <>
@@ -45,15 +45,6 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
             <p className="mt-3 max-w-2xl text-sm leading-6 text-on-surface-variant">
               2025 年度合作担保机构经营情况与政策目标完成评价报告生成与分析
             </p>
-          </div>
-          <div className="flex gap-3">
-            <Link href="/api/evaluation-report/export-summary" className="rounded-2xl border border-outline-variant/20 bg-white px-4 py-3 text-sm font-bold text-primary transition hover:bg-surface-container-low">
-              导出摘要
-            </Link>
-            <Link href="/evaluation-report/report?generate=1" className="flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-black text-white shadow-[0_14px_28px_rgba(11,28,48,0.16)] transition hover:-translate-y-0.5">
-              <FileSpreadsheet className="h-4 w-4" />
-              生成评价报告
-            </Link>
           </div>
         </section>
 
@@ -118,15 +109,20 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
             </div>
           </div>
 
-          <div className="mb-4 flex flex-wrap gap-2">
-            <Link href="/evaluation-report" className={`rounded-full px-3 py-1.5 text-[11px] font-black ${!selectedGroup ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface-variant'}`}>
-              全部
-            </Link>
-            {data.groups.map((group) => (
-              <Link key={group.key} href={`/evaluation-report?group=${group.key}`} className={`rounded-full px-3 py-1.5 text-[11px] font-black ${selectedGroup === group.key ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface-variant'}`}>
-                {group.title}
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Link href="/evaluation-report" className={`rounded-full px-3 py-1.5 text-[11px] font-black ${!selectedGroup ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface-variant'}`}>
+                全部
               </Link>
-            ))}
+              {data.groups.map((group) => (
+                <Link key={group.key} href={`/evaluation-report?group=${group.key}`} className={`rounded-full px-3 py-1.5 text-[11px] font-black ${selectedGroup === group.key ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface-variant'}`}>
+                  {group.title}
+                </Link>
+              ))}
+            </div>
+            <div className="text-xs text-on-surface-variant">
+              共 {institutions.length} 家机构 · 按 8 项指标完成率排序
+            </div>
           </div>
 
           <div className="max-w-full overflow-x-auto rounded-3xl border border-outline-variant/20 bg-surface-container-low">
@@ -137,20 +133,17 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
                   <th className="px-3 py-3">简称</th>
                   <th className="px-3 py-3">区域</th>
                   <th className="px-3 py-3">评级</th>
-                  <th className="px-3 py-3 text-right">目标规模</th>
-                  <th className="px-3 py-3 text-right">实际完成</th>
-                  <th className="px-3 py-3 text-right">完成率</th>
-                  <th className="px-3 py-3 text-right">目标客户数</th>
-                  <th className="px-3 py-3 text-right">实际客户数</th>
+                  <th className="px-3 py-3 text-right">规模完成率</th>
                   <th className="px-3 py-3 text-right">客户完成率</th>
-                  <th className="px-3 py-3 text-right">担保放大倍数</th>
-                  <th className="px-3 py-3 text-right">备案率</th>
-                  <th className="px-3 py-3 text-right">分险业务占比</th>
-                  <th className="px-3 py-3 text-right">支小支农占比</th>
-                  <th className="px-3 py-3 text-right">担保代偿率</th>
-                  <th className="px-3 py-3 text-right">代偿返还率</th>
+                  <th className="px-3 py-3 text-right">再担保完成率</th>
+                  <th className="px-3 py-3 text-right">分险完成率</th>
+                  <th className="px-3 py-3 text-right">杠杆完成率</th>
+                  <th className="px-3 py-3 text-right">代偿率状态</th>
+                  <th className="px-3 py-3 text-right">返还完成率</th>
+                  <th className="px-3 py-3 text-right">备案完成率</th>
                   <th className="px-3 py-3 text-right">政策打分</th>
-                  <th className="px-3 py-3">分组</th>
+                  <th className="px-3 py-3">综合评价</th>
+                  <th className="px-3 py-3">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -172,34 +165,46 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
                       </span>
                     </td>
                     <td className="px-3 py-3 text-on-surface-variant">{item.rating}</td>
-                    <td className="px-3 py-3 text-right font-semibold text-primary">{formatNumber(item.targetScale)}</td>
-                    <td className="px-3 py-3 text-right font-semibold text-primary">{formatNumber(item.actualScale)}</td>
                     <td className="px-3 py-3 text-right">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                        item.completionRate >= 1.0 ? 'bg-emerald-100 text-emerald-700' :
-                        item.completionRate >= 0.9 ? 'bg-blue-100 text-blue-700' :
-                        item.completionRate >= 0.7 ? 'bg-amber-100 text-amber-700' :
+                        item.scaleCompletionRate >= 1.0 ? 'bg-emerald-100 text-emerald-700' :
+                        item.scaleCompletionRate >= 0.9 ? 'bg-blue-100 text-blue-700' :
+                        item.scaleCompletionRate >= 0.7 ? 'bg-amber-100 text-amber-700' :
                         'bg-red-100 text-red-700'
                       }`}>
-                        {formatRatio(item.completionRate)}
+                        {formatRatio(item.scaleCompletionRate)}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatNumber(item.targetCustomer, 0)}</td>
-                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatNumber(item.actualCustomer, 0)}</td>
-                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.customerCompletionRate)}</td>
-                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatNumber(item.leverage, 3)}</td>
-                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.filingRate)}</td>
-                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.riskShareRatio)}</td>
-                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.inclusiveRatio)}</td>
-                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.compensationRate)}</td>
-                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.recoveryRate)}</td>
+                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.customerRatioCompletionRate)}</td>
+                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.reGuaranteeCompletionRate)}</td>
+                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.riskShareCompletionRate)}</td>
+                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.leverageCompletionRate)}</td>
+                    <td className="px-3 py-3 text-right">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        item.compensationRateStatus === '达标' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                      }`}>
+                        {item.compensationRateStatus}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.recoveryRateCompletionRate)}</td>
+                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.filingRate || 0)}</td>
                     <td className="px-3 py-3 text-right text-on-surface-variant">{formatNumber(item.policyScore, 1)}</td>
                     <td className="px-3 py-3">
+                      <span className={`rounded-full bg-surface-container px-2 py-0.5 text-[10px] font-bold ${
+                        item.overallStatus === '优秀' ? 'bg-emerald-100 text-emerald-700' :
+                        item.overallStatus === '良好' ? 'bg-blue-100 text-blue-700' :
+                        item.overallStatus === '达标' ? 'bg-amber-100 text-amber-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        {item.overallStatus}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3">
                       <Link
-                        href={`/evaluation-report?group=${item.groupKey}`}
-                        className="rounded-full bg-surface-container px-2 py-0.5 text-[10px] font-bold text-on-surface-variant hover:bg-primary hover:text-white"
+                        href={`/evaluation-report/generate?id=${item.id}`}
+                        className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-white hover:bg-primary/90"
                       >
-                        {item.displayLabel}
+                        生成评价报告
                       </Link>
                     </td>
                   </tr>
