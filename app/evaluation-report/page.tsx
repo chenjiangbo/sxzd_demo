@@ -3,6 +3,8 @@ import { Download, FileSpreadsheet, Target, TrendingUp } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { getEvaluationReportData } from '@/lib/server/evaluation-report';
+import { Suspense } from 'react';
+import EvaluationReportPreviewClient from '@/components/evaluation/EvaluationReportPreviewClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +13,8 @@ type Props = {
     group?: string;
     year?: string;
     page?: string;
+    generate?: string;
+    id?: string;
     [key: string]: string | undefined;
   }>;
 };
@@ -29,6 +33,8 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
   const selectedGroup = typeof params?.group === 'string' ? params.group : undefined;
   const currentPage = parseInt(params?.page ?? '1');
   const pageSize = 10;
+  const showPreview = params?.generate === '1';
+  const institutionId = params?.id;
 
   const institutions = selectedGroup
     ? data.institutions.filter((item) => item.overallStatus === selectedGroup)
@@ -44,6 +50,12 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
     <>
       <Sidebar />
       <Header />
+
+      {showPreview && institutionId && (
+        <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>}>
+          <EvaluationReportPreviewClient institutionId={institutionId} />
+        </Suspense>
+      )}
 
       <main className="ml-48 min-h-screen overflow-x-hidden bg-surface px-6 pb-8 pt-20">
         <section className="mb-6 flex items-end justify-between gap-6">
@@ -203,7 +215,7 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
                     </td>
                     <td className="px-3 py-3 w-[100px]">
                       <Link
-                        href={`/evaluation-report/generate?id=${item.id}`}
+                        href={`/evaluation-report?generate=1&id=${item.id}${selectedGroup ? `&group=${selectedGroup}` : ''}${currentPage > 1 ? `&page=${currentPage}` : ''}`}
                         className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-white hover:bg-primary/90"
                       >
                         生成评价报告
