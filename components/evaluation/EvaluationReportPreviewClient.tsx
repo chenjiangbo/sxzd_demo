@@ -40,7 +40,7 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
         for (const line of lines) {
           if (!line.startsWith('data:')) continue;
           const data = JSON.parse(line.slice(5)) as StreamMessage;
-          
+
           if (data.type === 'status') {
             setStatusText(data.text);
           } else if (data.type === 'chunk') {
@@ -114,7 +114,7 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleClose}>
-      <div 
+      <div
         className="h-[90vh] w-full max-w-5xl bg-white shadow-2xl overflow-y-auto mx-4"
         onClick={(e) => e.stopPropagation()}
         style={{ borderRadius: '0' }}
@@ -123,7 +123,7 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant/20 bg-white px-8 py-4 shadow-sm">
           <div>
             <h1 className="text-lg font-black text-primary">{institutionName}评价报告</h1>
-            <p className="text-xs text-on-surface-variant">AI 自动生成 · HTML 格式</p>
+            <p className="text-xs text-on-surface-variant">AI 自动生成</p>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -147,16 +147,16 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
 
         {/* Content - A4 Paper Style */}
         <main className="mx-auto max-w-4xl px-6 py-8">
-          <div 
+          <div
             className="rounded-xl bg-white p-8 shadow-sm min-h-[842px]"
-            style={{ 
+            style={{
               boxShadow: '0 4px 6px rgba(0,0,0,0.07)',
             }}
           >
-            <div 
+            <div
               className="prose prose-sm max-w-none"
               dangerouslySetInnerHTML={{ __html: reportHtml }}
-              style={{ 
+              style={{
                 fontFamily: "'SimSun', serif",
                 fontSize: '14px',
                 lineHeight: '1.8',
