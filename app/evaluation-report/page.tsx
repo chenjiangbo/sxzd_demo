@@ -53,7 +53,7 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
 
       {showPreview && institutionId && (
         <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>}>
-          <EvaluationReportPreviewClient institutionId={institutionId} />
+          <EvaluationReportPreviewClient institutionId={institutionId} selectedGroup={selectedGroup || null} currentPage={currentPage > 1 ? currentPage.toString() : null} />
         </Suspense>
       )}
 

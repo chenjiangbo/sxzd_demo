@@ -12,12 +12,11 @@ type StreamMessage =
 
 interface EvaluationReportPreviewClientProps {
   institutionId: string;
+  selectedGroup: string | null;
+  currentPage: string | null;
 }
 
-export default function EvaluationReportPreviewClient({ institutionId }: EvaluationReportPreviewClientProps) {
-  const searchParams = useSearchParams();
-  const selectedGroup = searchParams.get('group');
-  const currentPage = searchParams.get('page');
+export default function EvaluationReportPreviewClient({ institutionId, selectedGroup, currentPage }: EvaluationReportPreviewClientProps) {
   const [loading, setLoading] = useState(true);
   const [statusText, setStatusText] = useState('');
   const [reportHtml, setReportHtml] = useState('');
@@ -75,7 +74,8 @@ export default function EvaluationReportPreviewClient({ institutionId }: Evaluat
     if (selectedGroup) params.set('group', selectedGroup);
     if (currentPage) params.set('page', currentPage);
     if (params.toString()) url += `?${params.toString()}`;
-    window.history.pushState({}, '', url);
+    // 使用 window.location.href 直接跳转，确保 URL 变化触发页面重新渲染
+    window.location.href = url;
   };
 
   if (loading) {
@@ -113,10 +113,11 @@ export default function EvaluationReportPreviewClient({ institutionId }: Evaluat
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/50" onClick={handleClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleClose}>
       <div 
-        className="h-full w-full max-w-5xl bg-surface shadow-2xl overflow-y-auto"
+        className="h-[90vh] w-full max-w-5xl bg-white shadow-2xl overflow-y-auto mx-4"
         onClick={(e) => e.stopPropagation()}
+        style={{ borderRadius: '0' }}
       >
         {/* Header */}
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant/20 bg-white px-8 py-4 shadow-sm">
@@ -133,7 +134,10 @@ export default function EvaluationReportPreviewClient({ institutionId }: Evaluat
               下载 Word
             </button>
             <button
-              onClick={handleClose}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClose();
+              }}
               className="rounded-full p-2 hover:bg-surface-container-low transition-colors"
             >
               <X className="h-5 w-5 text-on-surface-variant" />
@@ -142,11 +146,11 @@ export default function EvaluationReportPreviewClient({ institutionId }: Evaluat
         </header>
 
         {/* Content - A4 Paper Style */}
-        <main className="mx-auto max-w-4xl px-6 py-12">
+        <main className="mx-auto max-w-4xl px-6 py-8">
           <div 
-            className="rounded-3xl bg-white p-12 shadow-sm min-h-[842px]"
+            className="rounded-xl bg-white p-8 shadow-sm min-h-[842px]"
             style={{ 
-              boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.07)',
             }}
           >
             <div 
