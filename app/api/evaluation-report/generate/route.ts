@@ -163,8 +163,8 @@ export async function POST(request: NextRequest) {
         let accumulated = '';
         let buffer = '';
 
-        const send = (event: string, data: Record<string, unknown>) => {
-          controller.enqueue(encoder.encode(createSseMessage(event, data)));
+        const send = (type: string, data: Record<string, unknown>) => {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type, ...data })}\n\n`));
         };
 
         send('status', { text: `正在调用模型生成${institution.shortName}评价报告...` });
@@ -175,24 +175,36 @@ export async function POST(request: NextRequest) {
             if (done) break;
 
             buffer += decoder.decode(value, { stream: true });
-            const frames = buffer.split('\n\n');
-            buffer = frames.pop() ?? '';
+            const lines = buffer.split('\n');
+            buffer = lines.pop() ?? '';
 
-            for (const frame of frames) {
-              const lines = frame.split('\n');
-              for (const line of lines) {
-                if (!line.startsWith('data:')) continue;
-                const payload = line.slice(5).trim();
-                if (!payload) continue;
-                if (payload === '[DONE]') {
-                  continue;
+            for (const line of lines) {
+              if (!line.startsWith('data:')) continue;
+              const payload = line.slice(5).trim();
+              if (!payload || payload === '[DONE]') continue;
+
+              try {
+                const parsed = JSON.parse(payload) as {
+                  choices?: Array<{
+                    delta?: {
+                      content?: string | Array<{ type?: string; text?: string }>;
+                    };
+                  }>;
+                };
+
+                const delta = parsed.choices?.[0]?.delta?.content;
+                let text = '';
+                if (typeof delta === 'string') {
+                  text = delta;
+                } else if (Array.isArray(delta)) {
+                  text = delta.map((item) => (item?.text ?? '')).join('');
                 }
 
-                const text = extractDeltaContent(payload);
                 if (!text) continue;
-
                 accumulated += text;
                 send('chunk', { text });
+              } catch {
+                continue;
               }
             }
           }

@@ -74,7 +74,7 @@ export async function createBlackwhiteChatResponse(messages: ChatMessage[], opti
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 120_000);
 
   try {
-    const response = await fetch('http://127.0.0.1:8080/proxy/openrouter/chat/completions', {
+    const response = await fetch('https://ai.realeasyinfo.com/proxy/openrouter/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ export async function createBlackwhiteChatResponse(messages: ChatMessage[], opti
         Authorization: `Bearer ${env.BLACKWHITH_KEY}`,
       },
       body: JSON.stringify({
-        model: options.model ?? 'google/gemini-2.5-flash-lite',
+        model: options.model ?? 'qwen/qwen3.5-plus-02-15',
         stream: options.stream ?? false,
         temperature: options.temperature ?? 0.1,
         messages,

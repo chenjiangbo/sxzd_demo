@@ -151,23 +151,6 @@ export default function BriefPreviewClient() {
     void generate();
   }, [generate]);
 
-  // 监听 HTML 内容变化，更新 iframe 高度
-  useEffect(() => {
-    if (htmlContent) {
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = htmlContent;
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.visibility = 'hidden';
-      tempDiv.style.width = '100%';
-      document.body.appendChild(tempDiv);
-      
-      const height = Math.max(tempDiv.scrollHeight, 1200);
-      setIframeHeight(height);
-      
-      document.body.removeChild(tempDiv);
-    }
-  }, [htmlContent]);
-
   const handleDownload = () => {
     if (!htmlContent) return;
     const blob = new Blob([htmlContent], { type: 'application/msword;charset=utf-8' });
@@ -253,11 +236,22 @@ export default function BriefPreviewClient() {
           {htmlContent ? (
             <div>
               <iframe
+                id="brief-iframe"
                 srcDoc={htmlContent}
-                style={{ width: '100%', height: `${iframeHeight}px`, border: 'none' }}
+                className="w-full border-0"
                 title="简报预览"
-                sandbox="allow-same-origin"
+                sandbox=""
                 scrolling="no"
+                onLoad={() => {
+                  const iframe = document.getElementById('brief-iframe');
+                  if (iframe) {
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                    if (iframeDoc) {
+                      const height = iframeDoc.body.scrollHeight;
+                      iframe.style.height = `${height}px`;
+                    }
+                  }
+                }}
               />
             </div>
         ) : (

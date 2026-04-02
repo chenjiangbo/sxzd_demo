@@ -138,30 +138,30 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
           </div>
 
           <div className="max-w-full overflow-x-auto rounded-3xl border border-outline-variant/20 bg-surface-container-low">
-            <table className="min-w-[2000px] border-collapse text-[11px] text-on-surface">
+            <table className="w-full border-collapse text-[11px] text-on-surface" style={{ tableLayout: 'fixed', minWidth: '1200px' }}>
               <thead>
                 <tr className="border-b border-outline-variant/15 text-left text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">
-                  <th className="px-4 py-3">机构名称</th>
-                  <th className="px-3 py-3">区域</th>
-                  <th className="px-3 py-3 text-right">规模完成率</th>
-                  <th className="px-3 py-3 text-right">客户完成率</th>
-                  <th className="px-3 py-3 text-right">再担保完成率</th>
-                  <th className="px-3 py-3 text-right">分险完成率</th>
-                  <th className="px-3 py-3 text-right">杠杆完成率</th>
-                  <th className="px-3 py-3 text-right">代偿率状态</th>
-                  <th className="px-3 py-3">综合评价</th>
-                  <th className="px-3 py-3">操作</th>
+                  <th className="px-2 py-3 w-[140px]">机构名称</th>
+                  <th className="px-2 py-3 w-[60px]">区域</th>
+                  <th className="px-2 py-3 text-right w-[70px]">规模完成率</th>
+                  <th className="px-2 py-3 text-right w-[70px]">客户完成率</th>
+                  <th className="px-2 py-3 text-right w-[70px]">再担保完成率</th>
+                  <th className="px-2 py-3 text-right w-[70px]">分险完成率</th>
+                  <th className="px-2 py-3 text-right w-[70px]">杠杆完成率</th>
+                  <th className="px-2 py-3 text-right w-[70px]">代偿率状态</th>
+                  <th className="px-2 py-3 w-[60px]">综合评价</th>
+                  <th className="px-3 py-3 w-[100px]">操作</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedInstitutions.map((item, index) => (
                   <tr key={item.id} className={index % 2 === 0 ? 'bg-white' : 'bg-surface-container-low/40'}>
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-3 w-[140px]">
                       <div>
-                        <p className="font-bold text-primary">{item.name}</p>
+                        <p className="font-bold text-primary truncate" title={item.name}>{item.name}</p>
                       </div>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-2 py-3 w-[60px]">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                         item.regionLevel === '省级' ? 'bg-primary/10 text-primary' :
                         item.regionLevel === '市级' ? 'bg-secondary/10 text-secondary' :
@@ -170,7 +170,7 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
                         {item.regionLevel}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-right">
+                    <td className="px-2 py-3 text-right w-[70px]">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                         item.scaleCompletionRate >= 1.0 ? 'bg-emerald-100 text-emerald-700' :
                         item.scaleCompletionRate >= 0.9 ? 'bg-blue-100 text-blue-700' :
@@ -180,18 +180,18 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
                         {formatRatio(item.scaleCompletionRate)}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.customerRatioCompletionRate)}</td>
-                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.reGuaranteeCompletionRate)}</td>
-                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.riskShareCompletionRate)}</td>
-                    <td className="px-3 py-3 text-right text-on-surface-variant">{formatRatio(item.leverageCompletionRate)}</td>
-                    <td className="px-3 py-3 text-right">
+                    <td className="px-2 py-3 text-right w-[70px] text-on-surface-variant">{formatRatio(item.customerRatioCompletionRate)}</td>
+                    <td className="px-2 py-3 text-right w-[70px] text-on-surface-variant">{formatRatio(item.reGuaranteeCompletionRate)}</td>
+                    <td className="px-2 py-3 text-right w-[70px] text-on-surface-variant">{formatRatio(item.riskShareCompletionRate)}</td>
+                    <td className="px-2 py-3 text-right w-[70px] text-on-surface-variant">{formatRatio(item.leverageCompletionRate)}</td>
+                    <td className="px-2 py-3 text-right w-[70px]">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                         item.compensationRateStatus === '达标' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
                       }`}>
                         {item.compensationRateStatus}
                       </span>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-2 py-3 w-[60px]">
                       <span className={`rounded-full bg-surface-container px-2 py-0.5 text-[10px] font-bold ${
                         item.overallStatus === '优秀' ? 'bg-emerald-100 text-emerald-700' :
                         item.overallStatus === '良好' ? 'bg-blue-100 text-blue-700' :
@@ -201,7 +201,7 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
                         {item.overallStatus}
                       </span>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-3 py-3 w-[100px]">
                       <Link
                         href={`/evaluation-report/generate?id=${item.id}`}
                         className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-white hover:bg-primary/90"
