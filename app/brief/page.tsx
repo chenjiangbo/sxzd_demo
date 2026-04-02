@@ -129,6 +129,7 @@ export default function BriefPage() {
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
               <h2 className="font-headline text-xl font-black text-primary">担保业务统计表格</h2>
+              <p className="mt-1.5 text-sm text-on-surface-variant">以下列表按 Excel 统计表逐行展示全部字段，可点击生成简报按钮导出 Word 文档。</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-surface-container-low px-3 py-2">

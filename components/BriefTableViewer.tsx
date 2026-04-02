@@ -58,8 +58,8 @@ export default function BriefTableViewer({ tables }: Props) {
       <section className="rounded-3xl bg-white p-6 shadow-sm">
         <h2 className="mb-4 font-headline text-xl font-black text-primary">{currentTable.caption || ''}</h2>
         
-        <div className="overflow-x-auto">
-          <table className="min-w-full border-collapse text-[11px] text-on-surface">
+        <div className="max-w-full overflow-x-auto rounded-3xl border border-outline-variant/20 bg-surface-container-low">
+          <table className="min-w-[2000px] border-collapse text-[11px] text-on-surface">
             <thead>
               <tr className="border-b border-outline-variant/15 text-left text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">
                 {(currentTable.headers || []).map((header, idx) => (
