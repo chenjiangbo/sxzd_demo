@@ -3,11 +3,15 @@ import { z } from 'zod';
 const blackwhiteEnvSchema = z.object({
   BLACKWHITH_APPID: z.string().min(1, 'BLACKWHITH_APPID is required'),
   BLACKWHITH_KEY: z.string().min(1, 'BLACKWHITH_KEY is required'),
+  BLACKWHITH_BASE_URL: z.string().url('BLACKWHITH_BASE_URL is required'),
+  BLACKWHITH_MODEL: z.string().min(1).default('google/gemini-2.5-flash-lite'),
 });
 
 const env = blackwhiteEnvSchema.parse({
   BLACKWHITH_APPID: process.env.BLACKWHITH_APPID,
   BLACKWHITH_KEY: process.env.BLACKWHITH_KEY,
+  BLACKWHITH_BASE_URL: process.env.BLACKWHITH_BASE_URL,
+  BLACKWHITH_MODEL: process.env.BLACKWHITH_MODEL,
 });
 
 export type ChatMessage =
@@ -74,7 +78,7 @@ export async function createBlackwhiteChatResponse(messages: ChatMessage[], opti
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 120_000);
 
   try {
-    const response = await fetch('https://ai.realeasyinfo.com/proxy/openrouter/chat/completions', {
+    const response = await fetch(`${env.BLACKWHITH_BASE_URL}/proxy/openrouter/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -82,7 +86,7 @@ export async function createBlackwhiteChatResponse(messages: ChatMessage[], opti
         Authorization: `Bearer ${env.BLACKWHITH_KEY}`,
       },
       body: JSON.stringify({
-        model: options.model ?? 'qwen/qwen3.5-plus-02-15',
+        model: options.model ?? env.BLACKWHITH_MODEL,
         stream: options.stream ?? false,
         temperature: options.temperature ?? 0.1,
         messages,

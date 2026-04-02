@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ArrowRight,
   Bot,
   CheckCircle2,
   ChevronRight,
@@ -11,10 +12,21 @@ import {
   LoaderCircle,
   MessageSquare,
   PanelRightOpen,
+  Trash2,
   Send,
   Sparkles,
 } from 'lucide-react';
-import type { AiReviewContext, ReviewConclusion, ReviewDocumentType, ReviewIssue, ReviewResult, ReviewStatus } from '@/lib/server/ai-review';
+import type {
+  AiReviewContext,
+  ConversationEntry,
+  ExperienceItem,
+  ReviewConclusion,
+  ReviewDocumentType,
+  ReviewIssue,
+  ReviewResult,
+  ReviewRound,
+  ReviewStatus,
+} from '@/lib/server/ai-review';
 import { useRouter } from 'next/navigation';
 
 type Props = {
@@ -25,11 +37,11 @@ type Props = {
 type ChatEntry =
   | { kind: 'system'; id: string; text: string }
   | { kind: 'user'; id: string; text: string }
-  | { kind: 'review'; id: string; review: ReviewResult; isLatest: boolean };
+  | { kind: 'assistant'; id: string; text: string }
+  | { kind: 'review'; id: string; round: ReviewRound; isLatest: boolean; fromActiveSession: boolean };
 
-type ActiveConversation = {
-  message: string;
-  review: ReviewResult;
+type ActiveSession = {
+  entries: ChatEntry[];
 };
 
 type SelectionSource = 'documents' | 'history';
@@ -58,42 +70,30 @@ function formatReviewStatusLabel(status: ReviewStatus) {
   return status;
 }
 
-function buildChatEntries(context: AiReviewContext): ChatEntry[] {
+function buildChatEntriesFromConversation(conversation: ConversationEntry[], rounds: ReviewRound[], options?: { fromActiveSession?: boolean }): ChatEntry[] {
+  const latestRoundId = rounds.at(-1)?.id;
   const entries: ChatEntry[] = [];
 
-  if (!context.latestReview) {
+  conversation.forEach((entry) => {
+    if (entry.kind === 'user') {
+      entries.push({ kind: 'user', id: entry.id, text: entry.text });
+      return;
+    }
+    if (entry.kind === 'assistant') {
+      entries.push({ kind: 'assistant', id: entry.id, text: entry.text });
+      return;
+    }
+
+    const round = rounds.find((item) => item.id === entry.roundId);
+    if (!round) return;
     entries.push({
-      kind: 'system',
-      id: 'empty',
-      text: '请选择左侧一个报告，然后输入复核要求，或直接点击“开始复核”。系统会按当前材料类型自动切换审核要点。',
+      kind: 'review',
+      id: entry.id,
+      round,
+      isLatest: round.id === latestRoundId,
+      fromActiveSession: Boolean(options?.fromActiveSession),
     });
-    return entries;
-  }
-
-  if (context.history.length === 0) {
-    entries.push({ kind: 'review', id: 'review-latest', review: context.latestReview, isLatest: true });
-    return entries;
-  }
-
-  let reviewInserted = false;
-  context.history.forEach((item, index) => {
-    if (item.role === 'user') {
-      entries.push({ kind: 'user', id: `user-${index}`, text: item.content });
-      return;
-    }
-
-    if (!reviewInserted) {
-      entries.push({ kind: 'review', id: `review-${index}`, review: context.latestReview!, isLatest: true });
-      reviewInserted = true;
-      return;
-    }
-
-    entries.push({ kind: 'system', id: `assistant-${index}`, text: item.content });
   });
-
-  if (!reviewInserted) {
-    entries.push({ kind: 'review', id: 'review-tail', review: context.latestReview, isLatest: true });
-  }
 
   return entries;
 }
@@ -114,7 +114,8 @@ function formatDocumentBlocks(text: string) {
     });
 }
 
-function ReviewCard({ review, isLatest, animate = false, onProgress }: { review: ReviewResult; isLatest: boolean; animate?: boolean; onProgress?: () => void }) {
+function ReviewCard({ round, isLatest, animate = false, onProgress }: { round: ReviewRound; isLatest: boolean; animate?: boolean; onProgress?: () => void }) {
+  const review = round.review;
   const [summaryText, setSummaryText] = useState(animate ? '' : review.summary);
   const [visibleIssueCount, setVisibleIssueCount] = useState(animate ? 0 : review.issues.length + review.risks.length);
   const [visibleSuggestionCount, setVisibleSuggestionCount] = useState(animate ? 0 : review.suggestions.length);
@@ -190,7 +191,8 @@ function ReviewCard({ review, isLatest, animate = false, onProgress }: { review:
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-black uppercase tracking-[0.16em] text-on-surface-variant">AI 复核结果</p>
-          <h3 className="mt-1 text-lg font-black text-primary">结构化审核意见</h3>
+          <h3 className="mt-1 text-lg font-black text-primary">第 {round.index} 轮复核</h3>
+          <p className="mt-1 text-xs text-on-surface-variant">{round.createdAt.replace('T', ' ').slice(0, 16)}</p>
         </div>
         <div className="flex items-center gap-2">
           {isLatest ? (
@@ -275,12 +277,14 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
   const [selectedType, setSelectedType] = useState<ReviewDocumentType | null>(startEmpty ? null : initialContext.current.type);
   const [selectionSource, setSelectionSource] = useState<SelectionSource>(startEmpty ? 'documents' : 'documents');
   const [showHistoryForSelected, setShowHistoryForSelected] = useState(false);
-  const [activeConversation, setActiveConversation] = useState<ActiveConversation | null>(null);
+  const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
+  const [flyingExperience, setFlyingExperience] = useState<{ id: string; label: string; phase: 'launch' | 'arrive' } | null>(null);
+  const [deletingExperienceId, setDeletingExperienceId] = useState<string | null>(null);
   const activeDocument = useMemo(
     () => (selectedType ? context.documents.find((item) => item.type === selectedType) ?? context.current : null),
     [context, selectedType],
   );
-  const shouldAnimateCurrentConversation = Boolean(activeConversation) && !showHistoryForSelected;
+  const shouldAnimateCurrentConversation = Boolean(activeSession) && !showHistoryForSelected;
 
   const scrollChatToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
     if (activeTab !== 'chat' || !shouldAnimateCurrentConversation) return;
@@ -301,16 +305,13 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
       setSelectedType(initialContext.current.type);
       setSelectionSource('documents');
     }
-    setActiveConversation(null);
+    setActiveSession(null);
   }, [initialContext, selectedType, startEmpty]);
 
   const chatEntries = useMemo(() => {
     if (!selectedType || !showHistoryForSelected) {
-      if (selectedType && activeConversation) {
-        return [
-          { kind: 'user' as const, id: 'active-user', text: activeConversation.message },
-          { kind: 'review' as const, id: 'active-review', review: activeConversation.review, isLatest: true },
-        ];
+      if (selectedType && activeSession) {
+        return activeSession.entries;
       }
 
       return [
@@ -323,8 +324,8 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
         },
       ];
     }
-    return buildChatEntries(context);
-  }, [activeConversation, activeDocument, context, selectedType, showHistoryForSelected]);
+    return buildChatEntriesFromConversation(context.conversation, context.reviewRounds);
+  }, [activeDocument, activeSession, context, selectedType, showHistoryForSelected]);
 
   const documentBlocks = useMemo(() => formatDocumentBlocks(context.draftBody), [context.draftBody]);
 
@@ -343,13 +344,48 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
     setSelectedType(type);
     setSelectionSource(options?.showHistory ? 'history' : 'documents');
     setShowHistoryForSelected(Boolean(options?.showHistory));
-    setActiveConversation(null);
+    setActiveSession(null);
     setActiveTab('chat');
     await reloadContext(type);
     router.replace(`/ai-review?type=${type}`, { scroll: false });
   }
 
-  async function handleReview(message: string) {
+  async function deleteExperience(item: ExperienceItem) {
+    if (!selectedType || deletingExperienceId) return;
+    setDeletingExperienceId(item.id);
+    setError(null);
+    try {
+      const response = await fetch('/api/ai-review/experience', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: selectedType, id: item.id }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || '删除沉淀经验失败');
+      }
+      await reloadContext(selectedType);
+    } catch (deleteError) {
+      setError((deleteError as Error).message);
+    } finally {
+      setDeletingExperienceId(null);
+    }
+  }
+
+  function triggerExperienceFlight(items: ExperienceItem[]) {
+    if (items.length === 0) return;
+    const label = items.length === 1 ? `沉淀经验：${items[0].text}` : `沉淀经验 +${items.length}`;
+    const id = `${items.map((item) => item.id).join('-')}-${Date.now()}`;
+    setFlyingExperience({ id, label, phase: 'launch' });
+    window.setTimeout(() => {
+      setFlyingExperience((current) => (current?.id === id ? { ...current, phase: 'arrive' } : current));
+    }, 30);
+    window.setTimeout(() => {
+      setFlyingExperience((current) => (current?.id === id ? null : current));
+    }, 1200);
+  }
+
+  async function handleReview(message: string, action: 'start' | 'message') {
     setIsReviewing(true);
     setError(null);
     setNotice(null);
@@ -359,7 +395,7 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
       const response = await fetch('/api/ai-review/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: reviewType, message }),
+        body: JSON.stringify({ type: reviewType, message, action }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -367,10 +403,40 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
       }
       await reloadContext(reviewType);
       setSelectionSource('documents');
-      setActiveConversation({ message, review: data.review });
+      setActiveSession((current) => {
+        const baseEntries = action === 'start' ? [] : current?.entries ?? [];
+        const nextEntries = baseEntries.map((entry) =>
+          entry.kind === 'review' ? { ...entry, isLatest: false } : entry,
+        );
+        nextEntries.push({ kind: 'user', id: `user-${Date.now()}`, text: message });
+        if (data.kind === 'review' && data.round) {
+          nextEntries.push({
+            kind: 'review',
+            id: `review-${data.round.id}`,
+            round: data.round,
+            isLatest: true,
+            fromActiveSession: true,
+          });
+        } else if (data.reply) {
+          nextEntries.push({ kind: 'assistant', id: `assistant-${Date.now()}`, text: data.reply });
+        }
+        return { entries: nextEntries };
+      });
+      if (Array.isArray(data.addedExperience) && data.addedExperience.length > 0) {
+        triggerExperienceFlight(data.addedExperience);
+      }
       setInput('');
       setActiveTab('chat');
-      setNotice(data.review.capturedExperiencePoints?.length > 0 ? '已完成重审，并沉淀新的岗位经验。' : '已完成本轮 AI 复核。');
+      if (Array.isArray(data.addedExperience) && data.addedExperience.length > 0) {
+        setNotice(`已新增 ${data.addedExperience.length} 条沉淀经验。`);
+      } else if (data.kind === 'review') {
+        setNotice('已完成本轮复核。');
+      } else {
+        setNotice('已完成本次问答。');
+      }
+      if (data.kind === 'chat') {
+        window.setTimeout(() => scrollChatToBottom('smooth'), 40);
+      }
     } catch (reviewError) {
       setError((reviewError as Error).message);
     } finally {
@@ -592,14 +658,35 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
                       );
                     }
 
+                    if (entry.kind === 'assistant') {
+                      return (
+                        <div key={entry.id} className="flex">
+                          <div className="max-w-[85%] rounded-3xl bg-white px-5 py-4 text-sm leading-6 text-on-surface shadow-sm">
+                            {entry.text}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    if (entry.isLatest) {
+                      return (
+                        <ReviewCard
+                          key={`${entry.id}-${entry.round.review.summary}-${shouldAnimateCurrentConversation ? 'animated' : 'static'}`}
+                          round={entry.round}
+                          isLatest={entry.isLatest}
+                          animate={shouldAnimateCurrentConversation && entry.fromActiveSession}
+                          onProgress={() => scrollChatToBottom()}
+                        />
+                      );
+                    }
+
                     return (
-                      <ReviewCard
-                        key={`${entry.id}-${entry.review.summary}-${shouldAnimateCurrentConversation ? 'animated' : 'static'}`}
-                        review={entry.review}
-                        isLatest={entry.isLatest}
-                        animate={shouldAnimateCurrentConversation && entry.isLatest}
-                        onProgress={() => scrollChatToBottom()}
-                      />
+                      <details key={entry.id} className="rounded-3xl bg-white p-5 shadow-sm">
+                        <summary className="cursor-pointer text-sm font-black text-primary">第 {entry.round.index} 轮复核</summary>
+                        <div className="mt-4">
+                          <ReviewCard round={entry.round} isLatest={false} />
+                        </div>
+                      </details>
                     );
                   })}
                 </div>
@@ -642,8 +729,19 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
               </div>
               <div className="space-y-3">
                 {context.learnedExperience.length > 0 ? context.learnedExperience.map((item) => (
-                  <div key={item} className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm leading-6">
-                    {item}
+                  <div key={item.id} className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm leading-6">
+                    <div className="flex items-start gap-3">
+                      <p className="flex-1">{item.text}</p>
+                      <button
+                        type="button"
+                        onClick={() => void deleteExperience(item)}
+                        disabled={deletingExperienceId === item.id}
+                        className="rounded-full border border-white/15 p-1 text-white/80 transition hover:bg-white/10 disabled:opacity-40"
+                        aria-label="删除沉淀经验"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                 )) : (
                   <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 text-sm leading-6 text-white/80">
@@ -660,8 +758,8 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
               </div>
               <div className="space-y-3">
                 {context.latestAddedExperience.length > 0 ? context.latestAddedExperience.map((item) => (
-                  <div key={item} className="rounded-2xl bg-secondary/5 px-4 py-3 text-sm leading-6 text-on-surface">
-                    {item}
+                  <div key={item.id} className="rounded-2xl bg-secondary/5 px-4 py-3 text-sm leading-6 text-on-surface">
+                    {item.text}
                   </div>
                 )) : null}
               </div>
@@ -669,6 +767,24 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
           </div>
         </aside>
       </div>
+
+      {flyingExperience ? (
+        <div
+          className="pointer-events-none fixed z-30"
+          style={{
+            left: flyingExperience.phase === 'launch' ? '52%' : '86%',
+            top: flyingExperience.phase === 'launch' ? '78%' : '24%',
+            transform: flyingExperience.phase === 'launch' ? 'translate(-50%, -50%) scale(1)' : 'translate(-50%, -50%) scale(0.82)',
+            opacity: flyingExperience.phase === 'launch' ? 1 : 0.15,
+            transition: 'all 0.9s cubic-bezier(0.2, 0.8, 0.2, 1)',
+          }}
+        >
+          <div className="inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-xs font-black text-white shadow-[0_20px_40px_rgba(11,28,48,0.24)]">
+            <ArrowRight className="h-3.5 w-3.5" />
+            {flyingExperience.label}
+          </div>
+        </div>
+      ) : null}
 
       <footer className="fixed bottom-0 right-0 left-48 z-20 border-t border-outline-variant/15 bg-white/96 px-6 py-4 backdrop-blur-md">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
@@ -691,7 +807,7 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
                   event.preventDefault();
                   const message = input.trim();
                   if (message && !isReviewing) {
-                    void handleReview(message);
+                    void handleReview(message, 'message');
                   }
                 }
               }}
@@ -704,7 +820,7 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
               onClick={() => {
                 const message = input.trim();
                 if (message && !isReviewing) {
-                  void handleReview(message);
+                  void handleReview(message, 'message');
                 }
               }}
               disabled={!selectedType || !input.trim() || isReviewing}
@@ -717,7 +833,7 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
 
           <button
             type="button"
-            onClick={() => handleReview(`请审核这份${activeDocument?.label ?? context.current.label}，按当前系统预置要点给出审核意见。`)}
+            onClick={() => handleReview(`请审核这份${activeDocument?.label ?? context.current.label}，按当前系统预置要点给出审核意见。`, 'start')}
             disabled={isReviewing || !selectedType}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-black text-white shadow-sm transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
           >

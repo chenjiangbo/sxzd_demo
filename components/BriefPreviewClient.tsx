@@ -243,7 +243,7 @@ export default function BriefPreviewClient() {
                 sandbox=""
                 scrolling="no"
                 onLoad={() => {
-                  const iframe = document.getElementById('brief-iframe');
+                  const iframe = document.getElementById('brief-iframe') as HTMLIFrameElement | null;
                   if (iframe) {
                     const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
                     if (iframeDoc) {

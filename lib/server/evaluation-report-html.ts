@@ -1,19 +1,50 @@
-/**
- * 评价报告 HTML 渲染工具
- * 将大模型生成的纯文本报告渲染为标准 A4 HTML 文档
- */
-
-export type EvaluationReport = {
-  rawText: string;
-  generatedAt: string;
-  institutionId: string;
-  institutionName: string;
+export type EvaluationInstitutionSnapshot = {
+  id: string;
+  name: string;
+  shortName: string;
+  regionLevel: '省级' | '市级' | '县区';
+  overallStatus: '优秀' | '良好' | '达标' | '待改进';
+  targetScale: number;
+  actualScale: number;
+  scaleCompletionRate: number;
+  targetCustomerRatio: number;
+  actualCustomerRatio: number;
+  customerRatioCompletionRate: number;
+  targetReGuarantee: number;
+  actualReGuarantee: number;
+  reGuaranteeCompletionRate: number;
+  targetRiskShare: number;
+  actualRiskShare: number;
+  riskShareCompletionRate: number;
+  targetLeverage: number;
+  actualLeverage: number;
+  leverageCompletionRate: number;
+  targetCompensationRate: number;
+  actualCompensationRate: number;
+  compensationRateStatus: string;
+  targetRecoveryRate: number;
+  actualRecoveryRate: number;
+  recoveryRateCompletionRate: number;
 };
 
-/**
- * HTML 转义
- */
-function escapeHtml(value: string): string {
+export type EvaluationReportNarrative = {
+  businessAnalysisParagraphs: string[];
+  annualTargetLead: string;
+  annualTargetAnalysisParagraphs: string[];
+  creditUsageParagraphs: string[];
+  conclusionParagraphs: string[];
+};
+
+export type EvaluationReportDocument = {
+  institution: EvaluationInstitutionSnapshot;
+  generatedAt: string;
+  investigator: string;
+  interviewee: string;
+  surveyDate: string;
+  narrative: EvaluationReportNarrative;
+};
+
+function escapeHtml(value: string) {
   return value
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -22,288 +53,200 @@ function escapeHtml(value: string): string {
     .replaceAll("'", '&#39;');
 }
 
-/**
- * 解析报告文本结构
- */
-export function parseEvaluationReportText(text: string): {
-  title: string;
-  institutionInfo: string;
-  sections: Array<{ heading: string; content: string }>;
-  conclusion: string;
-} {
-  const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
-  
-  // 提取标题
-  const titleMatch = text.match(/陕西省政府性融资担保机构综合评价报告/);
-  const title = titleMatch ? '陕西省政府性融资担保机构综合评价报告' : '评价报告';
-  
-  // 提取机构信息
-  const institutionInfoMatch = text.match(/机构名称：[^\n]+/);
-  const institutionInfo = institutionInfoMatch ? institutionInfoMatch[0] : '';
-  
-  // 提取各个章节
-  const sections: Array<{ heading: string; content: string }> = [];
-  const sectionPattern = /([一二三四五六七八九十]+)[、.]([\s\S]*?)(?=[一二三四五六七八九十]+[、.]|$)/g;
-  
-  let match;
-  while ((match = sectionPattern.exec(text)) !== null) {
-    sections.push({
-      heading: match[1] + '、' + match[2].split('\n')[0],
-      content: match[2].trim(),
-    });
-  }
-  
-  // 提取结论
-  const conclusionMatch = text.match(/四、结论\s*([\s\S]*)/);
-  const conclusion = conclusionMatch ? conclusionMatch[1].trim() : '';
-  
-  return {
-    title,
-    institutionInfo,
-    sections,
-    conclusion,
-  };
+function formatNumber(value: number, digits = 2) {
+  return value.toFixed(digits);
 }
 
-/**
- * 渲染评价报告 HTML（标准 A4 格式）
- */
-export function renderEvaluationReportHtml(report: EvaluationReport): string {
-  const parsed = parseEvaluationReportText(report.rawText);
-  
-  // 生成表格 HTML（如果有的话）
-  const tableHtml = report.rawText.includes('单位：亿元、倍、%') 
-    ? generatePolicyTableHtml(report.rawText)
-    : '';
-  
-  const businessTableHtml = report.rawText.includes('业务分类\t业务规模\t占比')
-    ? generateBusinessTableHtml(report.rawText)
-    : '';
+function formatPercent(value: number, digits = 2) {
+  return `${(value * 100).toFixed(digits)}%`;
+}
 
+function renderParagraph(paragraph: string) {
+  return `<p style="margin: 0 0 18px; text-indent: 2em; font-size: 20px; line-height: 2.1; color: #111827;">${escapeHtml(paragraph)}</p>`;
+}
+
+function renderSection(title: string, bodyHtml: string) {
+  return `
+    <section style="margin-top: 0; border: 2px solid #1f2937; border-top: 0;">
+      <div style="border-top: 2px solid #1f2937; border-bottom: 2px solid #1f2937; background: #d9d9d9; padding: 18px 24px;">
+        <div style="font-size: 22px; font-weight: 700; line-height: 1.5; color: #000000; font-family: 'SimSun', 'Songti SC', serif;">${escapeHtml(title)}</div>
+      </div>
+      <div style="padding: 26px 28px 18px;">
+        ${bodyHtml}
+      </div>
+    </section>
+  `;
+}
+
+function buildPolicyRows(institution: EvaluationInstitutionSnapshot) {
+  return [
+    ['目标值', formatNumber(institution.targetScale), formatPercent(institution.targetCustomerRatio), '50.00%', formatNumber(institution.targetReGuarantee), formatPercent(institution.targetRiskShare), formatNumber(institution.targetLeverage), `不超过${formatPercent(institution.targetCompensationRate, 0)}`, formatPercent(institution.targetRecoveryRate)],
+    ['实际值', formatNumber(institution.actualScale), formatPercent(institution.actualCustomerRatio), '（待补充）', formatNumber(institution.actualReGuarantee), formatPercent(institution.actualRiskShare), formatNumber(institution.actualLeverage), formatPercent(institution.actualCompensationRate), formatPercent(institution.actualRecoveryRate)],
+    ['完成进度', formatPercent(institution.scaleCompletionRate), formatPercent(institution.customerRatioCompletionRate), '（待补充）', formatPercent(institution.reGuaranteeCompletionRate), formatPercent(institution.riskShareCompletionRate), formatPercent(institution.leverageCompletionRate), institution.compensationRateStatus, formatPercent(institution.recoveryRateCompletionRate)],
+  ];
+}
+
+function renderPolicyTable(institution: EvaluationInstitutionSnapshot) {
+  const headers = [
+    '指标名称',
+    '新增担保业务规模',
+    '小微三农融资担保业务占比',
+    '单户500万以下融资担保业务占比',
+    '再担保规模',
+    '分险业务占比',
+    '担保放大倍数',
+    '合作业务代偿率',
+    '代偿补偿返还率',
+  ];
+
+  const rows = buildPolicyRows(institution)
+    .map(
+      (row) => `
+        <tr>
+          ${row
+            .map(
+              (cell, index) => `
+                <td style="border: 1.6px solid #1f2937; padding: 16px 10px; text-align: center; vertical-align: middle; font-size: 17px; line-height: 1.7; ${
+                  index === 0 ? 'font-weight: 700; width: 120px;' : ''
+                }">
+                  ${escapeHtml(cell)}
+                </td>`,
+            )
+            .join('')}
+        </tr>`,
+    )
+    .join('');
+
+  return `
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 8px; font-size: 17px; color: #111827;">单位：亿元、倍、%</div>
+    <table style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 18px;">
+      <thead>
+        <tr>
+          ${headers
+            .map(
+              (header, index) => `
+                <th style="border: 1.8px solid #1f2937; padding: 18px 10px; background: #ffffff; text-align: center; vertical-align: middle; font-size: 17px; line-height: 1.65; font-weight: 700; ${
+                  index === 0 ? 'width: 120px;' : ''
+                }">
+                  ${escapeHtml(header)}
+                </th>`,
+            )
+            .join('')}
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function renderBusinessStructureTable() {
+  const rows = [
+    ['1', '业务构成明细', '（待补充）', '（待补充）'],
+    ['2', '业务构成明细', '（待补充）', '（待补充）'],
+    ['合计', '合计', '（待补充）', '100.00%'],
+  ];
+
+  return `
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 8px; font-size: 17px; color: #111827;">单位：万元</div>
+    <table style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 18px;">
+      <thead>
+        <tr>
+          <th style="border: 1.8px solid #1f2937; padding: 14px 10px; width: 90px; text-align: center; font-size: 17px; font-weight: 700;">序号</th>
+          <th style="border: 1.8px solid #1f2937; padding: 14px 10px; text-align: center; font-size: 17px; font-weight: 700;">业务分类</th>
+          <th style="border: 1.8px solid #1f2937; padding: 14px 10px; width: 180px; text-align: center; font-size: 17px; font-weight: 700;">业务规模</th>
+          <th style="border: 1.8px solid #1f2937; padding: 14px 10px; width: 180px; text-align: center; font-size: 17px; font-weight: 700;">占比</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows
+          .map(
+            (row) => `
+              <tr>
+                ${row
+                  .map(
+                    (cell) => `
+                      <td style="border: 1.6px solid #1f2937; padding: 16px 10px; text-align: center; vertical-align: middle; font-size: 17px; line-height: 1.7;">
+                        ${escapeHtml(cell)}
+                      </td>`,
+                  )
+                  .join('')}
+              </tr>`,
+          )
+          .join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderCover(document: EvaluationReportDocument) {
+  return `
+    <section style="min-height: 820px; display: flex; flex-direction: column; justify-content: center; padding: 60px 0 80px;">
+      <h1 style="margin: 0 0 54px; text-align: center; font-size: 30px; line-height: 1.6; font-weight: 700; color: #000000;">陕西省政府性融资担保机构综合评价报告</h1>
+      <div style="max-width: 760px; margin: 0 auto; font-size: 20px; line-height: 2.25; color: #111827;">
+        <p style="margin: 0 0 12px;"><strong>机构名称：</strong>${escapeHtml(document.institution.name)}</p>
+        <p style="margin: 0 0 12px;"><strong>调查部门：</strong>业务一部</p>
+        <p style="margin: 0 0 12px;"><strong>调查人员：</strong>${escapeHtml(document.investigator)}</p>
+        <p style="margin: 0 0 12px;"><strong>约谈对象：</strong>${escapeHtml(document.interviewee)}</p>
+        <p style="margin: 0;"><strong>调查时间：</strong>${escapeHtml(document.surveyDate)}</p>
+      </div>
+    </section>
+  `;
+}
+
+export function renderEvaluationReportBodyHtml(document: EvaluationReportDocument) {
+  const { institution, narrative } = document;
+
+  const section1 = renderSection(
+    '一、经营情况变化及分析',
+    narrative.businessAnalysisParagraphs.map(renderParagraph).join(''),
+  );
+
+  const section2 = renderSection(
+    '二、年度政策目标完成情况',
+    `
+      <p style="margin: 0 0 18px; text-indent: 2em; font-size: 20px; line-height: 2.1; color: #111827;">${escapeHtml(narrative.annualTargetLead)}</p>
+      ${renderPolicyTable(institution)}
+      ${narrative.annualTargetAnalysisParagraphs.map(renderParagraph).join('')}
+    `,
+  );
+
+  const section3 = renderSection(
+    '三、授信使用及业务开展',
+    `
+      ${narrative.creditUsageParagraphs.map(renderParagraph).join('')}
+      ${renderBusinessStructureTable()}
+      <p style="margin: 0 0 18px; text-indent: 2em; font-size: 18px; line-height: 2; color: #6b7280;">当前数据集中未提供该机构业务分类明细，表格保留模板结构，具体数据待补充。</p>
+    `,
+  );
+
+  const section4 = renderSection(
+    '四、结论',
+    narrative.conclusionParagraphs.map(renderParagraph).join(''),
+  );
+
+  return `
+    <div style="background: #f6f8fb; padding: 32px 0;">
+      <div style="width: 1120px; margin: 0 auto; background: #ffffff; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.10); padding: 54px 48px 70px; font-family: 'SimSun', 'Songti SC', serif;">
+        ${renderCover(document)}
+        ${section1}
+        ${section2}
+        ${section3}
+        ${section4}
+      </div>
+    </div>
+  `;
+}
+
+export function renderEvaluationReportHtml(document: EvaluationReportDocument) {
   return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <title>${escapeHtml(parsed.title)}</title>
-  <style>
-    @page {
-      size: A4;
-      margin: 3.7cm 2.6cm 3.5cm 2.8cm;
-    }
-    
-    body {
-      margin: 0;
-      background: #ffffff;
-      font-family: 'Songti SC', 'STSong', 'SimSun', serif;
-      color: #111827;
-      padding: 56px 72px;
-      max-width: 595pt;
-      margin: 0 auto;
-    }
-    
-    h1 {
-      margin: 0 0 28px;
-      text-align: center;
-      font-size: 22px;
-      line-height: 1.8;
-      font-weight: 700;
-    }
-    
-    .institution-info {
-      margin: 0 0 16px;
-      font-size: 15px;
-      line-height: 2;
-    }
-    
-    h2 {
-      margin: 24px 0 12px;
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 2;
-    }
-    
-    p {
-      margin: 0 0 10px;
-      font-size: 15px;
-      line-height: 2;
-      text-indent: 2em;
-    }
-    
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 16px 0;
-      font-size: 12px;
-    }
-    
-    th, td {
-      border: 1px solid #000;
-      padding: 8px 6px;
-      text-align: center;
-    }
-    
-    th {
-      background-color: #f0f0f0;
-      font-weight: 700;
-    }
-    
-    .signature {
-      margin-top: 36px;
-      text-align: right;
-      line-height: 2;
-      font-size: 15px;
-    }
-    
-    .date {
-      margin-top: 22px;
-      text-align: right;
-      font-size: 15px;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeHtml(document.institution.name)}评价报告</title>
 </head>
-<body>
-  <article>
-    <h1>${escapeHtml(parsed.title)}</h1>
-    
-    ${parsed.institutionInfo ? `<div class="institution-info">${escapeHtml(parsed.institutionInfo)}</div>` : ''}
-    
-    ${parsed.sections.map((section, index) => `
-      <h2>${escapeHtml(section.heading)}</h2>
-      ${index === 1 && tableHtml ? tableHtml : ''}
-      ${index === 2 && businessTableHtml ? businessTableHtml : ''}
-      <div>${formatSectionContent(section.content)}</div>
-    `).join('')}
-    
-    ${parsed.conclusion ? `
-      <h2>四、结论</h2>
-      <div>${formatSectionContent(parsed.conclusion)}</div>
-    ` : ''}
-    
-    <div class="signature">
-      <p>业务一部</p>
-    </div>
-    
-    <div class="date">
-      <p>${new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-    </div>
-  </article>
+<body style="margin: 0; background: #f6f8fb;">
+${renderEvaluationReportBodyHtml(document)}
 </body>
 </html>`;
-}
-
-/**
- * 格式化章节内容（处理段落和缩进）
- */
-function formatSectionContent(content: string): string {
-  return content
-    .split('\n')
-    .filter(line => line.trim())
-    .map(line => `<p style="text-indent: 2em;">${escapeHtml(line.trim())}</p>`)
-    .join('');
-}
-
-/**
- * 生成政策指标表格 HTML
- */
-function generatePolicyTableHtml(text: string): string {
-  // 尝试从文本中提取表格数据
-  const tableMatch = text.match(/指标名称[\s\S]*?完成进度[^\n]*/);
-  if (!tableMatch) return '';
-  
-  return `
-    <table>
-      <thead>
-        <tr>
-          <th>指标名称</th>
-          <th>新增担保业务规模</th>
-          <th>小微三农融资担保业务占比</th>
-          <th>单户 500 万以下融资担保业务占比</th>
-          <th>再担保规模</th>
-          <th>分险业务占比</th>
-          <th>担保放大倍数</th>
-          <th>合作业务代偿率</th>
-          <th>代偿补偿返还率</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>目标值</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>不超过 2%</td>
-          <td>10.00%</td>
-        </tr>
-        <tr>
-          <td>实际值</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-        </tr>
-        <tr>
-          <td>完成进度</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-        </tr>
-      </tbody>
-    </table>
-  `;
-}
-
-/**
- * 生成业务分类表格 HTML
- */
-function generateBusinessTableHtml(text: string): string {
-  return `
-    <table>
-      <thead>
-        <tr>
-          <th>业务分类</th>
-          <th>业务规模（万元）</th>
-          <th>占比</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>总对总批量担保业务（国担版和地方版）</td>
-          <td>-</td>
-          <td>-</td>
-        </tr>
-        <tr>
-          <td>其中：国担版银担总对总业务</td>
-          <td>-</td>
-          <td>-</td>
-        </tr>
-        <tr>
-          <td>地方版银担总对总业务</td>
-          <td>-</td>
-          <td>-</td>
-        </tr>
-        <tr>
-          <td>传统直保业务</td>
-          <td>-</td>
-          <td>-</td>
-        </tr>
-        <tr>
-          <td>合计</td>
-          <td>-</td>
-          <td>100.00%</td>
-        </tr>
-      </tbody>
-    </table>
-  `;
 }

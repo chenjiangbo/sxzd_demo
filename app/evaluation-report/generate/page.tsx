@@ -7,8 +7,7 @@ import { ArrowLeft, Download } from 'lucide-react';
 
 type StreamMessage =
   | { type: 'status'; text: string }
-  | { type: 'chunk'; text: string }
-  | { type: 'complete'; text: string; institutionId: string; institutionName: string }
+  | { type: 'complete'; html: string; institutionId: string; institutionName: string }
   | { type: 'error'; message: string };
 
 function EvaluationReportGenerateContent() {
@@ -17,7 +16,7 @@ function EvaluationReportGenerateContent() {
   
   const [loading, setLoading] = useState(true);
   const [statusText, setStatusText] = useState('');
-  const [reportText, setReportText] = useState('');
+  const [reportHtml, setReportHtml] = useState('');
   const [institutionName, setInstitutionName] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -28,53 +27,37 @@ function EvaluationReportGenerateContent() {
       return;
     }
 
-    let accumulated = '';
-    let eventSource: EventSource | null = null;
-
-    const connect = () => {
-      try {
-        fetch('/api/evaluation-report/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ institutionId }),
-        })
-          .then((res) => {
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res.text();
-          })
-          .then((text) => {
-            const lines = text.split('\n');
-            for (const line of lines) {
-              if (!line.startsWith('data:')) continue;
-              const data = JSON.parse(line.slice(5)) as StreamMessage;
-              
-              if (data.type === 'status') {
-                setStatusText(data.text);
-              } else if (data.type === 'chunk') {
-                accumulated += data.text;
-                setReportText(accumulated);
-              } else if (data.type === 'complete') {
-                accumulated = data.text;
-                setReportText(accumulated);
-                setInstitutionName(data.institutionName);
-                setLoading(false);
-              } else if (data.type === 'error') {
-                setError(data.message);
-                setLoading(false);
-              }
-            }
-          })
-          .catch((err) => {
-            setError(err.message || '生成失败');
+    fetch('/api/evaluation-report/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ institutionId }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.text();
+      })
+      .then((text) => {
+        const lines = text.split('\n');
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;
+          const data = JSON.parse(line.slice(5)) as StreamMessage;
+          
+          if (data.type === 'status') {
+            setStatusText(data.text);
+          } else if (data.type === 'complete') {
+            setReportHtml(data.html);
+            setInstitutionName(data.institutionName);
             setLoading(false);
-          });
-      } catch (err) {
-        setError((err as Error).message || '生成失败');
+          } else if (data.type === 'error') {
+            setError(data.message);
+            setLoading(false);
+          }
+        }
+      })
+      .catch((err) => {
+        setError(err.message || '生成失败');
         setLoading(false);
-      }
-    };
-
-    connect();
+      });
   }, [institutionId]);
 
   const handleDownload = () => {
@@ -161,14 +144,8 @@ function EvaluationReportGenerateContent() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-12">
-        <div className="rounded-3xl bg-white p-12 shadow-sm">
-          <div className="prose prose-sm max-w-none">
-            <pre className="whitespace-pre-wrap font-sans text-sm leading-7 text-on-surface">
-              {reportText}
-            </pre>
-          </div>
-        </div>
+      <main className="px-0 py-0">
+        <div dangerouslySetInnerHTML={{ __html: reportHtml }} />
       </main>
     </div>
   );

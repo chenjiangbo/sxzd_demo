@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { execFile } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { promisify } from 'node:util';
 import { z } from 'zod';
 import { blackwhiteJson } from '@/lib/server/blackwhite';
@@ -39,6 +40,12 @@ const reviewSuggestionSchema = z.object({
   basis: z.string().min(1),
 });
 
+const experienceItemSchema = z.object({
+  id: z.string().min(1),
+  text: z.string().min(1),
+  createdAt: z.string().min(1),
+});
+
 const generatedReviewSchema = z
   .object({
     status: reviewStatusSchema,
@@ -66,19 +73,48 @@ const generatedReviewSchema = z
           : [],
   }));
 
+const reviewRoundSchema = z.object({
+  id: z.string().min(1),
+  index: z.number().int().positive(),
+  request: z.string().min(1),
+  review: generatedReviewSchema,
+  createdAt: z.string().min(1),
+});
+
+const conversationEntrySchema = z.discriminatedUnion('kind', [
+  z.object({
+    id: z.string().min(1),
+    kind: z.literal('user'),
+    text: z.string().min(1),
+    createdAt: z.string().min(1),
+  }),
+  z.object({
+    id: z.string().min(1),
+    kind: z.literal('assistant'),
+    text: z.string().min(1),
+    createdAt: z.string().min(1),
+  }),
+  z.object({
+    id: z.string().min(1),
+    kind: z.literal('review'),
+    roundId: z.string().min(1),
+    createdAt: z.string().min(1),
+  }),
+]);
+
+const intentDecisionSchema = z.object({
+  intent: z.enum(['chat', 'targeted_review', 'full_review']),
+  reply: z.string().min(1),
+  capturedExperiencePoints: z.array(z.string()).default([]),
+});
+
 const persistedSessionSchema = z.object({
   docType: z.enum(REVIEW_DOCUMENT_TYPES),
   review: generatedReviewSchema.nullable().default(null),
-  experience: z.array(z.string()).default([]),
-  history: z
-    .array(
-      z.object({
-        role: z.enum(['user', 'assistant']),
-        content: z.string().min(1),
-        createdAt: z.string().min(1),
-      }),
-    )
-    .default([]),
+  experience: z.array(experienceItemSchema).default([]),
+  conversation: z.array(conversationEntrySchema).default([]),
+  reviewRounds: z.array(reviewRoundSchema).default([]),
+  lastAddedExperienceIds: z.array(z.string()).default([]),
   submittedAt: z.string().nullable().default(null),
   lastUpdatedAt: z.string().min(1),
 });
@@ -88,6 +124,9 @@ export type ReviewStatus = z.infer<typeof reviewStatusSchema>;
 export type ReviewIssue = z.infer<typeof reviewIssueSchema>;
 export type ReviewSuggestion = z.infer<typeof reviewSuggestionSchema>;
 export type ReviewResult = z.infer<typeof generatedReviewSchema>;
+export type ExperienceItem = z.infer<typeof experienceItemSchema>;
+export type ReviewRound = z.infer<typeof reviewRoundSchema>;
+export type ConversationEntry = z.infer<typeof conversationEntrySchema>;
 type PersistedSession = z.infer<typeof persistedSessionSchema>;
 
 export type ReviewReference = {
@@ -119,10 +158,11 @@ export type AiReviewContext = {
   summary: string;
   references: ReviewReference[];
   presetPoints: string[];
-  learnedExperience: string[];
-  latestAddedExperience: string[];
+  learnedExperience: ExperienceItem[];
+  latestAddedExperience: ExperienceItem[];
   latestReview: ReviewResult | null;
-  history: PersistedSession['history'];
+  conversation: ConversationEntry[];
+  reviewRounds: ReviewRound[];
   reviewCounts: {
     errors: number;
     warnings: number;
@@ -252,7 +292,9 @@ async function readSession(docType: ReviewDocumentType): Promise<PersistedSessio
       docType,
       review: null,
       experience: [],
-      history: [],
+      conversation: [],
+      reviewRounds: [],
+      lastAddedExperienceIds: [],
       submittedAt: null,
       lastUpdatedAt: new Date(0).toISOString(),
     };
@@ -409,23 +451,121 @@ export async function getAiReviewContext(docType: ReviewDocumentType): Promise<A
     references: currentContext.references,
     presetPoints: PRESET_POINTS[docType],
     learnedExperience: session.experience,
-    latestAddedExperience: session.review?.capturedExperiencePoints ?? [],
+    latestAddedExperience: session.experience.filter((item) => session.lastAddedExperienceIds.includes(item.id)),
     latestReview: session.review,
-    history: session.history,
+    conversation: session.conversation,
+    reviewRounds: session.reviewRounds,
     reviewCounts: buildCounts(session.review),
     submittedAt: session.submittedAt,
   };
 }
 
-function dedupeStrings(values: string[]) {
+function normalizeTexts(values: string[]) {
   return [...new Set(values.map((item) => item.trim()).filter(Boolean))];
 }
 
-export async function runAiReview(docType: ReviewDocumentType, userMessage: string) {
-  const [context, session] = await Promise.all([getAiReviewContext(docType), readSession(docType)]);
-  const now = new Date().toISOString();
+function mergeExperience(existing: ExperienceItem[], additions: string[], createdAt: string) {
+  const next = [...existing];
+  const added: ExperienceItem[] = [];
+  const existingTexts = new Set(existing.map((item) => item.text.trim()));
 
-  const review = await blackwhiteJson(
+  for (const text of normalizeTexts(additions)) {
+    if (existingTexts.has(text)) continue;
+    const item = { id: randomUUID(), text, createdAt };
+    next.push(item);
+    added.push(item);
+    existingTexts.add(text);
+  }
+
+  return { next, added };
+}
+
+function buildConversationHistory(conversation: ConversationEntry[], reviewRounds: ReviewRound[]) {
+  return conversation.slice(-8).map((entry) => {
+    if (entry.kind === 'review') {
+      const round = reviewRounds.find((item) => item.id === entry.roundId);
+      return {
+        role: 'assistant',
+        content: round ? `第 ${round.index} 轮复核：${round.review.summary}` : '一轮结构化复核结果',
+      };
+    }
+
+    return {
+      role: entry.kind === 'user' ? 'user' : 'assistant',
+      content: entry.text,
+    };
+  });
+}
+
+async function classifyAiIntent(input: {
+  docType: ReviewDocumentType;
+  modeLabel: string;
+  summary: string;
+  draftTitle: string;
+  presetPoints: string[];
+  learnedExperience: ExperienceItem[];
+  conversation: ConversationEntry[];
+  reviewRounds: ReviewRound[];
+  userMessage: string;
+}) {
+  return blackwhiteJson(
+    intentDecisionSchema,
+    [
+      {
+        role: 'system',
+        content: [
+          '你是一名国企业务审批前的 AI 综合复核助手。',
+          '你的第一任务是判断用户这次输入的真实意图，而不是机械地重生成整份复核结果。',
+          'intent 只能取 chat、targeted_review、full_review。',
+          'chat：用户是在追问、解释、让你补充说明、讨论某个点，应该短答，不重生成整份结构化复核。',
+          'targeted_review：用户让你只针对某一维度再看一遍，也应该短答，不重生成整份结构化复核。',
+          'full_review：只有当用户确实希望你重新给出一整份完整复核结果时才选择这个意图。',
+          '你还要判断这次输入里是否包含可长期复用、值得沉淀成审核经验的规则，capturedExperiencePoints 可返回 0 到 4 条。',
+          '如果用户补充的是稳定的审核口径，例如正式报告的文风、成文规范、语句通顺、公文表达习惯，这类要求通常应沉淀为经验。',
+          'reply 必须是对用户当前输入的直接回复；如果 intent 不是 full_review，reply 应简洁、可直接显示在聊天区。',
+          '只返回 JSON。',
+        ].join('\n'),
+      },
+      {
+        role: 'user',
+        content: JSON.stringify(
+          {
+            current_document: {
+              type: input.docType,
+              mode: input.modeLabel,
+              summary: input.summary,
+              draft_title: input.draftTitle,
+            },
+            preset_points: input.presetPoints,
+            learned_experience: input.learnedExperience.map((item) => item.text),
+            recent_conversation: buildConversationHistory(input.conversation, input.reviewRounds),
+            user_message: input.userMessage,
+            constraints: [
+              '不要仅凭出现“再看一遍”“再检查”等字样就判定为 full_review，要综合语义判断。',
+              '如果用户只是要求补充一个角度、解释一个点、检查某一类问题，优先判为 chat 或 targeted_review。',
+              '只有当用户希望获得新的完整结论、问题、建议整套结果时，才判为 full_review。',
+              'capturedExperiencePoints 必须是下次可以复用的审核规则，不能是空泛总结。',
+              '如果用户补充的是“正式政府报告文风要严谨”“文字要通顺”“表述要符合公文习惯”这类稳定审核要求，应尽量沉淀成经验。',
+            ],
+          },
+          null,
+          2,
+        ),
+      },
+    ],
+    { temperature: 0.1, timeoutMs: 180_000 },
+  );
+}
+
+async function generateFullReview(input: {
+  docType: ReviewDocumentType;
+  context: AiReviewContext;
+  conversation: ConversationEntry[];
+  reviewRounds: ReviewRound[];
+  learnedExperience: ExperienceItem[];
+  userMessage: string;
+}) {
+  return blackwhiteJson(
     generatedReviewSchema,
     [
       {
@@ -435,7 +575,6 @@ export async function runAiReview(docType: ReviewDocumentType, userMessage: stri
           '你只做辅助复核，不做自动审批，也不能把结论伪装成人工审批意见。',
           '你必须严格基于当前报告正文、关联材料、系统预置要点和已沉淀经验，输出结构化复核意见。',
           '问题、风险、建议都要具体，不能写空泛套话。',
-          '当用户是在纠偏或追问时，你要输出第二版复核意见，并尽量提炼一条可长期复用的审核经验。',
           '只返回 JSON，不要输出 markdown 或解释。',
         ].join('\n'),
       },
@@ -443,19 +582,20 @@ export async function runAiReview(docType: ReviewDocumentType, userMessage: stri
         role: 'user',
         content: JSON.stringify(
           {
-            task: '请对当前报告生成一轮独立的审批前复核意见。',
+            task: '请对当前报告生成一轮完整的审批前复核意见。',
             current_document: {
-              type: docType,
-              label: context.current.label,
-              mode: context.modeLabel,
-              summary: context.summary,
-              draft_title: context.draftTitle,
-              draft_body: context.draftBody.slice(0, 6000),
+              type: input.docType,
+              label: input.context.current.label,
+              mode: input.context.modeLabel,
+              summary: input.context.summary,
+              draft_title: input.context.draftTitle,
+              draft_body: input.context.draftBody.slice(0, 6000),
             },
-            references: context.references,
-            preset_points: context.presetPoints,
-            learned_experience: context.learnedExperience,
-            user_message: userMessage,
+            references: input.context.references,
+            preset_points: input.context.presetPoints,
+            learned_experience: input.learnedExperience.map((item) => item.text),
+            recent_conversation: buildConversationHistory(input.conversation, input.reviewRounds),
+            user_message: input.userMessage,
             output_schema: {
               status: '待复核 | 已出首版意见 | 已反馈重审 | 可提交 OA',
               conclusion: '可提交 | 建议修改后提交 | 存在明显风险，不建议直接提交',
@@ -474,10 +614,8 @@ export async function runAiReview(docType: ReviewDocumentType, userMessage: stri
             constraints: [
               'issues 与 risks 至少各输出 1 条。',
               'severity 为 high 的问题必须是真正会影响提交判断的点。',
-              '如果用户只是要求重新看某个角度，也要重新给完整复核结论，而不是只回一句补充说明。',
-              'capturedExperiencePoints 只在用户反馈里包含可长期复用规则时填写，可返回 0 到 4 条。',
-              '如果用户明确要求“把这两条记为审核要点”或类似表达，应尽量拆成多条短句，不要合并成一条长段落。',
-              '每条沉淀经验都要是下次可直接复用的审核动作或核对规则，避免空泛表述。',
+              'capturedExperiencePoints 只填写可长期复用的审核规则。',
+              '每条沉淀经验都要是下次可直接复用的审核动作或核对规则。',
               '不要编造不存在的文件名、制度名、数字或结论。',
             ],
           },
@@ -488,25 +626,136 @@ export async function runAiReview(docType: ReviewDocumentType, userMessage: stri
     ],
     { temperature: 0.15, timeoutMs: 180_000 },
   );
+}
 
-  const nextExperience = review.capturedExperiencePoints.length > 0
-    ? dedupeStrings([...session.experience, ...review.capturedExperiencePoints])
-    : session.experience;
+export async function runAiReview(docType: ReviewDocumentType, userMessage: string, action: 'start' | 'message') {
+  const [context, session] = await Promise.all([getAiReviewContext(docType), readSession(docType)]);
+  const now = new Date().toISOString();
+  const baseSession: PersistedSession = action === 'start'
+    ? {
+        ...session,
+        review: null,
+        conversation: [],
+        reviewRounds: [],
+        lastAddedExperienceIds: [],
+      }
+    : session;
+
+  if (action === 'start') {
+    const review = await generateFullReview({
+      docType,
+      context,
+      conversation: [],
+      reviewRounds: [],
+      learnedExperience: baseSession.experience,
+      userMessage,
+    });
+    const merged = mergeExperience(baseSession.experience, review.capturedExperiencePoints, now);
+    const round: ReviewRound = {
+      id: randomUUID(),
+      index: 1,
+      request: userMessage,
+      review,
+      createdAt: now,
+    };
+    const nextSession: PersistedSession = {
+      ...baseSession,
+      review,
+      experience: merged.next,
+      reviewRounds: [round],
+      conversation: [
+        { id: randomUUID(), kind: 'user', text: userMessage, createdAt: now },
+        { id: randomUUID(), kind: 'review', roundId: round.id, createdAt: now },
+      ] satisfies ConversationEntry[],
+      lastAddedExperienceIds: merged.added.map((item) => item.id),
+      lastUpdatedAt: now,
+    };
+    await writeSession(nextSession);
+    return {
+      kind: 'review' as const,
+      intent: 'full_review' as const,
+      review,
+      round,
+      reply: null,
+      addedExperience: merged.added,
+    };
+  }
+
+  const intentResult = await classifyAiIntent({
+    docType,
+    modeLabel: context.modeLabel,
+    summary: context.summary,
+    draftTitle: context.draftTitle,
+    presetPoints: context.presetPoints,
+    learnedExperience: baseSession.experience,
+    conversation: baseSession.conversation,
+    reviewRounds: baseSession.reviewRounds,
+    userMessage,
+  });
+
+  const mergedFromIntent = mergeExperience(baseSession.experience, intentResult.capturedExperiencePoints, now);
+
+  if (intentResult.intent === 'full_review') {
+    const review = await generateFullReview({
+      docType,
+      context,
+      conversation: baseSession.conversation,
+      reviewRounds: baseSession.reviewRounds,
+      learnedExperience: mergedFromIntent.next,
+      userMessage,
+    });
+    const merged = mergeExperience(mergedFromIntent.next, review.capturedExperiencePoints, now);
+    const round: ReviewRound = {
+      id: randomUUID(),
+      index: baseSession.reviewRounds.length + 1,
+      request: userMessage,
+      review,
+      createdAt: now,
+    };
+    const nextSession: PersistedSession = {
+      ...baseSession,
+      review,
+      experience: merged.next,
+      reviewRounds: [...baseSession.reviewRounds, round],
+      conversation: [
+        ...baseSession.conversation,
+        { id: randomUUID(), kind: 'user', text: userMessage, createdAt: now },
+        { id: randomUUID(), kind: 'review', roundId: round.id, createdAt: now },
+      ].slice(-20) as ConversationEntry[],
+      lastAddedExperienceIds: merged.added.map((item) => item.id),
+      lastUpdatedAt: now,
+    };
+    await writeSession(nextSession);
+    return {
+      kind: 'review' as const,
+      intent: intentResult.intent,
+      review,
+      round,
+      reply: null,
+      addedExperience: merged.added,
+    };
+  }
 
   const nextSession: PersistedSession = {
-    docType,
-    review,
-    experience: nextExperience,
-    history: [],
-    submittedAt: session.submittedAt,
+    ...baseSession,
+    experience: mergedFromIntent.next,
+    conversation: [
+      ...baseSession.conversation,
+      { id: randomUUID(), kind: 'user', text: userMessage, createdAt: now },
+      { id: randomUUID(), kind: 'assistant', text: intentResult.reply, createdAt: now },
+    ].slice(-20) as ConversationEntry[],
+    lastAddedExperienceIds: mergedFromIntent.added.map((item) => item.id),
     lastUpdatedAt: now,
   };
   await writeSession(nextSession);
 
   return {
-    review,
-    experience: nextExperience,
-    history: [],
+    kind: 'chat' as const,
+    intent: intentResult.intent,
+    review: null,
+    round: null,
+    reply: intentResult.reply,
+    addedExperience: mergedFromIntent.added,
   };
 }
 
@@ -526,9 +775,9 @@ export async function submitAiReview(docType: ReviewDocumentType, note?: string)
       ...currentReview,
       status: '可提交 OA',
     },
-    history: note
-      ? [...session.history, { role: 'user' as const, content: `提交备注：${note}`, createdAt: now }].slice(-12)
-      : session.history,
+    conversation: note
+      ? ([...session.conversation, { id: randomUUID(), kind: 'assistant' as const, text: `提交备注：${note}`, createdAt: now }].slice(-20) as ConversationEntry[])
+      : session.conversation,
   };
 
   await writeSession(updated);
@@ -536,5 +785,26 @@ export async function submitAiReview(docType: ReviewDocumentType, note?: string)
     submittedAt: now,
     flow: ['综合复核岗确认', '业务负责人确认', '提交 OA'],
     memo: note?.trim() || currentReview.summary,
+  };
+}
+
+export async function deleteAiReviewExperience(docType: ReviewDocumentType, id: string) {
+  const session = await readSession(docType);
+  const nextExperience = session.experience.filter((item) => item.id !== id);
+  if (nextExperience.length === session.experience.length) {
+    throw new Error('要删除的沉淀经验不存在。');
+  }
+
+  const updated: PersistedSession = {
+    ...session,
+    experience: nextExperience,
+    lastAddedExperienceIds: session.lastAddedExperienceIds.filter((itemId) => itemId !== id),
+    lastUpdatedAt: new Date().toISOString(),
+  };
+  await writeSession(updated);
+
+  return {
+    success: true,
+    deletedId: id,
   };
 }

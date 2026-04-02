@@ -51,13 +51,15 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
       <Sidebar />
       <Header />
 
-      {showPreview && institutionId && (
-        <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>}>
-          <EvaluationReportPreviewClient institutionId={institutionId} selectedGroup={selectedGroup || null} currentPage={currentPage > 1 ? currentPage.toString() : null} />
-        </Suspense>
-      )}
-
       <main className="ml-48 min-h-screen overflow-x-hidden bg-surface px-6 pb-8 pt-20">
+        {showPreview && institutionId ? (
+          <section className="mb-6">
+            <Suspense fallback={<div className="flex min-h-[40vh] items-center justify-center rounded-3xl bg-white shadow-sm"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>}>
+              <EvaluationReportPreviewClient institutionId={institutionId} selectedGroup={selectedGroup || null} currentPage={currentPage > 1 ? currentPage.toString() : null} />
+            </Suspense>
+          </section>
+        ) : (
+          <>
         <section className="mb-6 flex items-end justify-between gap-6">
           <div>
             <nav className="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-on-surface-variant">
@@ -284,8 +286,10 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
               )}
             </div>
           </div>
-            </section>
-          </main>
+        </section>
+          </>
+        )}
+      </main>
         </>
   );
 }

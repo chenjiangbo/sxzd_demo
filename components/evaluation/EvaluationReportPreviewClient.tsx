@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import { X, Download, Loader2 } from 'lucide-react';
 
 type StreamMessage =
   | { type: 'status'; text: string }
-  | { type: 'chunk'; text: string }
-  | { type: 'complete'; text: string; institutionId: string; institutionName: string }
+  | { type: 'chunk'; html: string }
+  | { type: 'complete'; institutionId: string; institutionName: string }
   | { type: 'error'; message: string };
 
 interface EvaluationReportPreviewClientProps {
@@ -22,46 +21,97 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
   const [reportHtml, setReportHtml] = useState('');
   const [institutionName, setInstitutionName] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+
+  function parseFrames(buffer: string) {
+    const frames = buffer.split('\n\n');
+    return {
+      frames: frames.slice(0, -1),
+      rest: frames[frames.length - 1] ?? '',
+    };
+  }
+
+  function parseEvent(frame: string): StreamMessage | null {
+    const dataLine = frame
+      .split('\n')
+      .find((line) => line.startsWith('data:'));
+
+    if (!dataLine) return null;
+
+    try {
+      return JSON.parse(dataLine.slice(5).trim()) as StreamMessage;
+    } catch {
+      return null;
+    }
+  }
 
   useEffect(() => {
-    let accumulated = '';
+    const controller = new AbortController();
 
-    fetch('/api/evaluation-report/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ institutionId }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.text();
-      })
-      .then((text) => {
-        const lines = text.split('\n');
-        for (const line of lines) {
-          if (!line.startsWith('data:')) continue;
-          const data = JSON.parse(line.slice(5)) as StreamMessage;
+    void (async () => {
+      try {
+        const res = await fetch('/api/evaluation-report/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ institutionId }),
+          signal: controller.signal,
+        });
 
-          if (data.type === 'status') {
-            setStatusText(data.text);
-          } else if (data.type === 'chunk') {
-            accumulated += data.text;
-            setReportHtml(accumulated);
-          } else if (data.type === 'complete') {
-            accumulated = data.text;
-            setReportHtml(accumulated);
-            setInstitutionName(data.institutionName);
-            setLoading(false);
-          } else if (data.type === 'error') {
-            setError(data.message);
-            setLoading(false);
+        if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const parsed = parseFrames(buffer);
+          buffer = parsed.rest;
+
+          for (const frame of parsed.frames) {
+            const data = parseEvent(frame);
+            if (!data) continue;
+
+            if (data.type === 'status') {
+              setStatusText(data.text);
+              continue;
+            }
+
+            if (data.type === 'chunk') {
+              setReportHtml((current) => current + data.html);
+              continue;
+            }
+
+            if (data.type === 'complete') {
+              setInstitutionName(data.institutionName);
+              setLoading(false);
+              continue;
+            }
+
+            if (data.type === 'error') {
+              throw new Error(data.message);
+            }
           }
         }
-      })
-      .catch((err) => {
-        setError(err.message || '生成失败');
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return;
+        setError((err as Error).message || '生成失败');
         setLoading(false);
-      });
+      }
+    })();
+
+    return () => controller.abort();
   }, [institutionId]);
+
+  useEffect(() => {
+    if (!reportHtml) return;
+    const node = scrollerRef.current;
+    if (!node) return;
+    node.scrollTo({ top: node.scrollHeight, behavior: 'smooth' });
+  }, [reportHtml]);
 
   const handleDownload = () => {
     window.open(`/api/evaluation-report/export-html?id=${institutionId}`, '_blank');
@@ -78,24 +128,10 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
     window.location.href = url;
   };
 
-  if (loading) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="mx-auto max-w-md rounded-3xl bg-white p-12 text-center shadow-2xl">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-          <p className="text-lg font-bold text-on-surface">{statusText}</p>
-          <p className="mt-4 text-sm text-on-surface-variant">请稍候，AI 正在撰写报告...</p>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="mx-auto max-w-md rounded-3xl bg-white p-12 text-center shadow-2xl">
+      <section className="rounded-3xl bg-white p-10 text-center shadow-sm">
+        <div className="mx-auto max-w-md">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
             <span className="text-3xl font-black text-red-600">!</span>
           </div>
@@ -108,63 +144,46 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
             关闭
           </button>
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleClose}>
-      <div
-        className="h-[90vh] w-full max-w-5xl bg-white shadow-2xl overflow-y-auto mx-4"
-        onClick={(e) => e.stopPropagation()}
-        style={{ borderRadius: '0' }}
-      >
-        {/* Header */}
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant/20 bg-white px-8 py-4 shadow-sm">
-          <div>
-            <h1 className="text-lg font-black text-primary">{institutionName}评价报告</h1>
-            <p className="text-xs text-on-surface-variant">AI 自动生成</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleDownload}
-              className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-2 text-xs font-black text-primary hover:bg-primary hover:text-white transition-colors"
-            >
-              <Download className="h-4 w-4" />
-              下载 Word
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleClose();
-              }}
-              className="rounded-full p-2 hover:bg-surface-container-low transition-colors"
-            >
-              <X className="h-5 w-5 text-on-surface-variant" />
-            </button>
-          </div>
-        </header>
-
-        {/* Content - A4 Paper Style */}
-        <main className="mx-auto max-w-4xl px-6 py-8">
-          <div
-            className="rounded-xl bg-white p-8 shadow-sm min-h-[842px]"
-            style={{
-              boxShadow: '0 4px 6px rgba(0,0,0,0.07)',
-            }}
+    <section className="overflow-hidden rounded-3xl bg-white shadow-sm">
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant/20 bg-white px-8 py-4 shadow-sm">
+        <div>
+          <h1 className="text-lg font-black text-primary">{institutionName || '评价报告'}</h1>
+          <p className="text-xs text-on-surface-variant">{loading ? statusText || 'AI 正在逐段生成报告...' : 'AI 自动生成'}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleDownload}
+            className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-2 text-xs font-black text-primary hover:bg-primary hover:text-white transition-colors"
           >
-            <div
-              className="prose prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: reportHtml }}
-              style={{
-                fontFamily: "'SimSun', serif",
-                fontSize: '14px',
-                lineHeight: '1.8',
-              }}
-            />
-          </div>
+            <Download className="h-4 w-4" />
+            下载 Word
+          </button>
+          <button
+            onClick={handleClose}
+            className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-white px-4 py-2 text-xs font-black text-on-surface-variant hover:bg-surface-container-low"
+          >
+            <X className="h-4 w-4" />
+            返回列表
+          </button>
+        </div>
+      </header>
+
+      <div ref={scrollerRef} className="max-h-[80vh] overflow-y-auto">
+        <main className="px-0 py-0">
+          {loading && !reportHtml ? (
+            <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 bg-white">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-base font-bold text-on-surface">{statusText || '正在生成评价报告...'}</p>
+            </div>
+          ) : null}
+          <div dangerouslySetInnerHTML={{ __html: reportHtml }} />
         </main>
       </div>
-    </div>
+    </section>
   );
 }

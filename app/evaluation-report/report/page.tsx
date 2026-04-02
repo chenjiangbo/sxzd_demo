@@ -7,6 +7,9 @@ export const dynamic = 'force-dynamic';
 
 type Props = {
   searchParams?: Promise<{
+    id?: string;
+    group?: string;
+    page?: string;
     generate?: string;
   }>;
 };
@@ -15,6 +18,9 @@ export default async function EvaluationReportPreviewPage({ searchParams }: Prop
   const params = await searchParams;
   const data = await getEvaluationReportData();
   const autoGenerate = params?.generate === '1';
+  const institutionId = params?.id ?? '';
+  const selectedGroup = params?.group ?? null;
+  const currentPage = params?.page ?? null;
 
   return (
     <>
@@ -40,7 +46,11 @@ export default async function EvaluationReportPreviewPage({ searchParams }: Prop
 
         <div className="grid grid-cols-12 gap-8">
           <div className="col-span-12">
-            <EvaluationReportPreviewClient />
+            <EvaluationReportPreviewClient
+              institutionId={institutionId}
+              selectedGroup={selectedGroup}
+              currentPage={currentPage}
+            />
           </div>
         </div>
       </main>
