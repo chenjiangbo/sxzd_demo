@@ -29,11 +29,11 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
   const selectedGroup = typeof params?.group === 'string' ? params.group : undefined;
   const currentPage = parseInt(params?.page ?? '1');
   const pageSize = 10;
-  
-  const institutions = selectedGroup 
-    ? data.institutions.filter((item) => item.overallStatus === selectedGroup) 
+
+  const institutions = selectedGroup
+    ? data.institutions.filter((item) => item.overallStatus === selectedGroup)
     : data.institutions;
-  
+
   // 分页计算
   const totalPages = Math.ceil(institutions.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
@@ -111,7 +111,7 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
               <h2 className="font-headline text-xl font-black text-primary">合作担保机构评价情况统计表</h2>
-              <p className="mt-1.5 text-sm text-on-surface-variant">以下列表按 Excel 评价表逐行展示全部字段，可按完成率分组筛选。</p>
+              <p className="mt-1.5 text-sm text-on-surface-variant">以下列表按参考体系机构评价表数据,通过政策目标的8项指标完成率情况分组筛选。</p>
             </div>
             <div className="flex items-center gap-3">
               <Link href="/api/evaluation-report/export-list" className="rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-2 text-xs font-black text-primary">
@@ -214,7 +214,7 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
               </tbody>
             </table>
           </div>
-          
+
           {/* 分页导航 */}
           <div className="mt-4 flex items-center justify-between gap-4">
             <div className="text-xs text-on-surface-variant">
@@ -235,7 +235,7 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
                   上一页
                 </Link>
               )}
-              
+
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                 <Link
                   key={page}
@@ -255,7 +255,7 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
                   {page}
                 </Link>
               ))}
-              
+
               {currentPage < totalPages && (
                 <Link
                   href={{

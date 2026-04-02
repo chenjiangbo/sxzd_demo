@@ -60,6 +60,7 @@ export default function BriefPreviewClient() {
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(6);
   const [statusText, setStatusText] = useState('正在准备流式生成担保业务简报...');
+  const [iframeHeight, setIframeHeight] = useState(1200);
 
   const pendingTextRef = useRef('');
   const fullTextRef = useRef('');
@@ -150,6 +151,23 @@ export default function BriefPreviewClient() {
     void generate();
   }, [generate]);
 
+  // 监听 HTML 内容变化，更新 iframe 高度
+  useEffect(() => {
+    if (htmlContent) {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = htmlContent;
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.visibility = 'hidden';
+      tempDiv.style.width = '100%';
+      document.body.appendChild(tempDiv);
+      
+      const height = Math.max(tempDiv.scrollHeight, 1200);
+      setIframeHeight(height);
+      
+      document.body.removeChild(tempDiv);
+    }
+  }, [htmlContent]);
+
   const handleDownload = () => {
     if (!htmlContent) return;
     const blob = new Blob([htmlContent], { type: 'application/msword;charset=utf-8' });
@@ -233,21 +251,22 @@ export default function BriefPreviewClient() {
       <div className="col-span-9">
         <div className="rounded-3xl bg-white p-8 shadow-sm">
           {htmlContent ? (
-            <div className="prose prose-slate max-w-none">
+            <div>
               <iframe
                 srcDoc={htmlContent}
-                className="h-[1200px] w-full border-0"
+                style={{ width: '100%', height: `${iframeHeight}px`, border: 'none' }}
                 title="简报预览"
-                sandbox=""
+                sandbox="allow-same-origin"
+                scrolling="no"
               />
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <LoaderCircle className="mb-4 h-12 w-12 animate-spin text-primary" />
-              <p className="text-lg font-bold text-on-surface-variant">正在生成简报内容</p>
-              <p className="mt-2 text-sm text-on-surface-variant">请稍候，正在读取数据并渲染...</p>
-            </div>
-          )}
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <LoaderCircle className="mb-4 h-12 w-12 animate-spin text-primary" />
+            <p className="text-lg font-bold text-on-surface-variant">正在生成简报内容</p>
+            <p className="mt-2 text-sm text-on-surface-variant">请稍候，正在读取数据并渲染...</p>
+          </div>
+        )}
         </div>
       </div>
     </div>
