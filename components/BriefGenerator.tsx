@@ -169,7 +169,7 @@ export default function BriefGenerator() {
         <h3 className="mb-3 text-sm font-bold text-primary">📋 使用说明</h3>
         <ol className="list-inside list-decimal space-y-2 text-sm text-on-surface-variant">
           <li>点击上方时间选择按钮，选择报告期间（上半年/下半年/自定义）</li>
-          <li>点击"生成简报"按钮，系统自动从本地 JSON 文件读取数据并填充 Word 模板</li>
+          <li>点击“生成简报”按钮，系统自动从本地 JSON 文件读取数据并填充 Word 模板</li>
           <li>生成成功后，点击下载按钮获取 Word 文档</li>
         </ol>
       </section>

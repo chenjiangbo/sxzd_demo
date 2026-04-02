@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createBlackwhiteChatResponse } from '@/lib/server/blackwhite';
+import { createBlackwhiteChatResponse, type ChatMessage } from '@/lib/server/blackwhite';
 import { getEvaluationReportData } from '@/lib/server/evaluation-report';
 
 function createSseMessage(event: string, data: Record<string, unknown>) {
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
    - 完成率：${(institution.recoveryRateCompletionRate * 100).toFixed(1)}%
 
 8. **备案率**
-   - 实际完成：${(institution.filingRate ? institution.filingRate * 100 : 0).toFixed(1)}%
+   - 当前数据集中未提供备案率字段，请在报告中注明该指标暂未纳入本次量化评价
 
 ## 综合评价结果
 - 综合评价：${institution.overallStatus}
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
 
 请使用专业、客观、正式的公文语言，数据准确，分析深入，建议具有针对性和可操作性。字数控制在 2000-3000 字。`;
 
-    const messages = [
+    const messages: ChatMessage[] = [
       { role: 'system', content: '你是一名专业的担保机构评价报告撰写专家，擅长根据数据撰写专业、客观的评价报告。' },
       { role: 'user', content: prompt },
     ];

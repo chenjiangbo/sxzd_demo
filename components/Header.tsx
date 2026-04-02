@@ -8,6 +8,7 @@ import { CREDIT_POLICY_OPEN_EVENT } from '@/components/credit/PolicyTopicButton'
 const titleMap: Record<string, string> = {
   '/': '代偿补偿',
   '/cases/workbench': '案件处理工作台',
+  '/ai-review': 'AI 综合复核工作台',
   '/credit-report': '年度授信任务',
   '/credit-report/analysis': 'AI 授信结论归纳',
   '/credit-report/report': '授信报告成文预览',

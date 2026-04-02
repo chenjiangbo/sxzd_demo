@@ -1,18 +1,15 @@
 'use client';
 
-import { BotMessageSquare, ClipboardList, FileStack, Gauge, Presentation, Settings, ShieldCheck, User } from 'lucide-react';
+import { BotMessageSquare, BrainCircuit, ClipboardList, FileStack, Presentation, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const items = [
-  { href: '#', label: '首页', icon: Gauge },
   { href: '/', label: '代偿补偿', icon: ClipboardList },
-  { href: '/brief', label: '简报生成', icon: Presentation },
+  { href: '/brief', label: '担保体系简报', icon: Presentation },
   { href: '/evaluation-report', label: '机构评价报告', icon: BotMessageSquare },
   { href: '/credit-report', label: '授信报告', icon: FileStack },
-  { href: '#', label: '文书中心', icon: FileStack },
-  { href: '#', label: '审计与风控', icon: ShieldCheck },
-  { href: '#', label: '系统管理', icon: Settings },
+  { href: '/ai-review', label: 'AI 复核', icon: BrainCircuit },
 ];
 
 export default function Sidebar() {
@@ -33,7 +30,8 @@ export default function Sidebar() {
             (href === '/' && (pathname === '/' || pathname.startsWith('/cases/') || pathname === '/review' || pathname === '/verify')) ||
             (href === '/brief' && pathname === '/brief') ||
             (href === '/credit-report' && pathname.startsWith('/credit-report')) ||
-            (href === '/evaluation-report' && pathname.startsWith('/evaluation-report'));
+            (href === '/evaluation-report' && pathname.startsWith('/evaluation-report')) ||
+            (href === '/ai-review' && pathname.startsWith('/ai-review'));
           return (
             <Link
               key={label}

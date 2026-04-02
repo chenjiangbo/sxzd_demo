@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Comprehensive Review Workbench | Institutional Architect</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container": "#e5eeff",
+              "on-secondary-fixed-variant": "#173bab",
+              "on-tertiary-fixed-variant": "#005049",
+              "error-container": "#ffdad6",
+              "on-secondary": "#ffffff",
+              "on-surface-variant": "#43474f",
+              "on-primary-fixed-variant": "#264778",
+              "error": "#ba1a1a",
+              "on-error": "#ffffff",
+              "tertiary": "#001b18",
+              "surface-variant": "#d3e4fe",
+              "outline": "#747780",
+              "on-tertiary-container": "#2ca397",
+              "primary-fixed": "#d6e3ff",
+              "primary-fixed-dim": "#a9c7ff",
+              "surface-dim": "#cbdbf5",
+              "primary": "#001736",
+              "inverse-primary": "#a9c7ff",
+              "secondary": "#3755c3",
+              "inverse-on-surface": "#eaf1ff",
+              "on-primary-container": "#7594ca",
+              "surface-tint": "#405f91",
+              "secondary-fixed-dim": "#b8c4ff",
+              "secondary-fixed": "#dde1ff",
+              "surface-container-high": "#dce9ff",
+              "surface-container-highest": "#d3e4fe",
+              "background": "#f8f9ff",
+              "on-primary": "#ffffff",
+              "surface-container-low": "#eff4ff",
+              "surface-container-lowest": "#ffffff",
+              "surface": "#f8f9ff",
+              "tertiary-fixed-dim": "#6bd8cb",
+              "tertiary-fixed": "#89f5e7",
+              "inverse-surface": "#213145",
+              "primary-container": "#002b5b",
+              "secondary-container": "#708cfd",
+              "on-secondary-container": "#00217a",
+              "outline-variant": "#c4c6d0",
+              "on-tertiary-fixed": "#00201d",
+              "on-secondary-fixed": "#001453",
+              "tertiary-container": "#00322d",
+              "on-tertiary": "#ffffff",
+              "on-error-container": "#93000a",
+              "surface-bright": "#f8f9ff",
+              "on-surface": "#0b1c30",
+              "on-background": "#0b1c30",
+              "on-primary-fixed": "#001b3d"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(196, 198, 208, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface flex h-screen overflow-hidden">
+<!-- Left SideNavBar (Shared Component) -->
+<aside class="flex flex-col h-screen py-4 px-3 gap-y-2 bg-[#eff4ff] dark:bg-slate-950 w-64 shrink-0 transition-all duration-200">
+<div class="flex items-center gap-3 px-3 py-4 mb-4">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center text-tertiary-fixed-dim">
+<span class="material-symbols-outlined">architecture</span>
+</div>
+<div>
+<h2 class="font-['Manrope'] font-black text-[#001736] dark:text-white text-lg leading-tight">Workbench</h2>
+<p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Institutional Mode</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#001736] hover:bg-white/50 rounded-md transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px]">description</span>
+<span class="font-['Inter'] text-xs font-medium">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#001736] hover:bg-white/50 rounded-md transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px]">library_books</span>
+<span class="font-['Inter'] text-xs font-medium">References</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 bg-white dark:bg-slate-800 text-[#001736] dark:text-[#6bd8cb] shadow-sm rounded-md transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px]">psychology</span>
+<span class="font-['Inter'] text-xs font-medium">AI Conclusions</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#001736] hover:bg-white/50 rounded-md transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px]">rule</span>
+<span class="font-['Inter'] text-xs font-medium">Review Points</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#001736] hover:bg-white/50 rounded-md transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px]">auto_awesome</span>
+<span class="font-['Inter'] text-xs font-medium">Experience Hub</span>
+</a>
+</nav>
+<button class="mx-3 my-4 bg-primary text-on-primary py-2.5 rounded-lg flex items-center justify-center gap-2 font-bold text-xs shadow-lg hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-sm">add_circle</span>
+            New Analysis
+        </button>
+<div class="mt-auto border-t border-slate-200 dark:border-slate-800 pt-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 text-xs font-medium hover:bg-white/50 rounded-md" href="#">
+<span class="material-symbols-outlined text-[18px]">contact_support</span>
+                Support
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 text-xs font-medium hover:bg-white/50 rounded-md" href="#">
+<span class="material-symbols-outlined text-[18px]">inventory_2</span>
+                Archive
+            </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-full bg-surface overflow-hidden">
+<!-- TopNavBar (Shared Component Implementation) -->
+<header class="flex justify-between items-center w-full px-6 h-16 bg-slate-50 dark:bg-slate-900 z-50">
+<div class="flex items-center gap-6">
+<span class="text-lg font-bold text-[#001736] dark:text-white uppercase tracking-wider font-['Manrope']">Institutional Architect | Review Workbench</span>
+<nav class="hidden md:flex items-center gap-6 ml-8">
+<a class="font-['Manrope'] text-sm font-semibold tracking-tight text-slate-500 dark:text-slate-400 hover:bg-[#eff4ff] transition-colors px-2 py-1" href="#">Dashboard</a>
+<a class="font-['Manrope'] text-sm font-semibold tracking-tight text-[#001736] dark:text-[#6bd8cb] border-b-2 border-[#001736] dark:border-[#6bd8cb] pb-1" href="#">Workforce</a>
+<a class="font-['Manrope'] text-sm font-semibold tracking-tight text-slate-500 dark:text-slate-400 hover:bg-[#eff4ff] transition-colors px-2 py-1" href="#">Analytics</a>
+<a class="font-['Manrope'] text-sm font-semibold tracking-tight text-slate-500 dark:text-slate-400 hover:bg-[#eff4ff] transition-colors px-2 py-1" href="#">Settings</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex gap-2 mr-4">
+<button class="p-2 text-slate-500 hover:bg-slate-200 rounded-full transition-colors"><span class="material-symbols-outlined">notifications</span></button>
+<button class="p-2 text-slate-500 hover:bg-slate-200 rounded-full transition-colors"><span class="material-symbols-outlined">help</span></button>
+<button class="p-2 text-slate-500 hover:bg-slate-200 rounded-full transition-colors"><span class="material-symbols-outlined">history</span></button>
+</div>
+<button class="px-4 py-2 bg-primary text-on-primary text-sm font-bold rounded shadow-sm">Execute Report</button>
+<div class="w-10 h-10 rounded-full overflow-hidden bg-slate-200 ml-2">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="portrait of a professional financial auditor wearing a suit in a modern office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD152Qj-1x3Fdq0rK7E6QFGUFHbuw9A3qg0w8T0-apGkkiEZ6QryZTDIRUUNgqYaJ-1QSvXNH16uSMDMSqUgYdmVNTY29-aTcyYoJTG79eNadDQqkVBe7DjtaKh6j1Le9lLSOMeZuxBLGyrsnTwVSzSAQZ4h5VdhWZIPupw6hy7m5RL6Rv4mVmdyMPvxWzwk5gBNtb-F3kYsR-Ecnzax_SJSgyrc8ONW3AL-3WVnRo8-6WDCZCQJv6-GsdBO_a-lwEHFYRNbHxrK9c"/>
+</div>
+</div>
+</header>
+<!-- Workbench Dashboard -->
+<div class="flex-1 flex flex-col p-6 gap-6 overflow-hidden">
+<!-- 1. Top Section: Review Context -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="bg-secondary/10 text-secondary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter">Current Role: 综合复核岗</span>
+<span class="bg-tertiary-fixed-dim/20 text-tertiary-container text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter">Status: 待复核</span>
+</div>
+<h1 class="text-3xl font-extrabold text-primary tracking-tight font-headline">AI 综合复核工作台</h1>
+<div class="flex items-center gap-4 mt-2 text-on-surface-variant text-sm">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">assignment</span>
+<span>机构评价报告 (2025)</span>
+</div>
+<div class="w-1 h-1 bg-outline-variant rounded-full"></div>
+<div class="flex items-center gap-1.5 text-secondary font-medium">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+<span>模式: 机构评价复核 (自动匹配)</span>
+</div>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="px-5 py-2 bg-surface-container-highest text-primary font-bold text-sm rounded shadow-sm flex items-center gap-2 hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[20px]">save</span>
+                        Save Draft
+                    </button>
+<button class="px-5 py-2 bg-primary text-on-primary font-bold text-sm rounded shadow-lg flex items-center gap-2 active:opacity-80 transition-all">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+                        Submit Review
+                    </button>
+</div>
+</section>
+<!-- Main Workspace Grid -->
+<div class="flex-1 grid grid-cols-12 gap-6 overflow-hidden">
+<!-- 2. Left Panel: Report & Materials (Col 3) -->
+<aside class="col-span-3 flex flex-col gap-4 overflow-hidden">
+<div class="bg-surface-container-low rounded-xl flex-1 flex flex-col overflow-hidden">
+<div class="px-4 py-3 border-b border-white/40 flex justify-between items-center">
+<h3 class="text-xs font-bold text-primary uppercase tracking-widest">报告与材料区</h3>
+<span class="material-symbols-outlined text-sm text-on-surface-variant">open_in_full</span>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-6">
+<!-- Report Draft -->
+<div class="space-y-3">
+<label class="text-[10px] font-bold text-on-surface-variant uppercase">Current Draft</label>
+<div class="bg-surface-container-lowest p-4 rounded-lg shadow-sm group cursor-pointer hover:ring-1 ring-secondary/20 transition-all">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">description</span>
+<div>
+<p class="text-xs font-bold text-primary">2025 机构评价报告摘要</p>
+<p class="text-[10px] text-on-surface-variant mt-1">Edited 2 hours ago by System</p>
+</div>
+</div>
+</div>
+</div>
+<!-- References -->
+<div class="space-y-3">
+<label class="text-[10px] font-bold text-on-surface-variant uppercase">Reference Materials</label>
+<ul class="space-y-2">
+<li class="flex items-center gap-3 p-2.5 rounded-md hover:bg-white/60 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-primary transition-colors">table_view</span>
+<span class="text-xs font-medium text-on-surface-variant group-hover:text-primary">评价底表.xlsx</span>
+</li>
+<li class="flex items-center gap-3 p-2.5 rounded-md hover:bg-white/60 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-primary">gavel</span>
+<span class="text-xs font-medium text-on-surface-variant group-hover:text-primary">制度办法 (2024版)</span>
+</li>
+<li class="flex items-center gap-3 p-2.5 rounded-md hover:bg-white/60 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-primary">history</span>
+<span class="text-xs font-medium text-on-surface-variant group-hover:text-primary">历史报告样稿</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</aside>
+<!-- 3. Center Panel: AI Review Opinions (Col 6) -->
+<section class="col-span-6 flex flex-col gap-4 overflow-hidden">
+<div class="bg-surface-container-lowest rounded-xl flex-1 flex flex-col shadow-sm overflow-hidden border border-surface-container">
+<div class="px-6 py-4 flex justify-between items-center border-b border-surface-container-low">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary-fixed-dim" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<h3 class="text-sm font-bold text-primary">AI 审核意见区</h3>
+</div>
+<div class="flex gap-2">
+<span class="bg-error-container text-on-error-container text-[10px] font-bold px-2 py-0.5 rounded-full">2 Error</span>
+<span class="bg-surface-container text-secondary text-[10px] font-bold px-2 py-0.5 rounded-full">3 Warning</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-6 space-y-6">
+<!-- Conclusion Header -->
+<div class="bg-surface-container-low/50 rounded-xl p-5 border-l-4 border-secondary flex items-start gap-4">
+<span class="material-symbols-outlined text-secondary text-3xl">info</span>
+<div>
+<h4 class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">审核结论 (Conclusion)</h4>
+<p class="text-lg font-bold text-primary">建议修改后提交</p>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">AI 识别出 2 项核心数据不一致及指标分析缺失，建议先行修正后再行上报。</p>
+</div>
+</div>
+<!-- Problem Cards -->
+<div class="grid grid-cols-2 gap-4">
+<!-- Card 1 -->
+<div class="bg-error-container/30 p-4 rounded-lg space-y-3">
+<div class="flex items-center justify-between">
+<span class="material-symbols-outlined text-error text-[20px]">error</span>
+<span class="text-[10px] font-black text-error uppercase">Severity: High</span>
+</div>
+<h5 class="text-xs font-bold text-on-error-container">指标分析不充分</h5>
+<p class="text-[11px] text-on-surface-variant leading-relaxed">报告第 3 章节对“流动性比例”未达标的原因阐述过于笼统，缺乏具体业务归因。</p>
+</div>
+<!-- Card 2 -->
+<div class="bg-error-container/30 p-4 rounded-lg space-y-3">
+<div class="flex items-center justify-between">
+<span class="material-symbols-outlined text-error text-[20px]">error</span>
+<span class="text-[10px] font-black text-error uppercase">Severity: High</span>
+</div>
+<h5 class="text-xs font-bold text-on-error-container">数据不一致</h5>
+<p class="text-[11px] text-on-surface-variant leading-relaxed">部分测算数据（资本充足率 12.5%）与关联底表（12.2%）存在 0.3% 的偏差。</p>
+</div>
+</div>
+<!-- Recommendations / Evidence -->
+<div class="space-y-4">
+<div class="glass-panel p-5 rounded-xl border-l-4 border-tertiary-fixed-dim">
+<h5 class="text-[10px] font-bold text-tertiary-container uppercase tracking-widest mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">lightbulb</span> 修改建议与依据
+                                    </h5>
+<ul class="space-y-4">
+<li class="flex gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed-dim mt-1.5"></div>
+<p class="text-xs text-on-surface leading-relaxed">
+<span class="font-bold text-primary">建议：</span>在“未达标指标分析”部分，补充关于 2024Q4 资产配置变动对指标影响的具体描述。
+                                            </p>
+</li>
+<li class="flex gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed-dim mt-1.5"></div>
+<p class="text-xs text-on-surface leading-relaxed">
+<span class="font-bold text-primary">依据：</span>《担保机构信用评级管理办法》第五条，需对所有核心指标的负向波动进行量化说明。
+                                            </p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. Right Panel: Review Points & Experience (Col 3) -->
+<aside class="col-span-3 flex flex-col gap-4 overflow-hidden">
+<!-- Top section: System Rules -->
+<div class="bg-surface-container-low rounded-xl flex-1 flex flex-col overflow-hidden">
+<div class="px-4 py-3 flex items-center gap-2 border-b border-white/40">
+<span class="material-symbols-outlined text-primary text-[20px]">verified_user</span>
+<h3 class="text-xs font-bold text-primary uppercase tracking-widest">系统预置要点</h3>
+</div>
+<div class="p-4 space-y-4 overflow-y-auto">
+<div class="bg-surface-container-lowest p-3 rounded-md flex items-start gap-3">
+<span class="material-symbols-outlined text-tertiary text-sm">check_circle</span>
+<span class="text-[11px] font-medium leading-tight text-on-surface">合规准入条件复核 (自动)</span>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-md flex items-start gap-3 border-l-2 border-secondary">
+<span class="material-symbols-outlined text-secondary text-sm">sync</span>
+<span class="text-[11px] font-medium leading-tight text-on-surface">财务三表勾稽关系检查</span>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-md flex items-start gap-3 opacity-60">
+<span class="material-symbols-outlined text-slate-400 text-sm">schedule</span>
+<span class="text-[11px] font-medium leading-tight text-on-surface">历史舆情关联比对分析</span>
+</div>
+</div>
+</div>
+<!-- Bottom section: Experience Captured -->
+<div class="bg-tertiary-container text-on-tertiary rounded-xl p-5 space-y-4 shadow-lg">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary-fixed-dim" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<h3 class="text-xs font-bold uppercase tracking-widest text-tertiary-fixed-dim">本次沉淀经验</h3>
+</div>
+<div class="bg-white/10 rounded-lg p-3 backdrop-blur-sm border border-white/10">
+<p class="text-[11px] leading-relaxed italic">"以后审核机构评价要特别注意未达标指标，需强制要求业务部门提供具体的量化整改方案。"</p>
+</div>
+<div class="flex justify-between items-center pt-2">
+<span class="text-[9px] text-white/60">New Organizational Knowledge Captured</span>
+<button class="text-[10px] font-bold underline text-tertiary-fixed-dim">Review Log</button>
+</div>
+</div>
+</aside>
+</div>
+<!-- 5. Bottom Bar: Dialog Feedback Area -->
+<footer class="h-20 flex items-center gap-4 bg-surface-container-lowest rounded-xl px-6 border border-surface-container shadow-2xl relative">
+<div class="flex-shrink-0 flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-gradient-to-br from-secondary to-tertiary-fixed-dim flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm">smart_toy</span>
+</div>
+<span class="text-xs font-bold text-primary">AI Copilot</span>
+</div>
+<div class="flex-1 flex items-center gap-3 bg-surface-container-low px-4 py-2 rounded-full border border-outline-variant/20 focus-within:ring-2 ring-secondary/20 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">mic</span>
+<input class="flex-1 bg-transparent border-none text-xs focus:ring-0 text-on-surface placeholder-on-surface-variant/60" placeholder="Prompt AI to re-evaluate or capture new rules..." type="text"/>
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">attach_file</span>
+</button>
+<button class="bg-primary text-white w-8 h-8 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">send</span>
+</button>
+</div>
+</div>
+<div class="flex gap-4 items-center">
+<div class="h-8 w-[1px] bg-outline-variant/30"></div>
+<button class="text-[10px] font-bold text-secondary uppercase flex items-center gap-1 group">
+<span class="material-symbols-outlined text-[16px] group-hover:rotate-12 transition-transform">model_training</span>
+                        Train Logic
+                    </button>
+</div>
+</footer>
+</div>
+</main>
+<!-- Context Floating Notification for AI Interaction -->
+<div class="fixed bottom-24 right-10 z-50 animate-bounce">
+<div class="bg-white px-4 py-2 rounded-full shadow-2xl border border-secondary/20 flex items-center gap-2 cursor-pointer">
+<span class="flex h-2 w-2 relative">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+</span>
+<span class="text-[10px] font-bold text-primary">2 inconsistencies detected in Page 4</span>
+</div>
+</div>
+</body></html>

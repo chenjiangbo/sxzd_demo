@@ -43,7 +43,7 @@ export function parseEvaluationReportText(text: string): {
   
   // 提取各个章节
   const sections: Array<{ heading: string; content: string }> = [];
-  const sectionPattern = /([一二三四五六七八九十]+)[、.](.*?)(?=[一二三四五六七八九十]+[、.]|$)/gs;
+  const sectionPattern = /([一二三四五六七八九十]+)[、.]([\s\S]*?)(?=[一二三四五六七八九十]+[、.]|$)/g;
   
   let match;
   while ((match = sectionPattern.exec(text)) !== null) {

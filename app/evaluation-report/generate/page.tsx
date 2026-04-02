@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Download } from 'lucide-react';
@@ -11,7 +11,7 @@ type StreamMessage =
   | { type: 'complete'; text: string; institutionId: string; institutionName: string }
   | { type: 'error'; message: string };
 
-export default function EvaluationReportGeneratePage() {
+function EvaluationReportGenerateContent() {
   const searchParams = useSearchParams();
   const institutionId = searchParams.get('id');
   
@@ -171,5 +171,13 @@ export default function EvaluationReportGeneratePage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function EvaluationReportGeneratePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-surface" />}>
+      <EvaluationReportGenerateContent />
+    </Suspense>
   );
 }

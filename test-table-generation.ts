@@ -1,4 +1,4 @@
-import { parseCSV, createWordTableXML, splitCSVToTables } from './lib/server/word-table-generator';
+import { parseCSV, createWordTableXML } from './lib/server/word-table-generator';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
@@ -13,33 +13,30 @@ async function testTableGeneration() {
     const csvContent = await fs.readFile(csvPath, 'utf-8');
     console.log('✅ CSV 文件大小:', csvContent.length, '字节\n');
     
-    // 2. 分割成多个表格
-    console.log('📊 分割表格数据...');
-    const tables = splitCSVToTables(csvContent);
-    console.log('✅ 共解析出', tables.length, '个表格\n');
-    
-    // 3. 打印每个表格的摘要
-    tables.forEach((table, index) => {
-      console.log(`表格 ${index + 1}:`);
+    // 2. 解析单个表格
+    console.log('📊 解析表格数据...');
+    const table = parseCSV(csvContent);
+    console.log('✅ 表头列数:', table.headers.length);
+    console.log('✅ 数据行数:', table.rows.length, '\n');
+
+    if (table.rows.length > 0) {
+      console.log('表格摘要:');
       console.log('  表头:', table.headers.join(' | '));
-      console.log('  行数:', table.rows.length);
-      if (table.rows.length > 0) {
-        console.log('  第一行示例:', table.rows[0].join(' | '));
-      }
+      console.log('  第一行示例:', table.rows[0].join(' | '));
       console.log('');
-    });
-    
-    // 4. 生成第一个表格的 XML
-    if (tables.length > 0) {
+    }
+
+    // 3. 生成表格 XML
+    if (table.headers.length > 0) {
       console.log('🔧 生成 Word 表格 XML...');
-      const tableXML = createWordTableXML(tables[0].headers, tables[0].rows, 9000);
+      const tableXML = createWordTableXML(table.headers, table.rows, 9000);
       console.log('✅ XML 生成成功，长度:', tableXML.length, '字符');
       console.log('\nXML 预览（前 500 字符）:');
       console.log(tableXML.substring(0, 500));
       console.log('...\n');
     }
     
-    // 5. 测试完整的简报生成
+    // 4. 测试完整的简报生成
     console.log('🚀 测试完整简报生成...');
     const { generateBriefDocument } = await import('./lib/server/brief-generator');
     
