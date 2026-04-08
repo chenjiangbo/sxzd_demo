@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 const items = [
   { href: '/', label: '代偿补偿', icon: ClipboardList },
   { href: '/brief', label: '担保体系简报', icon: Presentation },
+  { href: '/compensation-brief', label: '代偿补偿简报', icon: FileStack },
   { href: '/evaluation-report', label: '机构评价报告', icon: BotMessageSquare },
   { href: '/credit-report', label: '授信报告', icon: FileStack },
   { href: '/ai-review', label: 'AI 复核', icon: BrainCircuit },
@@ -29,6 +30,7 @@ export default function Sidebar() {
           const active =
             (href === '/' && (pathname === '/' || pathname.startsWith('/cases/') || pathname === '/review' || pathname === '/verify')) ||
             (href === '/brief' && pathname === '/brief') ||
+            (href === '/compensation-brief' && pathname.startsWith('/compensation-brief')) ||
             (href === '/credit-report' && pathname.startsWith('/credit-report')) ||
             (href === '/evaluation-report' && pathname.startsWith('/evaluation-report')) ||
             (href === '/ai-review' && pathname.startsWith('/ai-review'));

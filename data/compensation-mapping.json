@@ -1,0 +1,89 @@
+{
+  "meta": {
+    "year": "2026",
+    "issue_number": "1",
+    "total_issue": "1",
+    "publish_date": "2026-04-07"
+  },
+  "overview": {
+    "project_count": "362",
+    "filing_amount": "44519.25",
+    "guarantee_amount": "34657.72",
+    "compensation_amount": "16678.99"
+  },
+  "by_guarantee_institutions": {
+    "institution_list": "咸阳市融资担保股份有限公司,商洛市融资担保有限公司,安康市财信融资担保有限公司,宝鸡市中小企业融资担保有限公司,延安市中小企业融资担保有限责任公司,杨凌农科融资担保有限公司,榆林市中小企业融资担保有限责任公司,汉中市资信融资担保有限公司,渭南市公信融资担保有限公司,白水县裕昆融资担保有限公司,神木市融资担保集团有限公司,蒲城县金财融资担保有公司,西安创新融资担保有限公司,西安小微企业融资担保有限公司,西安市高陵区三阳融资担保有限公司,西安投融资担保有限公司,西安曲江文化产业融资担保有限公司,西安浐灞融资担保有限公司,西安航天基地融资担保有限公司,西安财金融资担保有限公司,铜川市中小企业融资担保有限公司,铜川财创融资担保集团有限公司,陕西文化产业融资担保有限公司",
+    "institution_count": "23",
+    "over_20_projects": "西安财金融资担保有限公司,西安小微企业融资担保有限公司,西安曲江文化产业融资担保有限公司",
+    "institution_1": "西安财金融资担保有限公司",
+    "institution_2": "西安小微企业融资担保有限公司",
+    "between_10_to_20_projects": "安康市财信融资担保有限公司,西安投融资担保有限公司,榆林市中小企业融资担保有限责任公司",
+    "other_institution_count": "18",
+    "over_20m_compensation": "西安财金融资担保有限公司",
+    "percentage_1": "27.22",
+    "percentage_2": "84.75",
+    "between_5m_to_10m_compensation": "咸阳市融资担保股份有限公司,西安小微企业融资担保有限公司",
+    "percentage_3": "11.37",
+    "between_3m_to_5m_compensation": "安康市财信融资担保有限公司,宝鸡市中小企业融资担保有限公司,延安市中小企业融资担保有限责任公司,榆林市中小企业融资担保有限责任公司,西安投融资担保有限公司",
+    "percentage_4": "22.85",
+    "other_institution_count_2": "15",
+    "percentage_5": "38.56"
+  },
+  "by_partner_banks": {
+    "bank_count": "14",
+    "state_owned_bank_amount": "11639.18",
+    "state_owned_bank_percentage": "71.85",
+    "state_owned_bank_count": "204",
+    "state_owned_bank_count_percentage": "56.51",
+    "state_owned_bank_details": "邮储银行,工商银行",
+    "local_bank_amount": "3904.77",
+    "local_bank_percentage": "24.11",
+    "local_bank_count": "111",
+    "local_bank_count_percentage": "30.75",
+    "local_bank_details": "信合、村镇银行等,西安银行",
+    "joint_stock_bank_amount": "219.98",
+    "joint_stock_bank_percentage": "1.36",
+    "joint_stock_bank_count": "2",
+    "joint_stock_bank_count_percentage": "0.55",
+    "joint_stock_bank_details": "恒丰银行",
+    "joint_stock_highest_amount": "160.00",
+    "avg_compensation_amount": "44.87",
+    "internet_bank_avg": "9.88",
+    "local_bank_avg": "35.18",
+    "joint_stock_bank_avg": "109.99"
+  },
+  "by_compensation_amount": {
+    "avg_compensation_amount": "44.87",
+    "under_500k_count": "156",
+    "under_500k_amount": "2609.72",
+    "under_500k_count_percentage": "64.20",
+    "under_500k_amount_percentage": "15.65",
+    "500k_to_1m_count": "40",
+    "500k_to_1m_amount": "2959.88",
+    "500k_to_1m_count_percentage": "16.46",
+    "500k_to_1m_amount_percentage": "17.75",
+    "over_1m_count": "47",
+    "over_1m_amount": "11109.39",
+    "over_1m_count_percentage": "19.34",
+    "over_1m_amount_percentage": "66.61",
+    "highest_single_amount": "2960.90"
+  },
+  "by_industry": {
+    "construction_percentage": "27.32",
+    "agriculture_percentage": "5.84",
+    "wholesale_percentage": "16.44",
+    "industry_percentage": "19.98",
+    "retail_percentage": "14.18"
+  },
+  "by_compensation_reasons": {
+    "reason_1_percentage": "45.05",
+    "reason_2_percentage": "31.51",
+    "reason_3_percentage": "7.55",
+    "reason_4_percentage": "10.16",
+    "reason_5_percentage": "5.73"
+  },
+  "issues": {
+    "late_reporting_institutions": "部分担保机构",
+    "bank_name": "合作银行"
+  }
+}

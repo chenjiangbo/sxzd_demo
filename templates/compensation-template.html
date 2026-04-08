@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>陕西省政府性融资担保体系简报</title>
+    <style>
+        body {
+            font-family: "SimSun", serif;
+            line-height: 1.5;
+            margin: 0 auto;
+            padding: 20px;
+            max-width: 800px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .subtitle {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .date-info {
+            text-align: right;
+            margin-top: 10px;
+        }
+        .section {
+            margin: 20px 0;
+        }
+        .section-title {
+            font-weight: bold;
+            margin: 15px 0 10px 0;
+        }
+        .subsection {
+            margin: 10px 0;
+        }
+        .subsection-title {
+            font-weight: bold;
+            display: inline;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+            vertical-align: top;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            margin-top: 30px;
+        }
+        .placeholder {
+            color: #ff0000;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div>陕西省政府性融资担保体系</div>
+    <div class="title">简&nbsp;&nbsp;&nbsp;报</div>
+    <div>{{meta.year}}年第{{meta.issue_number}}期（总第{{meta.total_issue}}期）</div>
+    <div class="date-info">陕西省信用再担保有限责任公司编&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{meta.publish_date}}</div>
+</div>
+
+<div class="title">全省再担保代偿补偿及风险情况通报</div>
+
+<p>自2018年构建全省政府性融资担保体系以来，陕西省信用再担保有限责任公司（以下简称省再担保公司）认真落实中省各项决策部署，建立健全再担保代偿补偿机制，优化合作流程，缩短审批时限，加快补偿资金支付效率，积极履行再担保分险职责。{{meta.year}}年上半年，省再担保公司共办结代偿补偿项目{{overview.project_count}}笔，涉及项目备案金额{{overview.filing_amount}}万元，担保代偿金额{{overview.guarantee_amount}}万元，累计支付代偿补偿金额{{overview.compensation_amount}}万元。现将全省再担保代偿补偿及风险相关情况通报如下：</p>
+
+<div class="section">
+    <div class="section-title">一、代偿补偿情况</div>
+
+    <div class="subsection">
+        <div class="subsection-title">（一）分担保机构情况。</div>
+        {{meta.year}}年上半年，省再担保公司共对{{by_guarantee_institutions.institution_list}}等{{by_guarantee_institutions.institution_count}}家担保机构开展了再担保代偿补偿，其他担保机构因业务未发生代偿或因业务基数小，导致首次申请额度突破代偿率上限不符合补偿条件，未向省再担保公司申请补偿。
+
+        从补偿项目数量看，超过20笔的担保机构为{{by_guarantee_institutions.over_20_projects}}3家，{{by_guarantee_institutions.institution_1}}的国担版银担"总对总"批量担保业务代偿补偿项目数量占比较大，{{by_guarantee_institutions.institution_2}}的传统担保业务（含地方批量担保业务）代偿补偿项目数量占比较大；10笔至20笔的担保机构为{{by_guarantee_institutions.between_10_to_20_projects}}3家，全部为传统担保业务（含地方批量担保业务）代偿补偿项目；其余{{by_guarantee_institutions.other_institution_count}}家均在10笔以内。
+
+        从补偿金额看，代偿补偿金额超过2000万元的担保机构为{{by_guarantee_institutions.over_20m_compensation}}1家，占省再担保公司代偿补偿总金额的{{by_guarantee_institutions.percentage_1}}%，{{by_guarantee_institutions.over_20m_compensation}}受国担版银担"总对总"批量担保业务到期后集中代偿的影响较大，占其全部补偿金额的{{by_guarantee_institutions.percentage_2}}%；代偿补偿金额为500万元至1000万元的担保机构为{{by_guarantee_institutions.between_5m_to_10m_compensation}}2家，占省再担保公司代偿补偿总金额的{{by_guarantee_institutions.percentage_3}}%；代偿补偿金额为300万元至500万元的担保机构为{{by_guarantee_institutions.between_3m_to_5m_compensation}}5家，占省再担保公司代偿补偿总金额的{{by_guarantee_institutions.percentage_4}}%；其余{{by_guarantee_institutions.other_institution_count_2}}家代偿补偿金额均在300万元以下，合计占省再担保公司代偿补偿总金额的{{by_guarantee_institutions.percentage_5}}%。
+    </div>
+
+    <div class="subsection">
+        <div class="subsection-title">（二）分合作银行情况。</div>
+        {{meta.year}}年上半年，代偿补偿项目涉及合作银行{{by_partner_banks.bank_count}}家（见附表）。
+
+        从代偿补偿金额看，国有大型银行补偿金额{{by_partner_banks.state_owned_bank_amount}}万元，补偿金额占比{{by_partner_banks.state_owned_bank_percentage}}%，补偿笔数{{by_partner_banks.state_owned_bank_count}}笔，笔数占比{{by_partner_banks.state_owned_bank_count_percentage}}%，其中{{by_partner_banks.state_owned_bank_details}}补偿金额超过2000万元。地方法人银行补偿金额{{by_partner_banks.local_bank_amount}}万元，补偿金额占比{{by_partner_banks.local_bank_percentage}}%，补偿笔数{{by_partner_banks.local_bank_count}}笔，笔数占比{{by_partner_banks.local_bank_count_percentage}}%，其中{{by_partner_banks.local_bank_details}}等补偿金额超1000万元。全国股份制银行补偿金额{{by_partner_banks.joint_stock_bank_amount}}万元，补偿金额占比{{by_partner_banks.joint_stock_bank_percentage}}%，补偿笔数{{by_partner_banks.joint_stock_bank_count}}笔，笔数占比{{by_partner_banks.joint_stock_bank_count_percentage}}%，其中{{by_partner_banks.joint_stock_bank_details}}补偿金额最高，金额为{{by_partner_banks.joint_stock_highest_amount}}万元。
+
+        从笔均补偿金额看，{{by_partner_banks.bank_count}}家银行笔均补偿额{{by_partner_banks.avg_compensation_amount}}万元（全省平均水平）。其中：国有大型银行代偿补偿笔数最多，笔均补偿额{{by_partner_banks.internet_bank_avg}}万元，略高于全省平均水平；互联网银行代偿补偿笔数其次、单笔金额最小，笔均补偿额{{by_partner_banks.internet_bank_avg}}万元，明显低于全省平均水平；地方法人银行补偿笔数第三、单笔金额较高，笔均补偿额{{by_partner_banks.local_bank_avg}}万元；全国股份制银行补偿笔数最少，但单笔金额最高，笔均补偿额{{by_partner_banks.joint_stock_bank_avg}}万元，明显高于全省平均水平。
+    </div>
+
+    <div class="subsection">
+        <div class="subsection-title">（三）分补偿额度情况。</div>
+        我省再担保代偿补偿项目呈现"小额、分散"的特点，笔均补偿金额为{{by_compensation_amount.avg_compensation_amount}}万元。{{meta.year}}年上半年，代偿补偿金额50万元及以下项目共计{{by_compensation_amount.under_500k_count}}笔、金额{{by_compensation_amount.under_500k_amount}}万元，笔数占比{{by_compensation_amount.under_500k_count_percentage}}%，金额占比{{by_compensation_amount.under_500k_amount_percentage}}%；50万元至100万元（含）项目共计{{by_compensation_amount.500k_to_1m_count}}笔、金额{{by_compensation_amount.500k_to_1m_amount}}万元，笔数占比{{by_compensation_amount.500k_to_1m_count_percentage}}%，金额占比{{by_compensation_amount.500k_to_1m_amount_percentage}}%；100万元以上项目（单笔补偿金额最高{{by_compensation_amount.highest_single_amount}}万元）共计{{by_compensation_amount.over_1m_count}}笔、金额{{by_compensation_amount.over_1m_amount}}万元，笔数占比{{by_compensation_amount.over_1m_count_percentage}}%，金额占比{{by_compensation_amount.over_1m_amount_percentage}}%。
+    </div>
+
+    <div class="subsection">
+        <div class="subsection-title">（四）分行业情况。</div>
+        {{meta.year}}年上半年，再担保合作业务代偿最多的是建筑业，排名前5的行业分别为建筑业占比{{by_industry.construction_percentage}}%；农、林、牧、渔业占比{{by_industry.agriculture_percentage}}%；批发业占比{{by_industry.wholesale_percentage}}%；工业占比{{by_industry.industry_percentage}}%；零售业占比{{by_industry.retail_percentage}}%。
+    </div>
+
+    <div class="subsection">
+        <div class="subsection-title">（五）分代偿原因情况。</div>
+        {{meta.year}}年上半年，再担保合作业务发生代偿的主要原因如下（部分项目存在多个代偿原因叠加的情形）：1.因下游客户付款能力恶化、付款账期严重拉长导致代偿（笔数占比为{{by_compensation_reasons.reason_1_percentage}}%）；2.因市场竞争激烈或产品服务迭代导致代偿（笔数占比{{by_compensation_reasons.reason_2_percentage}}%）；3.因盲目扩张业务规模导致代偿（笔数占比{{by_compensation_reasons.reason_3_percentage}}%）；4.因新冠疫情持续影响导致代偿（笔数占比{{by_compensation_reasons.reason_4_percentage}}%）；5.因遭受自然灾害影响导致代偿（笔数占比{{by_compensation_reasons.reason_5_percentage}}%）。
+    </div>
+</div>
+
+<div class="section">
+    <div class="section-title">二、存在的主要问题</div>
+
+    <p>从代偿补偿审结的项目看，主要存在以下几类问题：</p>
+
+    <div class="subsection">
+        <div class="subsection-title">（一）代偿补偿提报不及时。</div>
+        担保机构在履行代偿责任后，未及时向省再担保公司申请补偿，影响全省整个代偿补偿审核效率，政策明确规定120天的申报时限，但部分担保机构积压到后期集中报送或卡在最后时限报送，如{{issues.late_reporting_institutions}}存在卡最后几天报送的情况。
+    </div>
+
+    <div class="subsection">
+        <div class="subsection-title">（二）代偿支付路径错误。</div>
+        担保代偿资金应自担保人账户转入{{issues.bank_name}}债权人账户，近期我司在代偿补偿业务审核过程中发现，个别担保机构在与{{issues.bank_name}}合作业务中，代偿资金转入了{{issues.bank_name}}的借款人名下账户，影响代偿补偿审批。后续请各担保机构加强对合作银行的政策培训与指导，避免此类情况发生。
+    </div>
+
+    <div class="subsection">
+        <div class="subsection-title">（三）国担银担"总对总"批量担保业务操作不规范。</div>
+        一是部分担保机构业务在完成代偿资金扣划后，未能及时与银行对接核对扣划资金、未获取项目资料向省再担保公司申请补偿，导致该业务长期挂账，影响后续备付金清算。二是部分担保机构国担银担"总对总"批量担保业务代偿补偿资料补充重视程度不够，退回后用时较长，严重影响2020版国担银担"总对总"批量担保业务的审核效率。三是对于2023年版国担银担"总对总"批量担保业务，已将业务流程调整为"先审核业务、后划扣资金"，合作担保机构应注意与原业务流程的区别，严格按照新的流程要求发起代偿补偿申请。
+    </div>
+</div>
+
+<div class="section">
+    <div class="section-title">三、工作意见</div>
+
+    <p>总体来看，经过近年来不断地探索实践，省再担保公司和各合作担保机构的代偿补偿工作的规范化水平不断提升，但仍然存在一些问题，请相关合作担保机构高度重视，切实加以解决。</p>
+
+    <p>一是担保机构需进一步优化代偿补偿申报工作流程，明确代偿补偿申报人员，专人专岗，建立提前预审机制，确保申报质效。二是担保机构要落实批量业务的保后管理，代偿补偿项目备案起始日期已逐步进入{{meta.year}}年，担保机构要按要求、按频次落实保后管理措施。三是关注行业代偿风险集中度问题。一方面，建筑业等与房地产相关产业的代偿水平凸显，应收账款回收困难，导致资金链断裂，逾期的情况频发。另一方面，民生消费相关的餐饮、商服、批发、零售等受消费降级的影响明显，收入普遍下降，房租、人力成本上升导致利润水平快速下降，项目逾期、代偿较多。担保机构对以上行业风险水平较高的，应采取谨慎态度开展业务。四是关注银行存量风险转嫁问题。今年以来，通过拆分风险项目，利用新借款主体化解存量风险的情况时有发生。根据国担基金《关于明确借新还旧业务政策适用范围的函》（国融担函〔2023〕256号）文件要求，应加强此类业务梳理，防止合作银行将其借新还旧业务纳入首次合作向担保体系转嫁。五是{{meta.year}}年上半年部分担保机构合作业务担保代偿率持续攀升，超过3%的机构数量明显增加，请各担保机构不断完善业务模式和担保产品，加强风险防控，将担保代偿率控制在政策要求范围内。</p>
+</div>
+
+<div class="section">
+    <div class="title">附表：{{meta.year}}年上半年再担保代偿补偿统计表（合作银行）</div>
+
+    <!-- 表格数据直接从Excel文件中提取 -->
+    <table>
+        <thead>
+        <tr>
+            <th>序号</th>
+            <th>合作<br>银行</th>
+            <th>补偿<br>金额</th>
+            <th>金额<br>占比</th>
+            <th>笔数</th>
+            <th>笔数<br>占比</th>
+            <th>笔均</th>
+            <th>合作业务<br>代偿率</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>合计</td>
+            <td></td>
+            <td>16198.67</td>
+            <td>100.00%</td>
+            <td>361.00</td>
+            <td>100.00%</td>
+            <td>44.87</td>
+            <td>1.64%</td>
+        </tr>
+        <tr>
+            <td colspan="8">一、国有大型银行</td>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td>邮储银行</td>
+            <td>5709.17</td>
+            <td>35.24%</td>
+            <td>33</td>
+            <td>9.14%</td>
+            <td>173.01</td>
+            <td>1.93%</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>农业银行</td>
+            <td>857.77</td>
+            <td>5.30%</td>
+            <td>111</td>
+            <td>30.75%</td>
+            <td>7.73</td>
+            <td>1.67%</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>中国银行</td>
+            <td>750.00</td>
+            <td>4.63%</td>
+            <td>10</td>
+            <td>2.77%</td>
+            <td>75.00</td>
+            <td>1.55%</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>建设银行</td>
+            <td>832.61</td>
+            <td>5.14%</td>
+            <td>22</td>
+            <td>6.09%</td>
+            <td>37.85</td>
+            <td>0.97%</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td>工商银行</td>
+            <td>2960.90</td>
+            <td>18.28%</td>
+            <td>25</td>
+            <td>6.93%</td>
+            <td>118.44</td>
+            <td>1.49%</td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td>交通银行</td>
+            <td>528.73</td>
+            <td>3.26%</td>
+            <td>3</td>
+            <td>0.83%</td>
+            <td>176.24</td>
+            <td>0%</td>
+        </tr>
+        <tr>
+            <td colspan="8">二、全国股份制银行</td>
+        </tr>
+        <tr>
+            <td>7</td>
+            <td>恒丰银行</td>
+            <td>160.00</td>
+            <td>0.99%</td>
+            <td>1</td>
+            <td>0.28%</td>
+            <td>160.00</td>
+            <td>0%</td>
+        </tr>
+        <tr>
+            <td>8</td>
+            <td>平安银行</td>
+            <td>59.98</td>
+            <td>0.37%</td>
+            <td>1</td>
+            <td>0.28%</td>
+            <td>59.98</td>
+            <td>0%</td>
+        </tr>
+        <tr>
+            <td colspan="8">三、地方法人银行</td>
+        </tr>
+        <tr>
+            <td>9</td>
+            <td>信合、村镇银行等</td>
+            <td>2886.77</td>
+            <td>17.82%</td>
+            <td>53</td>
+            <td>14.68%</td>
+            <td>54.47</td>
+            <td>1.84%</td>
+        </tr>
+        <tr>
+            <td>10</td>
+            <td>重庆银行</td>
+            <td>160</td>
+            <td>0.99%</td>
+            <td>1</td>
+            <td>0.28%</td>
+            <td>160</td>
+            <td>15.38%</td>
+        </tr>
+        <tr>
+            <td>11</td>
+            <td>秦农银行</td>
+            <td>311.87</td>
+            <td>1.93%</td>
+            <td>9</td>
+            <td>2.49%</td>
+            <td>34.65</td>
+            <td>3.38%</td>
+        </tr>
+        <tr>
+            <td>12</td>
+            <td>西安银行</td>
+            <td>634.13</td>
+            <td>3.91%</td>
+            <td>45</td>
+            <td>12.47%</td>
+            <td>14.09</td>
+            <td>3.07%</td>
+        </tr>
+        <tr>
+            <td>13</td>
+            <td>北京银行</td>
+            <td>72.00</td>
+            <td>0.44%</td>
+            <td>3</td>
+            <td>0.83%</td>
+            <td>24.00</td>
+            <td>6.69%</td>
+        </tr>
+        <tr>
+            <td colspan="8">四、互联网银行</td>
+        </tr>
+        <tr>
+            <td>14</td>
+            <td>深圳微众银行</td>
+            <td>434.74</td>
+            <td>2.68%</td>
+            <td>44</td>
+            <td>12.19%</td>
+            <td>9.88</td>
+            <td>1.49%</td>
+        </tr>
+        </tbody>
+        <tfoot>
+        <tr>
+            <td colspan="8">
+                备注：1.上表中合作业务代偿率为国担系统查询数据（包含国担"总对总"业务）。<br>
+                2. 按代偿补偿金额降序排列。<br>
+                3.合作业务代偿率是指{{meta.year}}年上半年合作银行与体系内担保机构备案业务担保代偿率。
+            </td>
+        </tr>
+        </tfoot>
+    </table>
+</div>
+
+<div class="footer">
+    <p>报送：省财政厅、省地方金融管理局。</p>
+    <p>发送：各合作政府性融资担保机构。</p>
+</div>
+</body>
+</html>
