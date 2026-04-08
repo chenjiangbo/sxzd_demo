@@ -1,13 +1,11 @@
 'use client';
 
-import { BotMessageSquare, BrainCircuit, ClipboardList, FileStack, Presentation, User } from 'lucide-react';
+import { BotMessageSquare, BrainCircuit, ChevronRight, ClipboardList, FileStack, Presentation, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const items = [
-  { href: '/', label: '代偿补偿', icon: ClipboardList },
+const topLevelItems = [
   { href: '/brief', label: '担保体系简报', icon: Presentation },
-  { href: '/compensation-brief', label: '代偿补偿简报', icon: FileStack },
   { href: '/evaluation-report', label: '机构评价报告', icon: BotMessageSquare },
   { href: '/credit-report', label: '授信报告', icon: FileStack },
   { href: '/ai-review', label: 'AI 复核', icon: BrainCircuit },
@@ -17,6 +15,9 @@ export default function Sidebar() {
   const pathname = usePathname();
   const isCreditRoute = pathname.startsWith('/credit-report');
   const isEvaluationRoute = pathname.startsWith('/evaluation-report');
+  const compensationParentActive = pathname === '/' || pathname.startsWith('/cases/') || pathname === '/review' || pathname === '/verify' || pathname.startsWith('/compensation-brief');
+  const approvalActive = pathname === '/' || pathname.startsWith('/cases/') || pathname === '/review' || pathname === '/verify';
+  const compensationBriefActive = pathname.startsWith('/compensation-brief');
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-full w-48 flex-col bg-slate-50 font-headline text-sm font-semibold tracking-tight dark:bg-slate-900">
@@ -26,11 +27,46 @@ export default function Sidebar() {
       </div>
 
       <nav className="mt-4 flex-1 space-y-2 px-3">
-        {items.map(({ href, label, icon: Icon }) => {
+        <div className="space-y-1">
+          <div
+            className={
+              compensationParentActive
+                ? 'flex items-center gap-3 rounded-l-lg border-r-4 border-[#002B5B] bg-white px-3 py-3 font-bold text-[#002B5B] shadow-sm transition-colors dark:bg-slate-800 dark:text-blue-300'
+                : 'flex items-center gap-3 rounded-lg px-3 py-3 text-slate-500 transition-colors dark:text-slate-400'
+            }
+          >
+            <ClipboardList className="h-5 w-5" />
+            <span>代偿补偿</span>
+          </div>
+          <div className="ml-5 space-y-1 border-l border-slate-200 pl-3 dark:border-slate-700">
+            <Link
+              href="/"
+              className={
+                approvalActive
+                  ? 'flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold text-[#002B5B] dark:bg-slate-800 dark:text-blue-300'
+                  : 'flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-500 transition-colors hover:bg-surface-container-low hover:text-[#002B5B] dark:text-slate-400 dark:hover:bg-slate-800/80'
+              }
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+              <span>审批表</span>
+            </Link>
+            <Link
+              href="/compensation-brief"
+              className={
+                compensationBriefActive
+                  ? 'flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold text-[#002B5B] dark:bg-slate-800 dark:text-blue-300'
+                  : 'flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-500 transition-colors hover:bg-surface-container-low hover:text-[#002B5B] dark:text-slate-400 dark:hover:bg-slate-800/80'
+              }
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+              <span>简报</span>
+            </Link>
+          </div>
+        </div>
+
+        {topLevelItems.map(({ href, label, icon: Icon }) => {
           const active =
-            (href === '/' && (pathname === '/' || pathname.startsWith('/cases/') || pathname === '/review' || pathname === '/verify')) ||
             (href === '/brief' && pathname === '/brief') ||
-            (href === '/compensation-brief' && pathname.startsWith('/compensation-brief')) ||
             (href === '/credit-report' && pathname.startsWith('/credit-report')) ||
             (href === '/evaluation-report' && pathname.startsWith('/evaluation-report')) ||
             (href === '/ai-review' && pathname.startsWith('/ai-review'));
