@@ -4,10 +4,26 @@ import Link from 'next/link';
 import { Download, FileText, LoaderCircle, RefreshCcw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import SubmitOaButton from '@/components/credit/SubmitOaButton';
-import { parseCreditReportText, type GeneratedCreditReport } from '@/lib/credit-report-format';
+import { parseCreditReportText } from '@/lib/credit-report-format';
+
+type CreditTraceItem = {
+  id: string;
+  numberText: string;
+  semanticLabel: string;
+  sourceType: 'direct' | 'derived';
+  sourceIds: string[];
+  formula?: string;
+  note?: string;
+};
+
+type GeneratedCreditReportWithTrace = {
+  rawText: string;
+  generatedAt: string;
+  dataTrace: CreditTraceItem[];
+};
 
 type Props = {
-  initialReport: GeneratedCreditReport | null;
+  initialReport: GeneratedCreditReportWithTrace | null;
   autoGenerate: boolean;
   adoptedCriteria: string[];
   references: string[];
@@ -17,7 +33,7 @@ type Props = {
 type StreamEvent =
   | { event: 'status'; data: { text?: string } }
   | { event: 'chunk'; data: { text?: string } }
-  | { event: 'complete'; data: { text?: string; cached?: boolean } }
+  | { event: 'complete'; data: { text?: string; cached?: boolean; dataTrace?: CreditTraceItem[] } }
   | { event: 'error'; data: { message?: string } };
 
 function parseSseFrames(buffer: string) {
@@ -55,6 +71,7 @@ function parseSseEvent(frame: string): StreamEvent | null {
         data: {
           text: typeof data.text === 'string' ? data.text : undefined,
           cached: typeof data.cached === 'boolean' ? data.cached : undefined,
+          dataTrace: Array.isArray(data.dataTrace) ? (data.dataTrace as CreditTraceItem[]) : undefined,
         },
       };
     }
@@ -66,7 +83,7 @@ function parseSseEvent(frame: string): StreamEvent | null {
 }
 
 export default function CreditReportPreviewClient({ initialReport, autoGenerate, adoptedCriteria, references, oaMemo }: Props) {
-  const [report, setReport] = useState<GeneratedCreditReport | null>(initialReport);
+  const [report, setReport] = useState<GeneratedCreditReportWithTrace | null>(initialReport);
   const [displayText, setDisplayText] = useState(initialReport?.rawText ?? '');
   const [loading, setLoading] = useState(autoGenerate || !initialReport);
   const [error, setError] = useState<string | null>(null);
@@ -174,6 +191,7 @@ export default function CreditReportPreviewClient({ initialReport, autoGenerate,
             setReport({
               rawText: finalText,
               generatedAt: new Date().toISOString(),
+              dataTrace: event.data.dataTrace ?? [],
             });
             setStatusText(event.data.cached ? '已加载最新缓存授信报告' : '模型已完成生成，正在整理排版...');
             streamDoneRef.current = true;
@@ -202,6 +220,7 @@ export default function CreditReportPreviewClient({ initialReport, autoGenerate,
 
   const parsed = parseCreditReportText(displayText);
   const hasVisibleContent = Boolean(displayText.trim());
+  const traceItems = report?.dataTrace ?? [];
 
   useEffect(() => {
     if (!loading || !hasVisibleContent) return;
@@ -339,6 +358,59 @@ export default function CreditReportPreviewClient({ initialReport, autoGenerate,
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="rounded-3xl bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-container-low text-secondary">
+              <FileText className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">数据核验映射</p>
+              <p className="text-sm font-black text-primary">报告数字的来源与口径</p>
+            </div>
+          </div>
+
+          {!traceItems.length ? (
+            <div className="mt-4 rounded-2xl border border-dashed border-outline-variant/20 bg-surface-container-low px-4 py-4 text-sm leading-6 text-on-surface-variant">
+              当前尚未生成数据核验映射。完成授信报告生成后，这里会显示正文中关键数字对应的来源 id、直接取数/推导类型和计算口径。
+            </div>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {traceItems.map((item) => (
+                <div key={item.id} className="rounded-2xl border border-outline-variant/15 bg-surface-container-low px-4 py-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-black text-primary">{item.semanticLabel}</p>
+                      <p className="mt-1 text-xs font-bold text-secondary">{item.numberText}</p>
+                    </div>
+                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-black text-on-surface-variant">
+                      {item.sourceType === 'direct' ? '直接取数' : '推导生成'}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 space-y-2 text-sm leading-6 text-on-surface">
+                    <p>
+                      <span className="font-black text-on-surface-variant">来源 ID：</span>
+                      {item.sourceIds.join('、')}
+                    </p>
+                    {item.formula ? (
+                      <p>
+                        <span className="font-black text-on-surface-variant">计算口径：</span>
+                        {item.formula}
+                      </p>
+                    ) : null}
+                    {item.note ? (
+                      <p>
+                        <span className="font-black text-on-surface-variant">备注：</span>
+                        {item.note}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </aside>
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
-import { Download, FileText, RefreshCcw } from 'lucide-react';
+import { Download, FileText, Pencil, RefreshCcw, Save, X } from 'lucide-react';
 import type { CaseAnalysis } from '@/lib/server/case-analysis';
 import {
   REVEAL_ORDER,
@@ -176,6 +176,87 @@ function ApprovalSectionTitle({ children }: { children: string }) {
   return <h3 className="text-[20px] font-black text-primary">{children}</h3>;
 }
 
+function cloneReport(report: GeneratedCompensationReport): GeneratedCompensationReport {
+  return {
+    ...report,
+    structured: {
+      header: { ...report.structured.header },
+      sections: {
+        debtorProfile: [...report.structured.sections.debtorProfile],
+        borrowRows: report.structured.sections.borrowRows.map((row) => ({ ...row })),
+        counterGuarantee: [...report.structured.sections.counterGuarantee],
+        filingInfo: [...report.structured.sections.filingInfo],
+        compensationReason: [...report.structured.sections.compensationReason],
+        riskRows: report.structured.sections.riskRows.map((row) => ({ ...row })),
+        riskExplanation: [...report.structured.sections.riskExplanation],
+        recoveryPlan: [...report.structured.sections.recoveryPlan],
+        conclusion: [...report.structured.sections.conclusion],
+      },
+    },
+  };
+}
+
+function ParagraphEditor({
+  values,
+  onChange,
+  emphasize = false,
+}: {
+  values: string[];
+  onChange: (index: number, value: string) => void;
+  emphasize?: boolean;
+}) {
+  return (
+    <div className="space-y-3">
+      {values.map((value, index) => (
+        <textarea
+          key={`${index}-${value.slice(0, 16)}`}
+          value={value}
+          onChange={(event) => onChange(index, event.target.value)}
+          rows={Math.max(3, Math.ceil(value.length / 42))}
+          className={`w-full rounded-2xl border border-outline-variant/20 bg-white px-4 py-3 text-[16px] leading-[2] text-on-surface outline-none transition focus:border-primary ${
+            emphasize ? 'font-semibold text-primary' : ''
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function EditableTable({
+  headers,
+  rows,
+}: {
+  headers: string[];
+  rows: React.ReactNode[][];
+}) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-300">
+      <table className="w-full border-collapse text-[15px] leading-7">
+        <thead className="bg-slate-100">
+          <tr>
+            {headers.map((header) => (
+              <th key={header} className="border border-slate-300 px-3 py-3 text-left font-black text-primary">
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, rowIndex) => (
+            <tr key={rowIndex} className="align-top">
+              {row.map((cell, cellIndex) => (
+                <td key={`${rowIndex}-${cellIndex}`} className="border border-slate-300 px-3 py-3 text-on-surface">
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function ReportTable({
   headers,
   rows,
@@ -226,10 +307,20 @@ function ApprovalPreview({
   report,
   revealCount,
   scrollAnchorRef,
+  editable = false,
+  onHeaderChange,
+  onParagraphChange,
+  onBorrowRowChange,
+  onRiskRowChange,
 }: {
   report: GeneratedCompensationReport;
   revealCount: number;
   scrollAnchorRef: RefObject<HTMLDivElement | null>;
+  editable?: boolean;
+  onHeaderChange?: (field: keyof GeneratedCompensationReport['structured']['header'], value: string) => void;
+  onParagraphChange?: (section: ParagraphSectionKey, index: number, value: string) => void;
+  onBorrowRowChange?: (index: number, field: keyof ApprovalBorrowRow, value: string) => void;
+  onRiskRowChange?: (index: number, field: keyof ApprovalRiskRow, value: string) => void;
 }) {
   const visible = new Set<RevealKey>(REVEAL_ORDER.slice(0, revealCount));
   const { header, sections } = report.structured;
@@ -238,11 +329,43 @@ function ApprovalPreview({
       {visible.has('header') ? (
         <>
           <div className="mb-10 text-center">
-            <h2 className="text-[2.8rem] font-bold leading-[1.5] tracking-[0.04em] text-primary">{header.title}</h2>
+            {editable ? (
+              <textarea
+                value={header.title}
+                onChange={(event) => onHeaderChange?.('title', event.target.value)}
+                rows={2}
+                className="mx-auto w-full max-w-[880px] rounded-2xl border border-outline-variant/20 px-5 py-4 text-center text-[2.5rem] font-bold leading-[1.5] tracking-[0.04em] text-primary outline-none focus:border-primary"
+              />
+            ) : (
+              <h2 className="text-[2.8rem] font-bold leading-[1.5] tracking-[0.04em] text-primary">{header.title}</h2>
+            )}
           </div>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-4 px-2 text-[16px]">
-            <span>担保机构名称：{header.guarantorName}</span>
-            <span>日期：{header.date}</span>
+            {editable ? (
+              <>
+                <label className="flex min-w-[420px] items-center gap-2">
+                  <span>担保机构名称：</span>
+                  <input
+                    value={header.guarantorName}
+                    onChange={(event) => onHeaderChange?.('guarantorName', event.target.value)}
+                    className="min-w-0 flex-1 rounded-xl border border-outline-variant/20 px-3 py-2 outline-none focus:border-primary"
+                  />
+                </label>
+                <label className="flex min-w-[260px] items-center gap-2">
+                  <span>日期：</span>
+                  <input
+                    value={header.date}
+                    onChange={(event) => onHeaderChange?.('date', event.target.value)}
+                    className="min-w-0 flex-1 rounded-xl border border-outline-variant/20 px-3 py-2 outline-none focus:border-primary"
+                  />
+                </label>
+              </>
+            ) : (
+              <>
+                <span>担保机构名称：{header.guarantorName}</span>
+                <span>日期：{header.date}</span>
+              </>
+            )}
           </div>
         </>
       ) : null}
@@ -256,13 +379,17 @@ function ApprovalPreview({
             <section className="border-b border-slate-900 px-4 py-4">
               <div className="space-y-4">
                 <ApprovalSectionTitle>一、债务人基本情况</ApprovalSectionTitle>
-                <div className="space-y-4 text-[16px] leading-[2.2] text-on-surface">
-                  {sections.debtorProfile.map((item) => (
-                    <p key={item} className="indent-8">
-                      {item}
-                    </p>
-                  ))}
-                </div>
+                {editable ? (
+                  <ParagraphEditor values={sections.debtorProfile} onChange={(index, value) => onParagraphChange?.('debtorProfile', index, value)} />
+                ) : (
+                  <div className="space-y-4 text-[16px] leading-[2.2] text-on-surface">
+                    {sections.debtorProfile.map((item) => (
+                      <p key={item} className="indent-8">
+                        {item}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
             </section>
           ) : null}
@@ -271,10 +398,21 @@ function ApprovalPreview({
             <section className="border-b border-slate-900 px-4 py-4">
               <div className="space-y-4">
                 <ApprovalSectionTitle>二、借款情况</ApprovalSectionTitle>
-                <ReportTable
-                  headers={['序号', '项目', '内容']}
-                  rows={sections.borrowRows.map((row) => [row.index, row.item, row.content])}
-                />
+                {editable ? (
+                  <EditableTable
+                    headers={['序号', '项目', '内容']}
+                    rows={sections.borrowRows.map((row, rowIndex) => [
+                      <input key="index" value={row.index} onChange={(event) => onBorrowRowChange?.(rowIndex, 'index', event.target.value)} className="w-full rounded-lg border border-outline-variant/20 px-2 py-2 outline-none focus:border-primary" />,
+                      <input key="item" value={row.item} onChange={(event) => onBorrowRowChange?.(rowIndex, 'item', event.target.value)} className="w-full rounded-lg border border-outline-variant/20 px-2 py-2 outline-none focus:border-primary" />,
+                      <textarea key="content" value={row.content} onChange={(event) => onBorrowRowChange?.(rowIndex, 'content', event.target.value)} rows={Math.max(2, Math.ceil(row.content.length / 28))} className="w-full rounded-lg border border-outline-variant/20 px-2 py-2 outline-none focus:border-primary" />,
+                    ])}
+                  />
+                ) : (
+                  <ReportTable
+                    headers={['序号', '项目', '内容']}
+                    rows={sections.borrowRows.map((row) => [row.index, row.item, row.content])}
+                  />
+                )}
               </div>
             </section>
           ) : null}
@@ -283,13 +421,17 @@ function ApprovalPreview({
             <section className="border-b border-slate-900 px-4 py-4">
               <div className="space-y-4">
                 <ApprovalSectionTitle>三、反担保措施</ApprovalSectionTitle>
-                <div className="space-y-4 text-[16px] leading-[2.2] text-on-surface">
-                  {sections.counterGuarantee.map((item) => (
-                    <p key={item} className="indent-8">
-                      {item}
-                    </p>
-                  ))}
-                </div>
+                {editable ? (
+                  <ParagraphEditor values={sections.counterGuarantee} onChange={(index, value) => onParagraphChange?.('counterGuarantee', index, value)} />
+                ) : (
+                  <div className="space-y-4 text-[16px] leading-[2.2] text-on-surface">
+                    {sections.counterGuarantee.map((item) => (
+                      <p key={item} className="indent-8">
+                        {item}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
             </section>
           ) : null}
@@ -298,13 +440,17 @@ function ApprovalPreview({
             <section className="border-b border-slate-900 px-4 py-4">
               <div className="space-y-4">
                 <ApprovalSectionTitle>四、备案情况</ApprovalSectionTitle>
-                <div className="space-y-4 text-[16px] leading-[2.2] text-on-surface">
-                  {sections.filingInfo.map((item) => (
-                    <p key={item} className="indent-8">
-                      {item}
-                    </p>
-                  ))}
-                </div>
+                {editable ? (
+                  <ParagraphEditor values={sections.filingInfo} onChange={(index, value) => onParagraphChange?.('filingInfo', index, value)} />
+                ) : (
+                  <div className="space-y-4 text-[16px] leading-[2.2] text-on-surface">
+                    {sections.filingInfo.map((item) => (
+                      <p key={item} className="indent-8">
+                        {item}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
             </section>
           ) : null}
@@ -313,13 +459,17 @@ function ApprovalPreview({
             <section className="border-b border-slate-900 px-4 py-4">
               <div className="space-y-4">
                 <ApprovalSectionTitle>五、代偿原因</ApprovalSectionTitle>
-                <div className="space-y-4 text-[16px] leading-[2.2] text-on-surface">
-                  {sections.compensationReason.map((item) => (
-                    <p key={item} className="indent-8">
-                      {item}
-                    </p>
-                  ))}
-                </div>
+                {editable ? (
+                  <ParagraphEditor values={sections.compensationReason} onChange={(index, value) => onParagraphChange?.('compensationReason', index, value)} />
+                ) : (
+                  <div className="space-y-4 text-[16px] leading-[2.2] text-on-surface">
+                    {sections.compensationReason.map((item) => (
+                      <p key={item} className="indent-8">
+                        {item}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
             </section>
           ) : null}
@@ -328,23 +478,40 @@ function ApprovalPreview({
             <section className="border-b border-slate-900 px-4 py-4">
               <div className="space-y-4">
                 <ApprovalSectionTitle>六、分险比例与分险金额</ApprovalSectionTitle>
-                <ReportTable
-                  headers={['代偿时间', '债务人未清偿本金（含银行债权人部分）', '原担保机构代偿金额（本金）', '省级再担保机构责任比例', '省级再担保机构代偿补偿金额（本金）']}
-                  rows={sections.riskRows.map((row) => [
-                    row.compensationDate,
-                    row.uncompensatedPrincipal,
-                    row.indemnityAmount,
-                    row.ratio,
-                    row.compensationAmount,
-                  ])}
-                />
-                <div className="space-y-4 text-[16px] leading-[2.2] text-on-surface">
-                  {sections.riskExplanation.map((item) => (
-                    <p key={item} className="indent-8">
-                      {item}
-                    </p>
-                  ))}
-                </div>
+                {editable ? (
+                  <EditableTable
+                    headers={['代偿时间', '债务人未清偿本金（含银行债权人部分）', '原担保机构代偿金额（本金）', '省级再担保机构责任比例', '省级再担保机构代偿补偿金额（本金）']}
+                    rows={sections.riskRows.map((row, rowIndex) => [
+                      <input key="compensationDate" value={row.compensationDate} onChange={(event) => onRiskRowChange?.(rowIndex, 'compensationDate', event.target.value)} className="w-full rounded-lg border border-outline-variant/20 px-2 py-2 outline-none focus:border-primary" />,
+                      <input key="uncompensatedPrincipal" value={row.uncompensatedPrincipal} onChange={(event) => onRiskRowChange?.(rowIndex, 'uncompensatedPrincipal', event.target.value)} className="w-full rounded-lg border border-outline-variant/20 px-2 py-2 outline-none focus:border-primary" />,
+                      <input key="indemnityAmount" value={row.indemnityAmount} onChange={(event) => onRiskRowChange?.(rowIndex, 'indemnityAmount', event.target.value)} className="w-full rounded-lg border border-outline-variant/20 px-2 py-2 outline-none focus:border-primary" />,
+                      <input key="ratio" value={row.ratio} onChange={(event) => onRiskRowChange?.(rowIndex, 'ratio', event.target.value)} className="w-full rounded-lg border border-outline-variant/20 px-2 py-2 outline-none focus:border-primary" />,
+                      <input key="compensationAmount" value={row.compensationAmount} onChange={(event) => onRiskRowChange?.(rowIndex, 'compensationAmount', event.target.value)} className="w-full rounded-lg border border-outline-variant/20 px-2 py-2 outline-none focus:border-primary" />,
+                    ])}
+                  />
+                ) : (
+                  <ReportTable
+                    headers={['代偿时间', '债务人未清偿本金（含银行债权人部分）', '原担保机构代偿金额（本金）', '省级再担保机构责任比例', '省级再担保机构代偿补偿金额（本金）']}
+                    rows={sections.riskRows.map((row) => [
+                      row.compensationDate,
+                      row.uncompensatedPrincipal,
+                      row.indemnityAmount,
+                      row.ratio,
+                      row.compensationAmount,
+                    ])}
+                  />
+                )}
+                {editable ? (
+                  <ParagraphEditor values={sections.riskExplanation} onChange={(index, value) => onParagraphChange?.('riskExplanation', index, value)} />
+                ) : (
+                  <div className="space-y-4 text-[16px] leading-[2.2] text-on-surface">
+                    {sections.riskExplanation.map((item) => (
+                      <p key={item} className="indent-8">
+                        {item}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
             </section>
           ) : null}
@@ -353,13 +520,17 @@ function ApprovalPreview({
             <section className="px-4 py-4">
               <div className="space-y-4">
                 <ApprovalSectionTitle>七、追偿方案</ApprovalSectionTitle>
-                <div className="space-y-4 text-[16px] leading-[2.2] text-on-surface">
-                  {sections.recoveryPlan.map((item) => (
-                    <p key={item} className="indent-8">
-                      {item}
-                    </p>
-                  ))}
-                </div>
+                {editable ? (
+                  <ParagraphEditor values={sections.recoveryPlan} onChange={(index, value) => onParagraphChange?.('recoveryPlan', index, value)} />
+                ) : (
+                  <div className="space-y-4 text-[16px] leading-[2.2] text-on-surface">
+                    {sections.recoveryPlan.map((item) => (
+                      <p key={item} className="indent-8">
+                        {item}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
             </section>
           ) : null}
@@ -374,13 +545,17 @@ function ApprovalPreview({
           <section className="px-4 py-4">
             <div className="space-y-4">
               <ApprovalSectionTitle>结论</ApprovalSectionTitle>
-              <div className="space-y-4 text-[16px] leading-[2.2]">
-                {sections.conclusion.map((item) => (
-                  <p key={item} className="indent-8 font-semibold text-primary">
-                    {item}
-                  </p>
-                ))}
-              </div>
+              {editable ? (
+                <ParagraphEditor values={sections.conclusion} onChange={(index, value) => onParagraphChange?.('conclusion', index, value)} emphasize />
+              ) : (
+                <div className="space-y-4 text-[16px] leading-[2.2]">
+                  {sections.conclusion.map((item) => (
+                    <p key={item} className="indent-8 font-semibold text-primary">
+                      {item}
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
         </div>
@@ -392,6 +567,9 @@ function ApprovalPreview({
 
 export default function CompensationApprovalPreviewClient({ analysis, initialReport }: Props) {
   const [report, setReport] = useState<GeneratedCompensationReport | null>(initialReport);
+  const [draftReport, setDraftReport] = useState<GeneratedCompensationReport | null>(initialReport ? cloneReport(initialReport) : null);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(initialReport ? 100 : 0);
@@ -421,11 +599,16 @@ export default function CompensationApprovalPreviewClient({ analysis, initialRep
     }
   }, []);
 
+  const applyReport = useCallback((nextReport: GeneratedCompensationReport) => {
+    setReport(nextReport);
+    setDraftReport(cloneReport(nextReport));
+  }, []);
+
   const finishPlaybackIfReady = useCallback((finalReport?: GeneratedCompensationReport) => {
     if (!streamDoneRef.current || playbackIndexRef.current < playbackQueueRef.current.length) return;
     stopPlayback();
     if (finalReport) {
-      setReport(finalReport);
+      applyReport(finalReport);
       setRevealCount(REVEAL_ORDER.length);
     }
     setLoading(false);
@@ -435,7 +618,7 @@ export default function CompensationApprovalPreviewClient({ analysis, initialRep
         ? '已加载最新缓存审批表'
         : `审批表已生成（${new Date((finalReport ?? report)?.generatedAt ?? new Date().toISOString()).toLocaleString('zh-CN')}）`,
     );
-  }, [report, stopPlayback]);
+  }, [applyReport, report, stopPlayback]);
 
   const startPlayback = useCallback((targetReport: GeneratedCompensationReport, cached: boolean) => {
     latestCachedRef.current = cached;
@@ -540,9 +723,11 @@ export default function CompensationApprovalPreviewClient({ analysis, initialRep
   const generate = useCallback(async (force: boolean) => {
     setLoading(true);
     setError(null);
+    setEditing(false);
     setProgress(6);
     setStatusText(force ? '正在重新生成代偿补偿审批表...' : '正在准备生成代偿补偿审批表...');
     setReport(null);
+    setDraftReport(null);
     setRevealCount(0);
     stopPlayback();
     playbackQueueRef.current = [];
@@ -624,6 +809,114 @@ export default function CompensationApprovalPreviewClient({ analysis, initialRep
     }
   }, [finishPlaybackIfReady, startPlayback, stopPlayback]);
 
+  const handleHeaderChange = useCallback((field: keyof GeneratedCompensationReport['structured']['header'], value: string) => {
+    setDraftReport((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        structured: {
+          ...current.structured,
+          header: {
+            ...current.structured.header,
+            [field]: value,
+          },
+        },
+      };
+    });
+  }, []);
+
+  const handleParagraphChange = useCallback((section: ParagraphSectionKey, index: number, value: string) => {
+    setDraftReport((current) => {
+      if (!current) return current;
+      const nextValues = current.structured.sections[section].slice();
+      nextValues[index] = value;
+      return {
+        ...current,
+        structured: {
+          ...current.structured,
+          sections: {
+            ...current.structured.sections,
+            [section]: nextValues,
+          },
+        },
+      };
+    });
+  }, []);
+
+  const handleBorrowRowChange = useCallback((index: number, field: keyof ApprovalBorrowRow, value: string) => {
+    setDraftReport((current) => {
+      if (!current) return current;
+      const nextRows = current.structured.sections.borrowRows.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, [field]: value } : row,
+      );
+      return {
+        ...current,
+        structured: {
+          ...current.structured,
+          sections: {
+            ...current.structured.sections,
+            borrowRows: nextRows,
+          },
+        },
+      };
+    });
+  }, []);
+
+  const handleRiskRowChange = useCallback((index: number, field: keyof ApprovalRiskRow, value: string) => {
+    setDraftReport((current) => {
+      if (!current) return current;
+      const nextRows = current.structured.sections.riskRows.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, [field]: value } : row,
+      );
+      return {
+        ...current,
+        structured: {
+          ...current.structured,
+          sections: {
+            ...current.structured.sections,
+            riskRows: nextRows,
+          },
+        },
+      };
+    });
+  }, []);
+
+  const saveDraft = useCallback(async () => {
+    if (!draftReport) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/compensation-report/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          report: {
+            ...draftReport,
+            generatedAt: new Date().toISOString(),
+          },
+        }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error ?? '审批表保存失败');
+      }
+      const payload = (await response.json()) as { report: GeneratedCompensationReport };
+      applyReport(payload.report);
+      setEditing(false);
+      setStatusText(`已保存人工修订稿（${new Date(payload.report.generatedAt).toLocaleString('zh-CN')}）`);
+    } catch (saveError) {
+      setError((saveError as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }, [applyReport, draftReport]);
+
+  const cancelEditing = useCallback(() => {
+    if (!report) return;
+    setDraftReport(cloneReport(report));
+    setEditing(false);
+  }, [report]);
+
   useEffect(() => {
     if (!loading || revealCount === 0) return;
     const frame = window.requestAnimationFrame(() => {
@@ -648,15 +941,61 @@ export default function CompensationApprovalPreviewClient({ analysis, initialRep
               <p className="mt-1 text-sm font-bold text-primary">生成《宝鸡三家村餐饮管理有限公司项目再担保代偿补偿审批表》</p>
             </div>
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => void generate(true)}
-                disabled={loading}
-                className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-black text-white shadow-[0_14px_28px_rgba(11,28,48,0.16)] disabled:opacity-60"
-              >
-                <RefreshCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                {report ? '重新生成审批表' : '生成审批表'}
-              </button>
+              {report ? (
+                editing ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => void saveDraft()}
+                      disabled={loading || saving || !draftReport}
+                      className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-black text-white shadow-[0_14px_28px_rgba(11,28,48,0.16)] disabled:opacity-60"
+                    >
+                      <Save className={`h-4 w-4 ${saving ? 'animate-spin' : ''}`} />
+                      {saving ? '保存中...' : '保存修改'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelEditing}
+                      disabled={saving}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-outline-variant/30 bg-white px-5 py-3 text-sm font-black text-primary disabled:opacity-60"
+                    >
+                      <X className="h-4 w-4" />
+                      取消编辑
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setEditing(true)}
+                      disabled={loading}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-outline-variant/30 bg-white px-5 py-3 text-sm font-black text-primary disabled:opacity-60"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      编辑报告
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void generate(true)}
+                      disabled={loading}
+                      className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-black text-white shadow-[0_14px_28px_rgba(11,28,48,0.16)] disabled:opacity-60"
+                    >
+                      <RefreshCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                      重新生成审批表
+                    </button>
+                  </>
+                )
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void generate(true)}
+                  disabled={loading}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-black text-white shadow-[0_14px_28px_rgba(11,28,48,0.16)] disabled:opacity-60"
+                >
+                  <RefreshCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                  生成审批表
+                </button>
+              )}
               <a href="/api/compensation-report/export" className="inline-flex items-center gap-2 rounded-2xl border border-outline-variant/30 bg-white px-5 py-3 text-sm font-black text-primary">
                 <Download className="h-4 w-4" />
                 导出审批表
@@ -683,7 +1022,18 @@ export default function CompensationApprovalPreviewClient({ analysis, initialRep
             </div>
           ) : null}
 
-          {report ? <ApprovalPreview report={report} revealCount={Math.max(revealCount, report ? 1 : 0)} scrollAnchorRef={scrollAnchorRef} /> : null}
+          {report ? (
+            <ApprovalPreview
+              report={editing && draftReport ? draftReport : report}
+              revealCount={Math.max(revealCount, report ? 1 : 0)}
+              scrollAnchorRef={scrollAnchorRef}
+              editable={editing}
+              onHeaderChange={handleHeaderChange}
+              onParagraphChange={handleParagraphChange}
+              onBorrowRowChange={handleBorrowRowChange}
+              onRiskRowChange={handleRiskRowChange}
+            />
+          ) : null}
 
           {loading && !report ? (
             <div className="flex min-h-[52vh] items-center justify-center rounded-[2rem] border border-outline-variant/15 bg-surface-container-low px-8 py-10">

@@ -9,7 +9,7 @@ import { getDemoCacheRoot, getWorkspaceRoot } from '@/lib/server/runtime-root';
 import { getCaseAnalysis } from '@/lib/server/case-analysis';
 import { getGeneratedCompensationReport } from '@/lib/server/compensation-approval-report';
 import { getCreditReportData } from '@/lib/server/credit-report';
-import { getGeneratedCreditReport } from '@/lib/server/credit-report-draft';
+import { getGeneratedCreditReport, type CreditTraceItem } from '@/lib/server/credit-report-draft';
 
 const execFileAsync = promisify(execFile);
 
@@ -136,6 +136,24 @@ export type ReviewReference = {
   note: string;
 };
 
+type BuiltDocumentContext = {
+  draftTitle: string;
+  draftBody: string;
+  draftUpdatedAt: string;
+  summary: string;
+  references: ReviewReference[];
+  verificationTrace?: CreditTraceItem[];
+};
+
+type VerificationTraceViewItem = {
+  id: string;
+  numberText: string;
+  semanticLabel: string;
+  sourceType: 'direct' | 'derived';
+  sourceSummary: string;
+  note?: string;
+};
+
 export type ReviewDocumentOption = {
   type: ReviewDocumentType;
   label: string;
@@ -169,6 +187,11 @@ export type AiReviewContext = {
     low: number;
   };
   submittedAt: string | null;
+  verification: {
+    enabled: boolean;
+    presetPoints: string[];
+    traceItems: VerificationTraceViewItem[];
+  };
 };
 
 const DOCUMENT_META: Record<ReviewDocumentType, Omit<ReviewDocumentOption, 'summary' | 'reviewStatus' | 'lastReviewedAt'> & { defaultSummary: string }> = {
@@ -226,6 +249,18 @@ const PRESET_POINTS: Record<ReviewDocumentType, string[]> = {
     '四类授信口径的分组说明是否自洽',
     '制度执行口径是否与本年说明保持一致',
     'OA 摘要与正文结论是否一致',
+  ],
+};
+
+const VERIFICATION_POINTS: Record<ReviewDocumentType, string[]> = {
+  compensation: [],
+  brief: [],
+  evaluation: [],
+  credit: [
+    '先区分数字是直接取数还是公式推导，不能混为一谈',
+    '每个数字都应能对应到生成阶段使用的结构化来源 id',
+    '比例、占比、压降值等推导数字必须展示计算口径',
+    '无法明确来源链的数字不能静默通过，应提示待人工确认',
   ],
 };
 
@@ -410,10 +445,176 @@ async function buildCreditContext() {
     draftUpdatedAt: formatTimestamp(generated?.generatedAt) || data.report.createdAt,
     summary: `授信报告覆盖 ${data.stats.institutionCount} 家机构，拟授信总额 ${data.stats.grantedTotal.toFixed(1)} 亿元，当前按四类授信口径组织正文。`,
     references,
+    verificationTrace: generated?.dataTrace ?? [],
   };
 }
 
-async function buildDocumentContext(docType: ReviewDocumentType) {
+function buildCreditSourceLabelMap(data: Awaited<ReturnType<typeof getCreditReportData>>) {
+  const map = new Map<string, string>();
+
+  map.set('stats.institutionCount', '合作机构数量');
+  map.set('stats.applicationTotal', '申请总额');
+  map.set('stats.grantedTotal', '拟授信总额');
+  map.set('stats.riskCreditTotal', '银担分险额度');
+  map.set('stats.nonRiskCreditTotal', '非银担分险额度');
+  map.set('stats.soeCreditTotal', '国企担保贷款额度');
+
+  data.groups.forEach((group) => {
+    map.set(`groups.${group.key}.totalCredit`, `${group.title}合计授信额度`);
+    map.set(`groups.${group.key}.count`, `${group.title}机构数量`);
+  });
+
+  data.institutions.forEach((item) => {
+    map.set(`institutions.${item.id}.totalCredit`, `${item.name}总授信额度`);
+    map.set(`institutions.${item.id}.riskCredit`, `${item.name}分险额度`);
+    map.set(`institutions.${item.id}.nonRiskCredit`, `${item.name}非分险额度`);
+    map.set(`institutions.${item.id}.soeCredit`, `${item.name}国企额度`);
+    map.set(`institutions.${item.id}.scale2024`, `${item.name}2024备案规模`);
+    map.set(`institutions.${item.id}.growthRate`, `${item.name}再担保增长率`);
+    map.set(`institutions.${item.id}.factor`, `${item.name}额度系数`);
+  });
+
+  map.set('summary.executionNotes[0]', '非银担分险额度压降比例说明');
+  map.set('summary.executionNotes[1]', '国企担保贷款比例说明');
+
+  return map;
+}
+
+function humanizeFormula(formula: string, labelMap: Map<string, string>) {
+  const ids = [...labelMap.keys()].sort((left, right) => right.length - left.length);
+  let result = formula;
+  ids.forEach((id) => {
+    result = result.replaceAll(id, labelMap.get(id) ?? id);
+  });
+  return result;
+}
+
+function buildCreditSourceValueMap(data: Awaited<ReturnType<typeof getCreditReportData>>) {
+  const map = new Map<string, number>();
+
+  map.set('stats.institutionCount', data.stats.institutionCount);
+  map.set('stats.applicationTotal', data.stats.applicationTotal);
+  map.set('stats.grantedTotal', data.stats.grantedTotal);
+  map.set('stats.riskCreditTotal', data.stats.riskCreditTotal);
+  map.set('stats.nonRiskCreditTotal', data.stats.nonRiskCreditTotal);
+  map.set('stats.soeCreditTotal', data.stats.soeCreditTotal);
+
+  data.groups.forEach((group) => {
+    map.set(`groups.${group.key}.totalCredit`, group.totalCredit);
+    map.set(`groups.${group.key}.count`, group.count);
+  });
+
+  data.institutions.forEach((item) => {
+    map.set(`institutions.${item.id}.totalCredit`, item.totalCredit);
+    map.set(`institutions.${item.id}.riskCredit`, item.riskCredit);
+    map.set(`institutions.${item.id}.nonRiskCredit`, item.nonRiskCredit);
+    map.set(`institutions.${item.id}.soeCredit`, item.soeCredit);
+    map.set(`institutions.${item.id}.scale2024`, item.scale2024);
+    map.set(`institutions.${item.id}.growthRate`, item.growthRate);
+    map.set(`institutions.${item.id}.factor`, item.factor);
+  });
+
+  return map;
+}
+
+function parseNumberText(value: string) {
+  const normalized = value.replaceAll(',', '').replaceAll('亿元', '').replaceAll('家', '').replaceAll('%', '').trim();
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function evaluateSimpleFormula(formula: string, sourceValueMap: Map<string, number>) {
+  let expression = formula;
+  const ids = [...sourceValueMap.keys()].sort((left, right) => right.length - left.length);
+
+  for (const id of ids) {
+    if (!expression.includes(id)) continue;
+    const value = sourceValueMap.get(id);
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return null;
+    }
+    expression = expression.replaceAll(id, String(value));
+  }
+
+  if (!/^[\d+\-*/().\s]+$/.test(expression)) {
+    return null;
+  }
+
+  try {
+    const result = Function(`"use strict"; return (${expression});`)();
+    return typeof result === 'number' && Number.isFinite(result) ? result : null;
+  } catch {
+    return null;
+  }
+}
+
+function numbersApproximatelyEqual(left: number, right: number, tolerance = 0.02) {
+  return Math.abs(left - right) <= tolerance;
+}
+
+function describeSourceDocuments(sourceIds: string[]) {
+  const names = new Set<string>();
+
+  sourceIds.forEach((sourceId) => {
+    if (sourceId.startsWith('stats.') || sourceId.startsWith('groups.') || sourceId.startsWith('institutions.')) {
+      names.add('合作担保机构授信情况统计表（Excel）');
+      return;
+    }
+    if (sourceId.startsWith('summary.executionNotes')) {
+      names.add('授信管理口径说明');
+    }
+  });
+
+  return names.size > 0 ? [...names].join('、') : '生成阶段结构化数据';
+}
+
+function buildVerificationTraceViewItems(
+  traceItems: CreditTraceItem[],
+  labelMap: Map<string, string>,
+  sourceValueMap: Map<string, number>,
+): VerificationTraceViewItem[] {
+  const rows: VerificationTraceViewItem[] = [];
+
+  traceItems.forEach((item) => {
+    const sourceDocument = describeSourceDocuments(item.sourceIds);
+    const sourceLabels = item.sourceIds.map((sourceId) => labelMap.get(sourceId) ?? sourceId);
+
+    if (item.sourceType === 'direct') {
+      rows.push({
+        id: item.id,
+        numberText: item.numberText,
+        semanticLabel: item.semanticLabel,
+        sourceType: item.sourceType,
+        sourceSummary: `来源文件：${sourceDocument}`,
+        note: item.note,
+      });
+      return;
+    }
+
+    if (!item.formula) {
+      return;
+    }
+
+    const expected = parseNumberText(item.numberText);
+    const actual = evaluateSimpleFormula(item.formula, sourceValueMap);
+    if (expected === null || actual === null || !numbersApproximatelyEqual(expected, actual)) {
+      return;
+    }
+
+    rows.push({
+      id: item.id,
+      numberText: item.numberText,
+      semanticLabel: item.semanticLabel,
+      sourceType: item.sourceType,
+      sourceSummary: `来源文件：${sourceDocument}；基于 ${sourceLabels.join('、')} 计算得出（${humanizeFormula(item.formula, labelMap)}）`,
+      note: item.note,
+    });
+  });
+
+  return rows;
+}
+
+async function buildDocumentContext(docType: ReviewDocumentType): Promise<BuiltDocumentContext> {
   if (docType === 'compensation') return buildCompensationContext();
   if (docType === 'brief') return buildBriefContext();
   if (docType === 'evaluation') return buildEvaluationContext();
@@ -422,6 +623,15 @@ async function buildDocumentContext(docType: ReviewDocumentType) {
 
 export async function getAiReviewContext(docType: ReviewDocumentType): Promise<AiReviewContext> {
   const [session, currentContext] = await Promise.all([readSession(docType), buildDocumentContext(docType)]);
+  const creditData = docType === 'credit' ? await getCreditReportData() : null;
+  const verificationTraceItems =
+    docType === 'credit' && creditData
+      ? buildVerificationTraceViewItems(
+          currentContext.verificationTrace ?? [],
+          buildCreditSourceLabelMap(creditData),
+          buildCreditSourceValueMap(creditData),
+        )
+      : [];
   const documents = await Promise.all(
     REVIEW_DOCUMENT_TYPES.map(async (type) => {
       const [context, docSession] = await Promise.all([
@@ -457,6 +667,11 @@ export async function getAiReviewContext(docType: ReviewDocumentType): Promise<A
     reviewRounds: session.reviewRounds,
     reviewCounts: buildCounts(session.review),
     submittedAt: session.submittedAt,
+    verification: {
+      enabled: docType === 'credit',
+      presetPoints: VERIFICATION_POINTS[docType],
+      traceItems: verificationTraceItems,
+    },
   };
 }
 

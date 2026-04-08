@@ -34,6 +34,8 @@ type Props = {
   startEmpty?: boolean;
 };
 
+type ReviewTab = 'chat' | 'document' | 'verification';
+
 type ChatEntry =
   | { kind: 'system'; id: string; text: string }
   | { kind: 'user'; id: string; text: string }
@@ -273,7 +275,7 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'chat' | 'document'>('chat');
+  const [activeTab, setActiveTab] = useState<ReviewTab>('chat');
   const [selectedType, setSelectedType] = useState<ReviewDocumentType | null>(startEmpty ? null : initialContext.current.type);
   const [selectionSource, setSelectionSource] = useState<SelectionSource>(startEmpty ? 'documents' : 'documents');
   const [showHistoryForSelected, setShowHistoryForSelected] = useState(false);
@@ -328,6 +330,7 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
   }, [activeDocument, activeSession, context, selectedType, showHistoryForSelected]);
 
   const documentBlocks = useMemo(() => formatDocumentBlocks(context.draftBody), [context.draftBody]);
+  const verificationEnabled = selectedType === 'credit' && context.verification.enabled;
 
   async function reloadContext(type = context.current.type) {
     const response = await fetch(`/api/ai-review/context?type=${type}`, { cache: 'no-store' });
@@ -599,12 +602,64 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
                   >
                     文档内容
                   </button>
+                  {verificationEnabled ? (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('verification')}
+                      className={`rounded-full px-3 py-1.5 text-xs font-black ${activeTab === 'verification' ? 'bg-primary text-white' : 'bg-white text-primary'}`}
+                    >
+                      数据核验
+                    </button>
+                  ) : null}
                 </div>
               </div>
             </div>
 
             <div ref={chatScrollRef} className="flex-1 overflow-y-auto bg-surface-container-low/45 p-5">
-              {activeTab === 'document' && selectedType ? (
+              {activeTab === 'verification' ? (
+                verificationEnabled ? (
+                  <div className="rounded-3xl bg-white p-5 shadow-sm">
+                    <div className="mb-3 flex items-center gap-2">
+                      <PanelRightOpen className="h-4 w-4 text-secondary" />
+                      <h3 className="text-sm font-black text-primary">授信报告数据核验</h3>
+                    </div>
+                    {context.verification.traceItems.length > 0 ? (
+                      <div className="overflow-hidden rounded-2xl border border-outline-variant/15">
+                        <div className="grid grid-cols-[1.5fr_0.7fr_2.8fr] gap-0 border-b border-outline-variant/15 bg-surface-container-low text-xs font-black uppercase tracking-[0.16em] text-on-surface-variant">
+                          <div className="px-4 py-3">数字项</div>
+                          <div className="px-4 py-3">类型</div>
+                          <div className="px-4 py-3">来源说明</div>
+                        </div>
+                        <div className="max-h-[36rem] overflow-y-auto">
+                          {context.verification.traceItems.map((item) => (
+                            <div key={item.id} className="grid grid-cols-[1.5fr_0.7fr_2.8fr] gap-0 border-b border-outline-variant/10 bg-white text-sm last:border-b-0">
+                              <div className="px-4 py-4">
+                                <p className="font-black text-primary">{item.semanticLabel}</p>
+                                <p className="mt-1 text-xs font-bold text-secondary">{item.numberText}</p>
+                              </div>
+                              <div className="px-4 py-4 text-on-surface">
+                                {item.sourceType === 'direct' ? '直接取数' : '计算得出'}
+                              </div>
+                              <div className="px-4 py-4 leading-6 text-on-surface">
+                                {item.sourceSummary}
+                                {item.note ? <p className="mt-1 text-xs text-on-surface-variant">备注：{item.note}</p> : null}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-outline-variant/20 bg-surface-container-low px-5 py-5 text-sm leading-6 text-on-surface-variant">
+                        当前授信报告尚未生成数据核验映射。请先在授信报告预览页生成一次最新报告，或稍后刷新后再查看。
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="rounded-3xl bg-white p-8 text-center text-sm leading-6 text-on-surface-variant shadow-sm">
+                    当前所选材料暂未启用数据核验视图。
+                  </div>
+                )
+              ) : activeTab === 'document' && selectedType ? (
                 <div className="rounded-3xl bg-white p-5 shadow-sm">
                   <div className="mb-3 flex items-center gap-2">
                     <PanelRightOpen className="h-4 w-4 text-secondary" />
@@ -701,7 +756,9 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
-                  <h2 className="text-xs font-black uppercase tracking-[0.18em] text-primary">系统预置要点</h2>
+                  <h2 className="text-xs font-black uppercase tracking-[0.18em] text-primary">
+                    {activeTab === 'verification' && verificationEnabled ? '系统预置核数要点' : '系统预置要点'}
+                  </h2>
                 </div>
                 <button type="button" className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-primary shadow-sm">
                   <Edit3 className="h-3 w-3" />
@@ -709,7 +766,7 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
                 </button>
               </div>
               <div className="space-y-3">
-                {context.presetPoints.map((item, index) => (
+                {(activeTab === 'verification' && verificationEnabled ? context.verification.presetPoints : context.presetPoints).map((item, index) => (
                   <div key={item} className="rounded-2xl border-l-4 border-primary bg-white px-4 py-4 shadow-sm">
                     <div className="flex items-start gap-3">
                       <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-black text-white">
