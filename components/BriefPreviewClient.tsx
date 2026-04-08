@@ -3,6 +3,11 @@
 import { Download, FileText, LoaderCircle, RefreshCcw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+type Props = {
+  adoptedCriteria: string[];
+  references: string[];
+};
+
 type StreamEvent =
   | { event: 'status'; data: { text?: string } }
   | { event: 'chunk'; data: { text?: string } }
@@ -54,7 +59,7 @@ function parseSseEvent(frame: string): StreamEvent | null {
   }
 }
 
-export default function BriefPreviewClient() {
+export default function BriefPreviewClient({ adoptedCriteria, references }: Props) {
   const [htmlContent, setHtmlContent] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -181,88 +186,124 @@ export default function BriefPreviewClient() {
 
   return (
     <div className="grid grid-cols-12 gap-8">
-      {/* 左侧：进度和状态 */}
-      <div className="col-span-3">
-        <div className="sticky top-24 space-y-6">
-          {/* 进度卡片 */}
-          <div className="rounded-3xl bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">生成进度</span>
-              <span className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-black text-primary">{progress}%</span>
-            </div>
+      {/* 左侧：预览区域 */}
+      <section className="col-span-12 xl:col-span-8">
+        <div className="overflow-hidden rounded-3xl border border-outline-variant/10 bg-white shadow-[0_20px_40px_rgba(11,28,48,0.06)]">
+          <div className="border-b border-outline-variant/5 bg-surface-container-low px-8 py-4">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">担保业务简报预览</p>
+          </div>
 
-            <div className="mb-4 h-2 overflow-hidden rounded-full bg-surface-container-low">
-              <div
-                className="h-full rounded-full bg-primary transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-
-            <p className="text-sm font-medium text-on-surface-variant">{statusText}</p>
-
-            {loading && (
-              <div className="mt-4 flex items-center gap-2 text-xs text-secondary">
-                <LoaderCircle className="h-4 w-4 animate-spin" />
-                正在生成中...
+          <div className="bg-white p-8 md:p-12">
+            {!htmlContent && loading ? (
+              <div className="mx-auto flex min-h-[60vh] max-w-3xl flex-col items-center justify-center rounded-[2rem] border border-dashed border-outline-variant/30 bg-surface-container-low px-8 py-10 text-center">
+                <LoaderCircle className="h-10 w-10 animate-spin text-secondary" />
+                <p className="mt-5 text-lg font-black text-primary">正在生成担保业务简报</p>
+                <p className="mt-2 text-sm text-on-surface-variant">{statusText}</p>
+                <div className="mt-6 h-2 w-full max-w-md overflow-hidden rounded-full bg-white">
+                  <div className="h-full rounded-full bg-primary transition-[width] duration-300" style={{ width: `${progress}%` }} />
+                </div>
+                <p className="mt-3 text-xs font-bold text-secondary">{progress}%</p>
+                {error ? (
+                  <div className="mt-6 max-w-xl rounded-2xl border border-error/20 bg-error-container/30 px-4 py-4 text-left">
+                    <p className="text-sm font-black text-error">生成失败</p>
+                    <p className="mt-2 text-sm leading-6 text-on-error-container">{error}</p>
+                  </div>
+                ) : null}
+              </div>
+            ) : htmlContent ? (
+              <div>
+                <iframe
+                  id="brief-iframe"
+                  srcDoc={htmlContent}
+                  className="w-full border-0"
+                  title="简报预览"
+                  sandbox="allow-same-origin"
+                  scrolling="no"
+                  onLoad={() => {
+                    const iframe = document.getElementById('brief-iframe') as HTMLIFrameElement | null;
+                    if (iframe) {
+                      try {
+                        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                        if (iframeDoc) {
+                          const height = iframeDoc.body.scrollHeight;
+                          iframe.style.height = `${height}px`;
+                        }
+                      } catch (e) {
+                        // 忽略跨域错误
+                      }
+                    }
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <LoaderCircle className="mb-4 h-12 w-12 animate-spin text-primary" />
+                <p className="text-lg font-bold text-on-surface-variant">正在生成简报内容</p>
+                <p className="mt-2 text-sm text-on-surface-variant">请稍候，正在读取数据并渲染...</p>
               </div>
             )}
           </div>
-
-          {/* 操作按钮 */}
-          {!loading && htmlContent && (
-            <div className="space-y-3">
-              {/*<button*/}
-              {/*  onClick={handleDownload}*/}
-              {/*  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-4 text-sm font-black text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"*/}
-              {/*>*/}
-              {/*  <Download className="h-5 w-5" />*/}
-              {/*  下载 Word 简报*/}
-              {/*</button>*/}
-              <button
-                onClick={() => void generate()}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-outline-variant/20 bg-white px-5 py-4 text-sm font-bold text-primary transition hover:bg-surface-container-low"
-              >
-                <RefreshCcw className="h-5 w-5" />
-                重新生成
-              </button>
-            </div>
-          )}
         </div>
-      </div>
 
-      {/* 右侧：预览区域 */}
-      <div className="col-span-9">
-        <div className="rounded-3xl bg-white p-8 shadow-sm">
-          {htmlContent ? (
-            <div>
-              <iframe
-                id="brief-iframe"
-                srcDoc={htmlContent}
-                className="w-full border-0"
-                title="简报预览"
-                sandbox=""
-                scrolling="no"
-                onLoad={() => {
-                  const iframe = document.getElementById('brief-iframe') as HTMLIFrameElement | null;
-                  if (iframe) {
-                    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-                    if (iframeDoc) {
-                      const height = iframeDoc.body.scrollHeight;
-                      iframe.style.height = `${height}px`;
-                    }
-                  }
-                }}
-              />
-            </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <LoaderCircle className="mb-4 h-12 w-12 animate-spin text-primary" />
-            <p className="text-lg font-bold text-on-surface-variant">正在生成简报内容</p>
-            <p className="mt-2 text-sm text-on-surface-variant">请稍候，正在读取数据并渲染...</p>
+        <div className="mt-6 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => void generate()}
+            disabled={loading}
+            className="flex items-center gap-2 rounded-2xl border border-outline-variant/30 bg-white px-5 py-3 text-sm font-black text-primary disabled:opacity-60"
+          >
+            <RefreshCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            重新生成
+          </button>
+          <button
+            onClick={handleDownload}
+            disabled={!htmlContent}
+            className="flex items-center gap-2 rounded-2xl border border-outline-variant/30 bg-white px-5 py-3 text-sm font-black text-primary disabled:opacity-60"
+          >
+            <Download className="h-4 w-4" />
+            导出 Word
+          </button>
+        </div>
+
+        {error ? (
+          <div className="mt-4 rounded-2xl border border-error/20 bg-error-container/30 px-4 py-4">
+            <p className="text-sm font-black text-error">生成失败</p>
+            <p className="mt-2 text-sm leading-6 text-on-error-container">{error}</p>
           </div>
-        )}
+        ) : null}
+      </section>
+
+      <aside className="col-span-12 space-y-6 xl:col-span-4">
+        <div className="rounded-3xl bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-container-low text-secondary">
+              <FileText className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">本次采用口径摘要</p>
+              <p className="text-sm font-black text-primary">写入报告的关键依据</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {adoptedCriteria.map((item) => (
+              <div key={item} className="rounded-2xl bg-surface-container-low px-4 py-4 text-sm font-semibold leading-6 text-on-surface">
+                {item}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+
+        <div className="rounded-3xl bg-white p-6 shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">相关附件</p>
+          <div className="mt-4 space-y-3">
+            {references.map((item) => (
+              <div key={item} className="rounded-2xl bg-surface-container-low px-4 py-3 text-sm font-semibold text-on-surface">
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }

@@ -4,6 +4,18 @@ import BriefPreviewClient from '@/components/BriefPreviewClient';
 
 export const dynamic = 'force-dynamic';
 
+const adoptedCriteria = [
+  '本期简报以 2025 年业务数据为基础，结合担保规模、分险业务占比等核心指标形成统计结论。',
+  '合作银行与担保机构数据按业务规模、占比、费率等多维度展示，支持趋势分析。',
+  '相关指标包含在保余额、同比增长、代偿率、综合融资成本等关键业务数据。',
+];
+
+const references = [
+  '输入 1：2025 年全省担保业务统计表',
+  '输入 2：陕西省信用再担保有限责任公司担保业务管理办法',
+  '输入 3：2025 年全省担保业务运行情况通报样稿',
+];
+
 export default function BriefPreviewPage() {
   return (
     <>
@@ -27,7 +39,7 @@ export default function BriefPreviewPage() {
           </div>
         </header>
 
-        <BriefPreviewClient />
+        <BriefPreviewClient adoptedCriteria={adoptedCriteria} references={references} />
       </main>
     </>
   );
