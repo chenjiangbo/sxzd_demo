@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getGeneratedCompensationReport } from '@/lib/server/compensation-approval-report';
+import { getEffectiveCompensationReport } from '@/lib/server/compensation-approval-report';
 
 export async function GET() {
-  const report = await getGeneratedCompensationReport();
+  const report = await getEffectiveCompensationReport();
   if (!report) {
     return NextResponse.json({ error: '审批表尚未生成，请先在报告生成页点击生成。' }, { status: 409 });
   }

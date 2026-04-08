@@ -7,6 +7,7 @@ import { getCaseAnalysis } from '@/lib/server/case-analysis';
 import type { GeneratedCompensationReport } from '@/lib/compensation-report-format';
 
 const GENERATED_REPORT_CACHE = path.join(getDemoCacheRoot(), 'compensation-report', 'approval-report.json');
+const EDITED_REPORT_CACHE = path.join(getDemoCacheRoot(), 'compensation-report', 'approval-report-edited.json');
 
 const approvalBorrowRowSchema = z.object({
   index: z.string(),
@@ -198,6 +199,7 @@ export async function generateCompensationApprovalReport(force = false) {
 
   await ensureDir(path.dirname(GENERATED_REPORT_CACHE));
   await fs.writeFile(GENERATED_REPORT_CACHE, JSON.stringify(report, null, 2), 'utf8');
+  await fs.rm(EDITED_REPORT_CACHE, { force: true });
   return { report, cached: false };
 }
 
@@ -208,4 +210,30 @@ export async function getGeneratedCompensationReport() {
   } catch {
     return null;
   }
+}
+
+export async function getEditedCompensationReport() {
+  try {
+    const raw = await fs.readFile(EDITED_REPORT_CACHE, 'utf8');
+    return generatedCompensationReportSchema.parse(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+export async function getEffectiveCompensationReport() {
+  const edited = await getEditedCompensationReport();
+  if (edited) return edited;
+  return getGeneratedCompensationReport();
+}
+
+export async function saveEditedCompensationReport(report: GeneratedCompensationReport) {
+  const normalized = generatedCompensationReportSchema.parse({
+    ...report,
+    rawText: renderRawText(report.structured),
+    generatedAt: report.generatedAt || new Date().toISOString(),
+  });
+  await ensureDir(path.dirname(EDITED_REPORT_CACHE));
+  await fs.writeFile(EDITED_REPORT_CACHE, JSON.stringify(normalized, null, 2), 'utf8');
+  return normalized;
 }
