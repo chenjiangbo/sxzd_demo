@@ -153,8 +153,8 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
   return (
     <div className="grid grid-cols-12 gap-8">
       {/* 左侧：报告预览 */}
-      <section className="col-span-12 xl:col-span-8 overflow-hidden rounded-3xl bg-white shadow-sm">
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant/20 bg-white px-8 py-4 shadow-sm">
+      <section className="col-span-12 xl:col-span-8">
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant/20 bg-white px-8 py-4 shadow-sm rounded-t-3xl">
           <div>
             <h1 className="text-lg font-black text-primary">{institutionName || '评价报告'}</h1>
             <p className="text-xs text-on-surface-variant">{loading ? statusText || 'AI 正在逐段生成报告...' : 'AI 自动生成'}</p>
@@ -186,7 +186,7 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
           ) : reportHtml ? (
             <article
               ref={scrollerRef}
-              className="mx-auto min-h-[60vh] max-w-3xl rounded-[1.75rem] border border-outline-variant/15 bg-white px-8 py-10 font-['Songti_SC','STSong','SimSun',serif] text-[15px] leading-[2] text-on-surface shadow-[0_12px_30px_rgba(11,28,48,0.05)] md:px-12 md:py-14"
+              className="mx-auto min-h-[60vh] max-w-3xl bg-white px-8 py-10 font-['Songti_SC','STSong','SimSun',serif] text-[15px] leading-[2] text-on-surface md:px-12 md:py-14"
               dangerouslySetInnerHTML={{ __html: reportHtml }}
             />
           ) : null}
