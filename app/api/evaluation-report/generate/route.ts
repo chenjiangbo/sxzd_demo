@@ -51,8 +51,22 @@ export async function POST(request: NextRequest) {
 
         try {
           send('status', { text: `正在读取 ${institution.shortName} 的评价指标数据...` });
+          
+          // 启动 AI 生成,并定期发送心跳
           send('status', { text: `正在调用 AI 生成 ${institution.shortName} 的评价正文...` });
-          const document = await generateEvaluationReportDocument(institution, force);
+          
+          // 创建心跳定时器,每10秒发送一次保持连接活跃
+          const heartbeatInterval = setInterval(() => {
+            send('status', { text: `AI 正在思考中... (${Math.floor(Date.now() / 1000) % 60}s)` });
+          }, 10000);
+          
+          let document;
+          try {
+            document = await generateEvaluationReportDocument(institution, force);
+          } finally {
+            clearInterval(heartbeatInterval);
+          }
+          
           send('status', { text: '正在按保后评价报告 Word 模板排版...' });
           const html = renderEvaluationReportBodyHtml(document);
           const chunks = splitHtmlIntoChunks(html);

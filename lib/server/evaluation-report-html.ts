@@ -178,13 +178,13 @@ function renderBusinessStructureTable() {
 
 function renderCover(document: EvaluationReportDocument) {
   return `
-    <section style="min-height: 820px; display: flex; flex-direction: column; justify-content: center; padding: 60px 0 80px;">
-      <h1 style="margin: 0 0 54px; text-align: center; font-size: 30px; line-height: 1.6; font-weight: 700; color: #000000;">陕西省政府性融资担保机构综合评价报告</h1>
-      <div style="max-width: 760px; margin: 0 auto; font-size: 20px; line-height: 2.25; color: #111827;">
-        <p style="margin: 0 0 12px;"><strong>机构名称：</strong>${escapeHtml(document.institution.name)}</p>
-        <p style="margin: 0 0 12px;"><strong>调查部门：</strong>业务一部</p>
-        <p style="margin: 0 0 12px;"><strong>调查人员：</strong>${escapeHtml(document.investigator)}</p>
-        <p style="margin: 0 0 12px;"><strong>约谈对象：</strong>${escapeHtml(document.interviewee)}</p>
+    <section style="padding: 80px 0 60px;">
+      <h1 style="margin: 0 0 40px; text-align: center; font-size: 28px; line-height: 1.6; font-weight: 700; color: #000000;">陕西省政府性融资担保机构综合评价报告</h1>
+      <div style="max-width: 760px; margin: 0 auto; font-size: 19px; line-height: 2.2; color: #111827;">
+        <p style="margin: 0 0 10px;"><strong>机构名称：</strong>${escapeHtml(document.institution.name)}</p>
+        <p style="margin: 0 0 10px;"><strong>调查部门：</strong>业务一部</p>
+        <p style="margin: 0 0 10px;"><strong>调查人员：</strong>${escapeHtml(document.investigator)}</p>
+        <p style="margin: 0 0 10px;"><strong>约谈对象：</strong>${escapeHtml(document.interviewee)}</p>
         <p style="margin: 0;"><strong>调查时间：</strong>${escapeHtml(document.surveyDate)}</p>
       </div>
     </section>
