@@ -67,11 +67,9 @@ function renderParagraph(paragraph: string) {
 
 function renderSection(title: string, bodyHtml: string) {
   return `
-    <section style="margin-top: 0; border: 2px solid #1f2937; border-top: 0;">
-      <div style="border-top: 2px solid #1f2937; border-bottom: 2px solid #1f2937; background: #d9d9d9; padding: 18px 24px;">
-        <div style="font-size: 22px; font-weight: 700; line-height: 1.5; color: #000000; font-family: 'SimSun', 'Songti SC', serif;">${escapeHtml(title)}</div>
-      </div>
-      <div style="padding: 26px 28px 18px;">
+    <section style="margin-top: 40px;">
+      <h2 style="margin: 0 0 20px; font-size: 22px; font-weight: 700; line-height: 1.5; color: #000000; font-family: 'SimSun', 'Songti SC', serif;">${escapeHtml(title)}</h2>
+      <div>
         ${bodyHtml}
       </div>
     </section>
@@ -180,13 +178,13 @@ function renderBusinessStructureTable() {
 
 function renderCover(document: EvaluationReportDocument) {
   return `
-    <section style="min-height: 820px; display: flex; flex-direction: column; justify-content: center; padding: 60px 0 80px;">
-      <h1 style="margin: 0 0 54px; text-align: center; font-size: 30px; line-height: 1.6; font-weight: 700; color: #000000;">陕西省政府性融资担保机构综合评价报告</h1>
-      <div style="max-width: 760px; margin: 0 auto; font-size: 20px; line-height: 2.25; color: #111827;">
-        <p style="margin: 0 0 12px;"><strong>机构名称：</strong>${escapeHtml(document.institution.name)}</p>
-        <p style="margin: 0 0 12px;"><strong>调查部门：</strong>业务一部</p>
-        <p style="margin: 0 0 12px;"><strong>调查人员：</strong>${escapeHtml(document.investigator)}</p>
-        <p style="margin: 0 0 12px;"><strong>约谈对象：</strong>${escapeHtml(document.interviewee)}</p>
+    <section style="padding: 80px 0 60px;">
+      <h1 style="margin: 0 0 40px; text-align: center; font-size: 28px; line-height: 1.6; font-weight: 700; color: #000000;">陕西省政府性融资担保机构综合评价报告</h1>
+      <div style="max-width: 760px; margin: 0 auto; font-size: 19px; line-height: 2.2; color: #111827;">
+        <p style="margin: 0 0 10px;"><strong>机构名称：</strong>${escapeHtml(document.institution.name)}</p>
+        <p style="margin: 0 0 10px;"><strong>调查部门：</strong>业务一部</p>
+        <p style="margin: 0 0 10px;"><strong>调查人员：</strong>${escapeHtml(document.investigator)}</p>
+        <p style="margin: 0 0 10px;"><strong>约谈对象：</strong>${escapeHtml(document.interviewee)}</p>
         <p style="margin: 0;"><strong>调查时间：</strong>${escapeHtml(document.surveyDate)}</p>
       </div>
     </section>
@@ -225,14 +223,12 @@ export function renderEvaluationReportBodyHtml(document: EvaluationReportDocumen
   );
 
   return `
-    <div style="background: #f6f8fb; padding: 32px 0;">
-      <div style="width: 1120px; margin: 0 auto; background: #ffffff; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.10); padding: 54px 48px 70px; font-family: 'SimSun', 'Songti SC', serif;">
-        ${renderCover(document)}
-        ${section1}
-        ${section2}
-        ${section3}
-        ${section4}
-      </div>
+    <div style="max-width: 800px; margin: 0 auto; background: #ffffff; padding: 54px 48px 70px; font-family: 'SimSun', 'Songti SC', serif;">
+      ${renderCover(document)}
+      ${section1}
+      ${section2}
+      ${section3}
+      ${section4}
     </div>
   `;
 }
@@ -245,7 +241,7 @@ export function renderEvaluationReportHtml(document: EvaluationReportDocument) {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${escapeHtml(document.institution.name)}评价报告</title>
 </head>
-<body style="margin: 0; background: #f6f8fb;">
+<body style="margin: 0; background: #ffffff;">
 ${renderEvaluationReportBodyHtml(document)}
 </body>
 </html>`;
