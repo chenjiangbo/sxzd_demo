@@ -3,7 +3,7 @@ import Header from '@/components/Header';
 import AiAssistant from '@/components/AiAssistant';
 import CaseWorkbench from '@/components/CaseWorkbench';
 import { getCaseAnalysis } from '@/lib/server/case-analysis';
-import { getGeneratedCompensationReport } from '@/lib/server/compensation-approval-report';
+import { getEffectiveCompensationReport } from '@/lib/server/compensation-approval-report';
 import { getStepArtifact } from '@/lib/server/step-artifacts';
 
 type Props = {
@@ -33,7 +33,7 @@ export default async function WorkbenchPage({ searchParams }: Props) {
     forceReextract: params?.reextract === '1',
   });
   const stepKey = normalizeStep(params?.step);
-  const initialGeneratedReport = stepKey === 'document' ? await getGeneratedCompensationReport() : null;
+  const initialGeneratedReport = stepKey === 'document' ? await getEffectiveCompensationReport() : null;
   const stepArtifact = stepKey === 'overview' ? null : await getStepArtifact(stepKey, analysis, { refresh: params?.refresh === '1' });
 
   return (
