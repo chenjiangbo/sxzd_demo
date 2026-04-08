@@ -64,6 +64,12 @@ export async function POST(request: NextRequest) {
           send('complete', {
             institutionId,
             institutionName: institution.name,
+            indicators: {
+              overallStatus: institution.overallStatus,
+              scaleCompletionRate: institution.scaleCompletionRate,
+              customerRatioCompletionRate: institution.customerRatioCompletionRate,
+              compensationRateStatus: institution.compensationRateStatus,
+            },
           });
           controller.close();
         } catch (error) {

@@ -3,11 +3,11 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, FileText } from 'lucide-react';
 
 type StreamMessage =
   | { type: 'status'; text: string }
-  | { type: 'complete'; html: string; institutionId: string; institutionName: string }
+  | { type: 'complete'; html: string; institutionId: string; institutionName: string; indicators?: Record<string, any> }
   | { type: 'error'; message: string };
 
 function EvaluationReportGenerateContent() {
@@ -47,6 +47,7 @@ function EvaluationReportGenerateContent() {
           } else if (data.type === 'complete') {
             setReportHtml(data.html);
             setInstitutionName(data.institutionName);
+            setIndicators(data.indicators || null);
             setLoading(false);
           } else if (data.type === 'error') {
             setError(data.message);
@@ -144,8 +145,80 @@ function EvaluationReportGenerateContent() {
         </div>
       </header>
 
-      <main className="px-0 py-0">
-        <div dangerouslySetInnerHTML={{ __html: reportHtml }} />
+      <main className="mx-auto max-w-[1600px] px-6 py-8">
+        <div className="grid grid-cols-12 gap-8">
+          {/* 左侧：报告预览 */}
+          <section className="col-span-12 xl:col-span-8">
+            <div className="overflow-x-auto rounded-3xl bg-white shadow-sm">
+              <div dangerouslySetInnerHTML={{ __html: reportHtml }} />
+            </div>
+          </section>
+
+          {/* 右侧：口径摘要和指标 */}
+          <aside className="col-span-12 space-y-6 xl:col-span-4">
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-container-low text-secondary">
+                <FileText className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">本次采用口径摘要</p>
+                <p className="text-sm font-black text-primary">写入报告的关键依据</p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="rounded-2xl bg-surface-container-low px-4 py-4 text-sm font-semibold leading-6 text-on-surface">
+                本年度机构评价以政策目标完成度为核心，结合 8 项核心指标进行综合评价。
+              </div>
+              <div className="rounded-2xl bg-surface-container-low px-4 py-4 text-sm font-semibold leading-6 text-on-surface">
+                评价指标包含新增担保业务规模、小微三农占比、再担保规模、分险业务占比、担保放大倍数、代偿率控制、代偿返还率等。
+              </div>
+              <div className="rounded-2xl bg-surface-container-low px-4 py-4 text-sm font-semibold leading-6 text-on-surface">
+                评价结果分为优秀、良好、合格、不合格四个等次，作为授信额度配置的重要依据。
+              </div>
+            </div>
+          </div>
+
+          {indicators && (
+            <div className="rounded-3xl bg-white p-6 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">机构核心指标</p>
+              <div className="mt-4 space-y-3">
+                <div className="rounded-2xl bg-surface-container-low px-4 py-3">
+                  <p className="text-[11px] font-black text-on-surface-variant">综合评价结果</p>
+                  <p className="mt-1 text-sm font-bold text-primary">{indicators.overallStatus}</p>
+                </div>
+                <div className="rounded-2xl bg-surface-container-low px-4 py-3">
+                  <p className="text-[11px] font-black text-on-surface-variant">新增担保业务规模完成率</p>
+                  <p className="mt-1 text-sm font-bold text-primary">{(indicators.scaleCompletionRate * 100).toFixed(1)}%</p>
+                </div>
+                <div className="rounded-2xl bg-surface-container-low px-4 py-3">
+                  <p className="text-[11px] font-black text-on-surface-variant">小微三农占比完成率</p>
+                  <p className="mt-1 text-sm font-bold text-primary">{(indicators.customerRatioCompletionRate * 100).toFixed(1)}%</p>
+                </div>
+                <div className="rounded-2xl bg-surface-container-low px-4 py-3">
+                  <p className="text-[11px] font-black text-on-surface-variant">代偿率状态</p>
+                  <p className="mt-1 text-sm font-bold text-primary">{indicators.compensationRateStatus}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">相关附件</p>
+            <div className="mt-4 space-y-3">
+              <div className="rounded-2xl bg-surface-container-low px-4 py-3 text-sm font-semibold text-on-surface">
+                输入 1：{institutionName}年度业务数据统计表
+              </div>
+              <div className="rounded-2xl bg-surface-container-low px-4 py-3 text-sm font-semibold text-on-surface">
+                输入 2：陕西省政府性融资担保机构综合评价办法
+              </div>
+              <div className="rounded-2xl bg-surface-container-low px-4 py-3 text-sm font-semibold text-on-surface">
+                输入 3：保后评价报告模板
+              </div>
+            </div>
+          </div>
+        </aside>
+        </div>
       </main>
     </div>
   );
