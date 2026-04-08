@@ -88,6 +88,7 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
 
             if (data.type === 'complete') {
               setInstitutionName(data.institutionName);
+              setIndicators((data as any).indicators || null);
               setLoading(false);
               continue;
             }
@@ -176,16 +177,19 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
           </div>
         </header>
 
-        <div ref={scrollerRef} className="max-h-[80vh] overflow-y-auto">
-          <main className="px-0 py-0">
-            {loading && !reportHtml ? (
-              <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 bg-white">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                <p className="text-base font-bold text-on-surface">{statusText || '正在生成评价报告...'}</p>
-              </div>
-            ) : null}
-            <div dangerouslySetInnerHTML={{ __html: reportHtml }} />
-          </main>
+        <div className="bg-white p-8 md:p-12">
+          {loading && !reportHtml ? (
+            <div className="mx-auto flex min-h-[60vh] max-w-3xl flex-col items-center justify-center rounded-[2rem] border border-dashed border-outline-variant/30 bg-surface-container-low px-8 py-10 text-center">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="mt-5 text-lg font-black text-primary">{statusText || '正在生成评价报告...'}</p>
+            </div>
+          ) : reportHtml ? (
+            <article
+              ref={scrollerRef}
+              className="mx-auto min-h-[60vh] max-w-3xl rounded-[1.75rem] border border-outline-variant/15 bg-white px-8 py-10 font-['Songti_SC','STSong','SimSun',serif] text-[15px] leading-[2] text-on-surface shadow-[0_12px_30px_rgba(11,28,48,0.05)] md:px-12 md:py-14"
+              dangerouslySetInnerHTML={{ __html: reportHtml }}
+            />
+          ) : null}
         </div>
       </section>
 

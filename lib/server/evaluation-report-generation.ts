@@ -76,32 +76,44 @@ export async function generateEvaluationReportDocument(institution: EvaluationIn
   if (!force) {
     try {
       const cached = await fs.readFile(cachePath, 'utf8');
+      console.log(`[评价报告] 命中缓存: ${institution.shortName}`);
       return JSON.parse(cached) as EvaluationReportDocument;
     } catch {
       // no cache
     }
   }
 
-  const narrative = await blackwhiteJson(
-    evaluationNarrativeSchema,
-    [
+  console.log(`[评价报告] 开始生成: ${institution.shortName}`);
+  
+  const promptContent = buildPrompt(institution);
+  console.log(`[评价报告] Prompt长度: ${promptContent.length} 字符`);
+  
+  try {
+    const narrative = await blackwhiteJson(
+      evaluationNarrativeSchema,
+      [
+        {
+          role: 'system',
+          content: '你是政府性融资担保机构年度评价报告撰写专家。回答必须严格基于提供数据，不得虚构缺失事实，只返回 JSON。',
+        },
+        {
+          role: 'user',
+          content: promptContent,
+        },
+      ],
       {
-        role: 'system',
-        content: '你是政府性融资担保机构年度评价报告撰写专家。回答必须严格基于提供数据，不得虚构缺失事实，只返回 JSON。',
+        temperature: 0.2,
+        timeoutMs: 300_000, // 增加到5分钟
       },
-      {
-        role: 'user',
-        content: buildPrompt(institution),
-      },
-    ],
-    {
-      temperature: 0.2,
-      timeoutMs: 180_000,
-    },
-  );
+    );
 
-  const document = buildDocument(institution, narrative);
-  await ensureParent(cachePath);
-  await fs.writeFile(cachePath, JSON.stringify(document, null, 2), 'utf8');
-  return document;
+    const document = buildDocument(institution, narrative);
+    await ensureParent(cachePath);
+    await fs.writeFile(cachePath, JSON.stringify(document, null, 2), 'utf8');
+    console.log(`[评价报告] 生成成功: ${institution.shortName}`);
+    return document;
+  } catch (error) {
+    console.error(`[评价报告] 生成失败: ${institution.shortName}`, error);
+    throw error;
+  }
 }

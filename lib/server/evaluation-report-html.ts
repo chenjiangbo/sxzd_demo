@@ -226,7 +226,7 @@ export function renderEvaluationReportBodyHtml(document: EvaluationReportDocumen
 
   return `
     <div style="background: #f6f8fb; padding: 32px 0;">
-      <div style="width: 1120px; margin: 0 auto; background: #ffffff; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.10); padding: 54px 48px 70px; font-family: 'SimSun', 'Songti SC', serif;">
+      <div style="max-width: 800px; margin: 0 auto; background: #ffffff; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.10); padding: 54px 48px 70px; font-family: 'SimSun', 'Songti SC', serif;">
         ${renderCover(document)}
         ${section1}
         ${section2}
