@@ -43,7 +43,7 @@ export default function CompensationBriefPage() {
       <>
         <Sidebar />
         <Header />
-        <main className="ml-48 min-h-screen bg-surface px-8 pb-32 pt-20">
+        <main className="ml-48 min-h-screen overflow-x-hidden bg-surface px-6 pb-8 pt-20">
           <div className="flex items-center justify-center py-20">
             <p className="text-lg font-bold text-on-surface-variant">正在加载代偿补偿数据...</p>
           </div>
@@ -149,10 +149,8 @@ export default function CompensationBriefPage() {
           </div>
 
           {/* 合作银行统计表 */}
-          <div className="rounded-3xl bg-white p-6 shadow-sm">
-
-            <div className="max-w-full overflow-x-auto rounded-3xl border border-outline-variant/20 bg-surface-container-low">
-              <table className="min-w-full border-collapse text-xs text-on-surface">
+          <div className="overflow-x-auto rounded-3xl border border-outline-variant/20 bg-surface-container-low">
+              <table className="min-w-[1200px] border-collapse text-xs text-on-surface">
                 <thead>
                   <tr className="border-b border-outline-variant/15 text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">
                     <th className="px-4 py-3 whitespace-nowrap text-left">序号</th>
@@ -340,7 +338,6 @@ export default function CompensationBriefPage() {
                 3.合作业务代偿率是指2025年上半年合作银行与体系内担保机构备案业务担保代偿率。
               </p>
             </div>
-          </div>
         </section>
       </main>
     </>
