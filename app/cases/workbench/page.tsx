@@ -4,6 +4,7 @@ import AiAssistant from '@/components/AiAssistant';
 import CaseWorkbench from '@/components/CaseWorkbench';
 import { getCaseAnalysis } from '@/lib/server/case-analysis';
 import { getEffectiveCompensationReport } from '@/lib/server/compensation-approval-report';
+import { getCompensationPromptConfig } from '@/lib/server/compensation-report-prompt-config';
 import { getStepArtifact } from '@/lib/server/step-artifacts';
 
 type Props = {
@@ -33,8 +34,14 @@ export default async function WorkbenchPage({ searchParams }: Props) {
     forceReextract: params?.reextract === '1',
   });
   const stepKey = normalizeStep(params?.step);
-  const initialGeneratedReport = stepKey === 'document' ? await getEffectiveCompensationReport() : null;
-  const stepArtifact = stepKey === 'overview' ? null : await getStepArtifact(stepKey, analysis, { refresh: params?.refresh === '1' });
+  const [initialGeneratedReport, compensationPromptConfig] =
+    stepKey === 'document'
+      ? await Promise.all([getEffectiveCompensationReport(), getCompensationPromptConfig()])
+      : [null, undefined];
+  const stepArtifact =
+    stepKey === 'overview' || stepKey === 'document'
+      ? null
+      : await getStepArtifact(stepKey, analysis, { refresh: params?.refresh === '1' });
 
   return (
     <>
@@ -49,6 +56,7 @@ export default async function WorkbenchPage({ searchParams }: Props) {
         selectedDraftKey={params?.draft}
         stepArtifact={stepArtifact ?? undefined}
         initialGeneratedReport={initialGeneratedReport}
+        compensationPromptConfig={compensationPromptConfig}
       />
       <AiAssistant />
     </>

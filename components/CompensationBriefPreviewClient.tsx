@@ -2,10 +2,12 @@
 
 import { Download, FileText, LoaderCircle, RefreshCcw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import BriefAiInstructionPanel, { type BriefPromptConfig } from '@/components/BriefAiInstructionPanel';
 
 type Props = {
   adoptedCriteria: string[];
   references: string[];
+  promptConfig: BriefPromptConfig;
 };
 
 type StreamEvent =
@@ -59,27 +61,62 @@ function parseSseEvent(frame: string): StreamEvent | null {
   }
 }
 
-export default function CompensationBriefPreviewClient({ adoptedCriteria, references }: Props) {
+export default function CompensationBriefPreviewClient({ adoptedCriteria, references, promptConfig }: Props) {
   const [htmlContent, setHtmlContent] = useState<string>('');
+  const [targetHtml, setTargetHtml] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(6);
   const [statusText, setStatusText] = useState('正在准备流式生成代偿补偿简报...');
 
-  const pendingTextRef = useRef('');
   const fullTextRef = useRef('');
-  const streamDoneRef = useRef(false);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const previewSectionRef = useRef<HTMLDivElement | null>(null);
+  const syncIframeHeight = useCallback(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    try {
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) return;
+      const height = iframeDoc.body.scrollHeight;
+      iframe.style.height = `${height}px`;
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const scrollPreviewToBottom = useCallback(() => {
+    const previewSection = previewSectionRef.current;
+    if (!previewSection) return;
+    const targetTop = previewSection.getBoundingClientRect().top + window.scrollY + previewSection.offsetHeight - window.innerHeight + 72;
+    if (targetTop > window.scrollY) {
+      window.scrollTo({ top: targetTop, behavior: 'smooth' });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!targetHtml) {
+      syncIframeHeight();
+      return;
+    }
+
+    setHtmlContent(targetHtml);
+    setProgress(100);
+    setLoading(false);
+    window.requestAnimationFrame(() => {
+      syncIframeHeight();
+      scrollPreviewToBottom();
+    });
+  }, [scrollPreviewToBottom, syncIframeHeight, targetHtml]);
 
   const generate = useCallback(async () => {
     setLoading(true);
     setError(null);
     setHtmlContent('');
+    setTargetHtml('');
     setProgress(6);
     setStatusText('正在准备流式生成代偿补偿简报...');
-    pendingTextRef.current = '';
     fullTextRef.current = '';
-    streamDoneRef.current = false;
-
     try {
       const response = await fetch('/api/generate-compensation-brief', {
         method: 'POST',
@@ -120,20 +157,17 @@ export default function CompensationBriefPreviewClient({ adoptedCriteria, refere
             const text = event.data.text ?? '';
             if (!text) continue;
             fullTextRef.current += text;
-            pendingTextRef.current += text;
             setStatusText('正在逐段生成简报正文...');
-            setProgress((current) => Math.min(94, Math.max(current, 18)));
+            setProgress((current) => Math.min(72, Math.max(current, 18)));
             continue;
           }
 
           if (event.event === 'complete') {
             const finalText = event.data.text ?? fullTextRef.current;
             fullTextRef.current = finalText;
-            setHtmlContent(finalText);
             setStatusText(event.data.cached ? '已加载最新缓存简报' : '模型已完成生成，正在整理排版...');
-            streamDoneRef.current = true;
-            setProgress(100);
-            setLoading(false);
+            setTargetHtml(finalText);
+            setProgress((current) => Math.max(current, 76));
             continue;
           }
 
@@ -142,10 +176,13 @@ export default function CompensationBriefPreviewClient({ adoptedCriteria, refere
           }
         }
       }
+
+      if (!fullTextRef.current) {
+        setLoading(false);
+      }
     } catch (generationError) {
       setError((generationError as Error).message);
       setLoading(false);
-      streamDoneRef.current = false;
     }
   }, []);
 
@@ -190,7 +227,7 @@ export default function CompensationBriefPreviewClient({ adoptedCriteria, refere
             <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">代偿补偿简报预览</p>
           </div>
 
-          <div className="bg-white p-8 md:p-12">
+          <div ref={previewSectionRef} className="bg-white p-8 md:p-12">
             {!htmlContent && loading ? (
               <div className="mx-auto flex min-h-[60vh] max-w-3xl flex-col items-center justify-center rounded-[2rem] border border-dashed border-outline-variant/30 bg-surface-container-low px-8 py-10 text-center">
                 <LoaderCircle className="h-10 w-10 animate-spin text-secondary" />
@@ -210,26 +247,14 @@ export default function CompensationBriefPreviewClient({ adoptedCriteria, refere
             ) : htmlContent ? (
               <div>
                 <iframe
+                  ref={iframeRef}
                   id="compensation-brief-iframe"
                   srcDoc={htmlContent}
                   className="w-full border-0"
                   title="代偿补偿简报预览"
                   sandbox="allow-same-origin"
                   scrolling="no"
-                  onLoad={() => {
-                    const iframe = document.getElementById('compensation-brief-iframe') as HTMLIFrameElement | null;
-                    if (iframe) {
-                      try {
-                        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-                        if (iframeDoc) {
-                          const height = iframeDoc.body.scrollHeight;
-                          iframe.style.height = `${height}px`;
-                        }
-                      } catch (e) {
-                        // 忽略跨域错误
-                      }
-                    }
-                  }}
+                  onLoad={syncIframeHeight}
                 />
               </div>
             ) : (
@@ -271,6 +296,8 @@ export default function CompensationBriefPreviewClient({ adoptedCriteria, refere
       </section>
 
       <aside className="col-span-12 space-y-6 xl:col-span-4">
+        <BriefAiInstructionPanel config={promptConfig} onRegenerate={() => void generate()} loading={loading} />
+
         <div className="rounded-3xl bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-container-low text-secondary">

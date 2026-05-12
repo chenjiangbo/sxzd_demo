@@ -331,6 +331,13 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
 
   const documentBlocks = useMemo(() => formatDocumentBlocks(context.draftBody), [context.draftBody]);
   const verificationEnabled = selectedType === 'credit' && context.verification.enabled;
+  const visibleLearnedExperience = useMemo(() => context.learnedExperience.slice(-3), [context.learnedExperience]);
+  const visiblePresetPoints = useMemo(() => {
+    const basePoints = activeTab === 'verification' && verificationEnabled ? context.verification.presetPoints : context.presetPoints;
+    if (activeTab === 'verification' && verificationEnabled) return basePoints;
+    const foldedExperience = context.learnedExperience.slice(0, Math.max(0, context.learnedExperience.length - 3)).map((item) => item.text);
+    return [...new Set([...basePoints, ...foldedExperience])];
+  }, [activeTab, context.learnedExperience, context.presetPoints, context.verification.presetPoints, verificationEnabled]);
 
   async function reloadContext(type = context.current.type) {
     const response = await fetch(`/api/ai-review/context?type=${type}`, { cache: 'no-store' });
@@ -766,7 +773,7 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
                 </button>
               </div>
               <div className="space-y-3">
-                {(activeTab === 'verification' && verificationEnabled ? context.verification.presetPoints : context.presetPoints).map((item, index) => (
+                {visiblePresetPoints.map((item, index) => (
                   <div key={item} className="rounded-2xl border-l-4 border-primary bg-white px-4 py-4 shadow-sm">
                     <div className="flex items-start gap-3">
                       <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-black text-white">
@@ -785,15 +792,15 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
                 <h2 className="text-xs font-black uppercase tracking-[0.18em] text-tertiary-fixed-dim">沉淀经验</h2>
               </div>
               <div className="space-y-3">
-                {context.learnedExperience.length > 0 ? context.learnedExperience.map((item) => (
-                  <div key={item.id} className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm leading-6">
+                {visibleLearnedExperience.length > 0 ? visibleLearnedExperience.map((item) => (
+                  <div key={item.id} className="rounded-2xl border border-white/15 bg-white px-4 py-3 text-sm leading-6 text-primary shadow-sm">
                     <div className="flex items-start gap-3">
                       <p className="flex-1">{item.text}</p>
                       <button
                         type="button"
                         onClick={() => void deleteExperience(item)}
                         disabled={deletingExperienceId === item.id}
-                        className="rounded-full border border-white/15 p-1 text-white/80 transition hover:bg-white/10 disabled:opacity-40"
+                        className="rounded-full border border-primary/10 p-1 text-primary/70 transition hover:bg-primary/5 disabled:opacity-40"
                         aria-label="删除沉淀经验"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -808,19 +815,6 @@ export default function AiReviewWorkbench({ initialContext, startEmpty = false }
               </div>
             </section>
 
-            <section className="rounded-3xl bg-white p-4 shadow-sm">
-              <div className="mb-4 flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-secondary" />
-                <h2 className="text-xs font-black uppercase tracking-[0.18em] text-secondary">本次新增要点</h2>
-              </div>
-              <div className="space-y-3">
-                {context.latestAddedExperience.length > 0 ? context.latestAddedExperience.map((item) => (
-                  <div key={item.id} className="rounded-2xl bg-secondary/5 px-4 py-3 text-sm leading-6 text-on-surface">
-                    {item.text}
-                  </div>
-                )) : null}
-              </div>
-            </section>
           </div>
         </aside>
       </div>

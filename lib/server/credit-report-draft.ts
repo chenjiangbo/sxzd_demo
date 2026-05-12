@@ -7,6 +7,7 @@ import { GeneratedCreditReport, normalizeCreditReportText, parseCreditReportText
 import { blackwhiteJson, type ChatMessage } from '@/lib/server/blackwhite';
 import { getDemoCacheRoot, getWorkspaceRoot } from '@/lib/server/runtime-root';
 import { getCreditReportData } from '@/lib/server/credit-report';
+import { getCreditPromptConfig, type CreditPromptConfig } from '@/lib/server/credit-report-prompt-config';
 
 const execFileAsync = promisify(execFile);
 
@@ -14,6 +15,7 @@ const WORKSPACE_ROOT = getWorkspaceRoot();
 const CREDIT_DOC_DIR = path.join(WORKSPACE_ROOT, 'docs', '授信及评价');
 const CREDIT_REPORT_TEMPLATE_DOC = path.join(CREDIT_DOC_DIR, '副本关于2025年度合作担保机构再担保业务授信的报告(1).docx');
 const GENERATED_REPORT_CACHE = path.join(getDemoCacheRoot(), 'credit-report', 'generated-report.json');
+const REPORT_TIME_ZONE = 'Asia/Shanghai';
 
 const traceItemSchema = z.object({
   id: z.string().min(1),
@@ -52,7 +54,37 @@ async function readTemplateText() {
   return stdout.trim();
 }
 
+function getCurrentChineseDate() {
+  const parts = new Intl.DateTimeFormat('zh-CN', {
+    timeZone: REPORT_TIME_ZONE,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  const day = parts.find((part) => part.type === 'day')?.value;
+  if (!year || !month || !day) {
+    throw new Error('无法生成当前报告日期');
+  }
+  return `${year}年${Number(month)}月${Number(day)}日`;
+}
+
+function resolveCurrentDateRequirement(value: string, currentDate: string) {
+  return value.replaceAll('当前时间（到日）', currentDate).replaceAll('当前时间', currentDate);
+}
+
+function resolvePromptConfigDates(promptConfig: CreditPromptConfig, currentDate: string): CreditPromptConfig {
+  return {
+    ...promptConfig,
+    businessRequirements: promptConfig.businessRequirements.map((item) => resolveCurrentDateRequirement(item, currentDate)),
+    templateConstraints: promptConfig.templateConstraints.map((item) => resolveCurrentDateRequirement(item, currentDate)),
+    technicalRequirements: promptConfig.technicalRequirements.map((item) => resolveCurrentDateRequirement(item, currentDate)),
+  };
+}
+
 function buildPromptPayload(data: Awaited<ReturnType<typeof getCreditReportData>>) {
+  const currentReportDate = getCurrentChineseDate();
   const sourceCatalog = {
     stats: [
       { id: 'stats.institutionCount', label: '合作机构数量', value: data.stats.institutionCount, unit: '家' },
@@ -132,8 +164,9 @@ function buildPromptPayload(data: Awaited<ReturnType<typeof getCreditReportData>
       title: '2025年度合作担保机构再担保业务授信报告',
       addressee: '公司领导：',
       signatureDepartment: '业务一部',
-      signatureDate: '2025年5月22日',
+      signatureDate: currentReportDate,
       attachmentLine: '附件：2025年度合作担保机构再担保业务授信情况统计表',
+      generatedDateRule: `本次生成时服务端按 ${REPORT_TIME_ZONE} 计算的当前日期为 ${currentReportDate}，报告落款日期必须使用该日期。`,
     },
     sourceCatalog,
     sourceIndex,
@@ -141,21 +174,29 @@ function buildPromptPayload(data: Awaited<ReturnType<typeof getCreditReportData>
 }
 
 export async function buildCreditReportMessages(): Promise<ChatMessage[]> {
-  const [data, templateText] = await Promise.all([getCreditReportData(), readTemplateText()]);
+  const [data, templateText, promptConfig] = await Promise.all([getCreditReportData(), readTemplateText(), getCreditPromptConfig()]);
   const promptPayload = buildPromptPayload(data);
+  return buildCreditReportMessagesFromInputs(templateText, promptPayload, promptConfig);
+}
+
+function buildCreditReportMessagesFromInputs(
+  templateText: string,
+  promptPayload: ReturnType<typeof buildPromptPayload>,
+  promptConfig: CreditPromptConfig,
+): ChatMessage[] {
+  const resolvedPromptConfig = resolvePromptConfigDates(promptConfig, promptPayload.reportMeta.signatureDate);
+  const systemRequirements = [
+    '你是一名国企公文写作助手，负责撰写正式授信报告。',
+    `本次生成日期：${promptPayload.reportMeta.signatureDate}。凡指令中出现“当前时间”或“当前时间（到日）”，均指该日期。`,
+    ...resolvedPromptConfig.businessRequirements,
+    ...resolvedPromptConfig.technicalRequirements,
+    ...resolvedPromptConfig.templateConstraints,
+  ];
 
   return [
     {
       role: 'system',
-      content: [
-        '你是一名国企公文写作助手，负责撰写正式授信报告。',
-        '你必须严格遵循模板的结构、语气、标题层级和公文写法。',
-        '你的输出必须是 JSON，对外正式成文只能放在 report_text 字段中，不输出额外解释，不输出 markdown。',
-        '必须严格使用提供的数据，不得编造任何数字、机构名称、政策依据和附件名称。',
-        '报告正文必须包含且只包含以下结构：标题、称谓、引言、一、综合授信情况、二、产品分项额度设定、三、授信额度运用、附件行、落款部门、落款日期。',
-        '一级标题必须使用“一、”“二、”“三、”格式，小条款使用“（一）”“（二）”格式。',
-        'report_text 必须是适合直接展示和导出 Word 的正式正文，段落之间使用换行分隔。',
-      ].join('\n'),
+      content: systemRequirements.join('\n'),
     },
     {
       role: 'user',
@@ -166,24 +207,33 @@ export async function buildCreditReportMessages(): Promise<ChatMessage[]> {
         '以下是本次报告允许使用的真实数据，请严格基于这些数据写作：',
         JSON.stringify(promptPayload, null, 2),
         '',
+        '以下是本次生成时的业务要求，请优先满足：',
+        ...resolvedPromptConfig.businessRequirements.map((item, index) => `${index + 1}. ${item}`),
+        '',
+        '以下是本次生成时的模板约束，请严格满足：',
+        ...resolvedPromptConfig.templateConstraints.map((item, index) => `${index + 1}. ${item}`),
+        '',
         '输出要求：',
-        '1. 第一行固定输出“2025年度合作担保机构再担保业务授信报告”。',
-        '2. 第二行固定输出“公司领导：”。',
-        '3. 文中金额、机构数量、机构分组、产品额度等必须和提供数据一致。',
-        '4. 保留正式公文措辞，不要写提示语，不要写代码块，不要写列表标记符号。',
-        '5. 最后必须以“业务一部”和“2025年5月22日”作为落款两行结束。',
-        '6. 附件行必须单独成段，写为“附件：2025年度合作担保机构再担保业务授信情况统计表”。',
-        '7. 最终只输出 JSON，JSON 结构必须是：{ "report_text": string, "data_trace": Array<{ id, numberText, semanticLabel, sourceType, sourceIds, formula?, note? }> }。',
-        '8. report_text 中禁止出现来源解释、公式、字段 id 或括号式技术说明。',
-        '9. data_trace 中 sourceType 只能填写 "direct" 或 "derived"，绝对不能输出 literal、source、estimated、inferred 等其他值。',
-        '10. data_trace 的 sourceIds 必须从 sourceIndex 或 sourceCatalog 中逐字复制，不能改写为 institutions[3].totalCredit 这类路径，不能编造不存在的 id。',
-        '11. 如果数字是直接引用基础数据，则 sourceType = "direct"；如果数字由基础数据加总、相减、占比、压降等得出，则 sourceType = "derived"，并填写 formula。',
-        '12. data_trace 重点覆盖正文中实际出现的金额、机构数、分组合计和机构额度数字。',
-        '13. 示例：{"id":"trace-granted-total","numberText":"451.3亿元","semanticLabel":"拟授信总额","sourceType":"direct","sourceIds":["stats.grantedTotal"]}',
-        '14. 示例：{"id":"trace-risk-share","numberText":"81.46%","semanticLabel":"银担分险授信额度占比","sourceType":"derived","sourceIds":["stats.riskCreditTotal","stats.grantedTotal"],"formula":"stats.riskCreditTotal / stats.grantedTotal"}',
+        ...resolvedPromptConfig.technicalRequirements.map((item, index) => `${index + 1}. ${item}`),
+        `${resolvedPromptConfig.technicalRequirements.length + 1}. 最终只输出 JSON，JSON 结构必须是：{ "report_text": string, "data_trace": Array<{ id, numberText, semanticLabel, sourceType, sourceIds, formula?, note? }> }。`,
+        `${resolvedPromptConfig.technicalRequirements.length + 2}. report_text 中禁止出现来源解释、公式、字段 id 或括号式技术说明。`,
+        `${resolvedPromptConfig.technicalRequirements.length + 3}. 如果数字是直接引用基础数据，则 sourceType = "direct"；如果数字由基础数据加总、相减、占比、压降等得出，则 sourceType = "derived"，并填写 formula。`,
+        `${resolvedPromptConfig.technicalRequirements.length + 4}. data_trace 重点覆盖正文中实际出现的金额、机构数、分组合计和机构额度数字。`,
+        `${resolvedPromptConfig.technicalRequirements.length + 5}. 示例：{"id":"trace-granted-total","numberText":"451.3亿元","semanticLabel":"拟授信总额","sourceType":"direct","sourceIds":["stats.grantedTotal"]}`,
+        `${resolvedPromptConfig.technicalRequirements.length + 6}. 示例：{"id":"trace-risk-share","numberText":"81.46%","semanticLabel":"银担分险授信额度占比","sourceType":"derived","sourceIds":["stats.riskCreditTotal","stats.grantedTotal"],"formula":"stats.riskCreditTotal / stats.grantedTotal"}`,
       ].join('\n'),
     },
   ];
+}
+
+function validateReportSignature(reportText: string, promptPayload: ReturnType<typeof buildPromptPayload>) {
+  const parsed = parseCreditReportText(reportText);
+  if (parsed.signatureDepartment !== promptPayload.reportMeta.signatureDepartment) {
+    throw new Error(`模型返回的落款部门不符合要求：期望 ${promptPayload.reportMeta.signatureDepartment}，实际 ${parsed.signatureDepartment ?? '空'}`);
+  }
+  if (parsed.signatureDate !== promptPayload.reportMeta.signatureDate) {
+    throw new Error(`模型返回的落款日期不符合要求：期望 ${promptPayload.reportMeta.signatureDate}，实际 ${parsed.signatureDate ?? '空'}`);
+  }
 }
 
 function collectValidSourceIds(promptPayload: ReturnType<typeof buildPromptPayload>) {
@@ -216,53 +266,15 @@ function validateGeneratedTrace(
 }
 
 export async function generateCreditReportWithTrace() {
-  const [data, templateText] = await Promise.all([getCreditReportData(), readTemplateText()]);
+  const [data, templateText, promptConfig] = await Promise.all([getCreditReportData(), readTemplateText(), getCreditPromptConfig()]);
   const promptPayload = buildPromptPayload(data);
-  const messages: ChatMessage[] = [
-    {
-      role: 'system',
-      content: [
-        '你是一名国企公文写作助手，负责撰写正式授信报告。',
-        '你必须严格遵循模板的结构、语气、标题层级和公文写法。',
-        '你的输出必须是 JSON，对外正式成文只能放在 report_text 字段中，不输出额外解释，不输出 markdown。',
-        '必须严格使用提供的数据，不得编造任何数字、机构名称、政策依据和附件名称。',
-        '报告正文必须包含且只包含以下结构：标题、称谓、引言、一、综合授信情况、二、产品分项额度设定、三、授信额度运用、附件行、落款部门、落款日期。',
-        '一级标题必须使用“一、”“二、”“三、”格式，小条款使用“（一）”“（二）”格式。',
-        'report_text 必须是适合直接展示和导出 Word 的正式正文，段落之间使用换行分隔。',
-      ].join('\n'),
-    },
-    {
-      role: 'user',
-      content: [
-        '以下是必须严格参照的模板全文，请学习其语气、段落组织方式和章节安排：',
-        templateText,
-        '',
-        '以下是本次报告允许使用的真实数据，请严格基于这些数据写作：',
-        JSON.stringify(promptPayload, null, 2),
-        '',
-        '输出要求：',
-        '1. 第一行固定输出“2025年度合作担保机构再担保业务授信报告”。',
-        '2. 第二行固定输出“公司领导：”。',
-        '3. 文中金额、机构数量、机构分组、产品额度等必须和提供数据一致。',
-        '4. 保留正式公文措辞，不要写提示语，不要写代码块，不要写列表标记符号。',
-        '5. 最后必须以“业务一部”和“2025年5月22日”作为落款两行结束。',
-        '6. 附件行必须单独成段，写为“附件：2025年度合作担保机构再担保业务授信情况统计表”。',
-        '7. 最终只输出 JSON，JSON 结构必须是：{ "report_text": string, "data_trace": Array<{ id, numberText, semanticLabel, sourceType, sourceIds, formula?, note? }> }。',
-        '8. report_text 中禁止出现来源解释、公式、字段 id 或括号式技术说明。',
-        '9. data_trace 中 sourceType 只能填写 "direct" 或 "derived"，绝对不能输出 literal、source、estimated、inferred 等其他值。',
-        '10. data_trace 的 sourceIds 必须从 sourceIndex 或 sourceCatalog 中逐字复制，不能改写为 institutions[3].totalCredit 这类路径，不能编造不存在的 id。',
-        '11. 如果数字是直接引用基础数据，则 sourceType = "direct"；如果数字由基础数据加总、相减、占比、压降等得出，则 sourceType = "derived"，并填写 formula。',
-        '12. data_trace 重点覆盖正文中实际出现的金额、机构数、分组合计和机构额度数字。',
-        '13. 示例：{"id":"trace-granted-total","numberText":"451.3亿元","semanticLabel":"拟授信总额","sourceType":"direct","sourceIds":["stats.grantedTotal"]}',
-        '14. 示例：{"id":"trace-risk-share","numberText":"81.46%","semanticLabel":"银担分险授信额度占比","sourceType":"derived","sourceIds":["stats.riskCreditTotal","stats.grantedTotal"],"formula":"stats.riskCreditTotal / stats.grantedTotal"}',
-      ].join('\n'),
-    },
-  ];
+  const messages = buildCreditReportMessagesFromInputs(templateText, promptPayload, promptConfig);
   const generated = await blackwhiteJson(generatedCreditReportWithTraceSchema, messages, {
     temperature: 0.2,
     timeoutMs: 180_000,
   });
   validateGeneratedTrace(generated, collectValidSourceIds(promptPayload));
+  validateReportSignature(generated.report_text, promptPayload);
   return generated;
 }
 

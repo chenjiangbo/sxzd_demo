@@ -1,60 +1,177 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { X, Download, Loader2, FileText } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Download, FileText, Loader2, Plus, RefreshCcw, Save, Trash2, X } from 'lucide-react';
 
 type StreamMessage =
   | { type: 'status'; text: string }
   | { type: 'chunk'; html: string }
-  | { type: 'complete'; institutionId: string; institutionName: string; indicators?: Record<string, any> }
+  | { type: 'complete'; institutionId: string; institutionName: string; indicators?: Record<string, unknown> }
   | { type: 'error'; message: string };
+
+type EvaluationPromptResource = {
+  id: string;
+  title: string;
+  kind: 'template' | 'data' | 'structured';
+  path?: string;
+  purpose: string;
+};
+
+type EvaluationPromptConfig = {
+  businessRequirements: string[];
+  technicalRequirements: string[];
+  templateConstraints: string[];
+  resources: EvaluationPromptResource[];
+};
 
 interface EvaluationReportPreviewClientProps {
   institutionId: string;
   selectedGroup: string | null;
   currentPage: string | null;
+  promptConfig: EvaluationPromptConfig;
 }
 
-export default function EvaluationReportPreviewClient({ institutionId, selectedGroup, currentPage }: EvaluationReportPreviewClientProps) {
+function parseFrames(buffer: string) {
+  const frames = buffer.split('\n\n');
+  return {
+    frames: frames.slice(0, -1),
+    rest: frames[frames.length - 1] ?? '',
+  };
+}
+
+function parseEvent(frame: string): StreamMessage | null {
+  const dataLine = frame
+    .split('\n')
+    .find((line) => line.startsWith('data:'));
+
+  if (!dataLine) return null;
+
+  try {
+    return JSON.parse(dataLine.slice(5).trim()) as StreamMessage;
+  } catch {
+    return null;
+  }
+}
+
+function formatResourceKind(kind: EvaluationPromptResource['kind']) {
+  if (kind === 'template') return '模板';
+  if (kind === 'data') return '资料';
+  return '结构化数据';
+}
+
+function PromptLineEditor({
+  prefix,
+  value,
+  expanded,
+  onToggle,
+  onChange,
+  onRemove,
+}: {
+  prefix: string;
+  value: string;
+  expanded: boolean;
+  onToggle: () => void;
+  onChange: (value: string) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-low px-3 py-3">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggle}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onToggle();
+          }
+        }}
+        className="flex cursor-pointer items-start gap-3"
+      >
+        <span className="mt-0.5 shrink-0 rounded-full bg-primary/10 px-2 py-1 text-[11px] font-black tracking-[0.12em] text-primary">
+          {prefix}
+        </span>
+        <div className="min-w-0 flex-1">
+          {expanded ? (
+            <textarea
+              value={value}
+              onChange={(event) => onChange(event.target.value)}
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
+              rows={Math.max(3, Math.ceil(value.length / 26))}
+              className="w-full resize-none rounded-xl border border-outline-variant/20 bg-white px-3 py-2 text-sm leading-6 text-on-surface outline-none transition focus:border-primary"
+            />
+          ) : (
+            <p className="truncate text-sm font-semibold leading-6 text-on-surface" title={value}>
+              {value}
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onRemove();
+          }}
+          className="shrink-0 rounded-full p-1.5 text-on-surface-variant transition hover:bg-white hover:text-red-600"
+          aria-label="删除指令"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function EvaluationReportPreviewClient({
+  institutionId,
+  selectedGroup,
+  currentPage,
+  promptConfig,
+}: EvaluationReportPreviewClientProps) {
   const [loading, setLoading] = useState(true);
   const [statusText, setStatusText] = useState('');
   const [reportHtml, setReportHtml] = useState('');
+  const [renderHtml, setRenderHtml] = useState('');
   const [institutionName, setInstitutionName] = useState('');
-  const [indicators, setIndicators] = useState<Record<string, any> | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const scrollerRef = useRef<HTMLDivElement | null>(null);
-
-  function parseFrames(buffer: string) {
-    const frames = buffer.split('\n\n');
-    return {
-      frames: frames.slice(0, -1),
-      rest: frames[frames.length - 1] ?? '',
-    };
-  }
-
-  function parseEvent(frame: string): StreamMessage | null {
-    const dataLine = frame
-      .split('\n')
-      .find((line) => line.startsWith('data:'));
-
-    if (!dataLine) return null;
-
-    try {
-      return JSON.parse(dataLine.slice(5).trim()) as StreamMessage;
-    } catch {
-      return null;
-    }
-  }
+  const [promptDraft, setPromptDraft] = useState<EvaluationPromptConfig>(promptConfig);
+  const [savingPrompt, setSavingPrompt] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [expandedPromptKeys, setExpandedPromptKeys] = useState<Set<string>>(() => new Set());
+  const revealIndexRef = useRef(0);
+  const controllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    const controller = new AbortController();
+    setPromptDraft(promptConfig);
+  }, [promptConfig]);
 
-    void (async () => {
+  const groupedResources = useMemo(
+    () => ({
+      templates: promptDraft.resources.filter((item) => item.kind === 'template'),
+      references: promptDraft.resources.filter((item) => item.kind !== 'template'),
+    }),
+    [promptDraft.resources],
+  );
+
+  const startGeneration = useCallback(
+    async (force = false) => {
+      controllerRef.current?.abort();
+      const controller = new AbortController();
+      controllerRef.current = controller;
+      setLoading(true);
+      setStatusText('');
+      setReportHtml('');
+      setRenderHtml('');
+      setInstitutionName('');
+      setError(null);
+      revealIndexRef.current = 0;
+
       try {
         const res = await fetch('/api/evaluation-report/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ institutionId }),
+          body: JSON.stringify({ institutionId, force }),
           signal: controller.signal,
         });
 
@@ -88,7 +205,6 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
 
             if (data.type === 'complete') {
               setInstitutionName(data.institutionName);
-              setIndicators((data as any).indicators || null);
               setLoading(false);
               continue;
             }
@@ -103,32 +219,123 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
         setError((err as Error).message || '生成失败');
         setLoading(false);
       }
-    })();
+    },
+    [institutionId],
+  );
 
-    return () => controller.abort();
-  }, [institutionId]);
+  useEffect(() => {
+    void startGeneration(false);
+    return () => {
+      controllerRef.current?.abort();
+    };
+  }, [startGeneration]);
 
   useEffect(() => {
     if (!reportHtml) return;
-    const node = scrollerRef.current;
-    if (!node) return;
-    node.scrollTo({ top: node.scrollHeight, behavior: 'smooth' });
-  }, [reportHtml]);
+    if (renderHtml.length >= reportHtml.length) return;
 
-  const handleDownload = () => {
+    const timer = window.setInterval(() => {
+      const remaining = reportHtml.length - revealIndexRef.current;
+      if (remaining <= 0) {
+        window.clearInterval(timer);
+        return;
+      }
+
+      const nextSize = Math.min(remaining, 120);
+      revealIndexRef.current += nextSize;
+      setRenderHtml(reportHtml.slice(0, revealIndexRef.current));
+    }, 45);
+
+    return () => window.clearInterval(timer);
+  }, [renderHtml.length, reportHtml]);
+
+  const togglePromptLine = useCallback((key: string) => {
+    setExpandedPromptKeys((current) => {
+      const next = new Set(current);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }, []);
+
+  const savePromptConfig = useCallback(async (nextDraft: EvaluationPromptConfig) => {
+    const payload: EvaluationPromptConfig = {
+      ...nextDraft,
+      businessRequirements: nextDraft.businessRequirements.map((item) => item.trim()).filter(Boolean),
+      templateConstraints: nextDraft.templateConstraints.map((item) => item.trim()).filter(Boolean),
+    };
+
+    if (payload.businessRequirements.length === 0) {
+      throw new Error('至少保留一条业务要求');
+    }
+    if (payload.templateConstraints.length === 0) {
+      throw new Error('至少保留一条格式要求');
+    }
+
+    const response = await fetch('/api/evaluation-report/prompt-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error('保存 AI 指令失败');
+    }
+
+    const data = (await response.json()) as { config: EvaluationPromptConfig };
+    setPromptDraft(data.config);
+    return data.config;
+  }, []);
+
+  const handleSavePrompt = useCallback(async () => {
+    setSavingPrompt(true);
+    try {
+      await savePromptConfig(promptDraft);
+    } finally {
+      setSavingPrompt(false);
+    }
+  }, [promptDraft, savePromptConfig]);
+
+  const handleRegenerate = useCallback(async () => {
+    setRegenerating(true);
+    try {
+      await savePromptConfig(promptDraft);
+      await startGeneration(true);
+    } finally {
+      setRegenerating(false);
+    }
+  }, [promptDraft, savePromptConfig, startGeneration]);
+
+  const handleResetPrompt = useCallback(async () => {
+    setSavingPrompt(true);
+    try {
+      const response = await fetch('/api/evaluation-report/prompt-config', { method: 'DELETE' });
+      if (!response.ok) {
+        throw new Error('恢复默认指令失败');
+      }
+      const data = (await response.json()) as { config: EvaluationPromptConfig };
+      setPromptDraft(data.config);
+      setExpandedPromptKeys(new Set());
+    } finally {
+      setSavingPrompt(false);
+    }
+  }, []);
+
+  const handleDownload = useCallback(() => {
     window.open(`/api/evaluation-report/export-html?id=${institutionId}`, '_blank');
-  };
+  }, [institutionId]);
 
-  const handleClose = () => {
-    // 构建返回 URL，保留 group 和 page 参数
+  const handleClose = useCallback(() => {
     let url = '/evaluation-report';
     const params = new URLSearchParams();
     if (selectedGroup) params.set('group', selectedGroup);
     if (currentPage) params.set('page', currentPage);
     if (params.toString()) url += `?${params.toString()}`;
-    // 使用 window.location.href 直接跳转，确保 URL 变化触发页面重新渲染
     window.location.href = url;
-  };
+  }, [currentPage, selectedGroup]);
 
   if (error) {
     return (
@@ -152,9 +359,8 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
 
   return (
     <div className="grid grid-cols-12 gap-8">
-      {/* 左侧：报告预览 */}
       <section className="col-span-12 xl:col-span-8">
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant/20 bg-white px-8 py-4 shadow-sm rounded-t-3xl">
+        <header className="sticky top-0 z-10 flex items-center justify-between rounded-t-3xl border-b border-outline-variant/20 bg-white px-8 py-4 shadow-sm">
           <div>
             <h1 className="text-lg font-black text-primary">{institutionName || '评价报告'}</h1>
             <p className="text-xs text-on-surface-variant">{loading ? statusText || 'AI 正在逐段生成报告...' : 'AI 自动生成'}</p>
@@ -162,7 +368,7 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
           <div className="flex items-center gap-3">
             <button
               onClick={handleDownload}
-              className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-2 text-xs font-black text-primary hover:bg-primary hover:text-white transition-colors"
+              className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-2 text-xs font-black text-primary transition-colors hover:bg-primary hover:text-white"
             >
               <Download className="h-4 w-4" />
               下载 Word
@@ -185,15 +391,13 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
             </div>
           ) : reportHtml ? (
             <article
-              ref={scrollerRef}
               className="mx-auto min-h-[60vh] max-w-3xl bg-white px-8 py-10 font-['Songti_SC','STSong','SimSun',serif] text-[15px] leading-[2] text-on-surface md:px-12 md:py-14"
-              dangerouslySetInnerHTML={{ __html: reportHtml }}
+              dangerouslySetInnerHTML={{ __html: renderHtml || reportHtml }}
             />
           ) : null}
         </div>
       </section>
 
-      {/* 右侧：口径摘要和指标 */}
       <aside className="col-span-12 space-y-6 xl:col-span-4">
         <div className="rounded-3xl bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center gap-3">
@@ -201,59 +405,161 @@ export default function EvaluationReportPreviewClient({ institutionId, selectedG
               <FileText className="h-4 w-4" />
             </span>
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">本次采用口径摘要</p>
-              <p className="text-sm font-black text-primary">写入报告的关键依据</p>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">AI 指令</p>
+              <p className="text-sm font-black text-primary">写给模型的业务要求与格式要求</p>
             </div>
           </div>
-          <div className="space-y-3">
-            <div className="rounded-2xl bg-surface-container-low px-4 py-4 text-sm font-semibold leading-6 text-on-surface">
-              本年度机构评价以政策目标完成度为核心，结合 8 项核心指标进行综合评价。
+
+          <div className="space-y-5">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">业务要求</p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPromptDraft((current) => ({
+                      ...current,
+                      businessRequirements: [...current.businessRequirements, '请补充新的业务要求。'],
+                    }))
+                  }
+                  className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-black text-primary"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  新增
+                </button>
+              </div>
+              {promptDraft.businessRequirements.map((item, index) => (
+                <PromptLineEditor
+                  key={`business-${index}`}
+                  prefix={`${String(index + 1).padStart(2, '0')}`}
+                  value={item}
+                  expanded={expandedPromptKeys.has(`business-${index}`)}
+                  onToggle={() => togglePromptLine(`business-${index}`)}
+                  onChange={(value) =>
+                    setPromptDraft((current) => ({
+                      ...current,
+                      businessRequirements: current.businessRequirements.map((line, lineIndex) =>
+                        lineIndex === index ? value : line,
+                      ),
+                    }))
+                  }
+                  onRemove={() =>
+                    setPromptDraft((current) => ({
+                      ...current,
+                      businessRequirements: current.businessRequirements.filter((_, lineIndex) => lineIndex !== index),
+                    }))
+                  }
+                />
+              ))}
             </div>
-            <div className="rounded-2xl bg-surface-container-low px-4 py-4 text-sm font-semibold leading-6 text-on-surface">
-              评价指标包含新增担保业务规模、小微三农占比、再担保规模、分险业务占比、担保放大倍数、代偿率控制、代偿返还率等。
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">格式要求</p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPromptDraft((current) => ({
+                      ...current,
+                      templateConstraints: [...current.templateConstraints, '请补充新的格式要求。'],
+                    }))
+                  }
+                  className="inline-flex items-center gap-1 rounded-full bg-secondary/10 px-3 py-1 text-[11px] font-black text-secondary"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  新增
+                </button>
+              </div>
+              {promptDraft.templateConstraints.map((item, index) => (
+                <PromptLineEditor
+                  key={`format-${index}`}
+                  prefix={`格${String(index + 1).padStart(2, '0')}`}
+                  value={item}
+                  expanded={expandedPromptKeys.has(`format-${index}`)}
+                  onToggle={() => togglePromptLine(`format-${index}`)}
+                  onChange={(value) =>
+                    setPromptDraft((current) => ({
+                      ...current,
+                      templateConstraints: current.templateConstraints.map((line, lineIndex) =>
+                        lineIndex === index ? value : line,
+                      ),
+                    }))
+                  }
+                  onRemove={() =>
+                    setPromptDraft((current) => ({
+                      ...current,
+                      templateConstraints: current.templateConstraints.filter((_, lineIndex) => lineIndex !== index),
+                    }))
+                  }
+                />
+              ))}
             </div>
-            <div className="rounded-2xl bg-surface-container-low px-4 py-4 text-sm font-semibold leading-6 text-on-surface">
-              评价结果分为优秀、良好、合格、不合格四个等次，作为授信额度配置的重要依据。
-            </div>
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleSavePrompt}
+              disabled={savingPrompt || regenerating}
+              className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-white px-4 py-2 text-xs font-black text-primary transition hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Save className="h-4 w-4" />
+              保存
+            </button>
+            <button
+              type="button"
+              onClick={handleRegenerate}
+              disabled={savingPrompt || regenerating}
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-black text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {regenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+              重新生成
+            </button>
+            <button
+              type="button"
+              onClick={handleResetPrompt}
+              disabled={savingPrompt || regenerating}
+              className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-white px-4 py-2 text-xs font-black text-on-surface-variant transition hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Trash2 className="h-4 w-4" />
+              恢复默认
+            </button>
           </div>
         </div>
 
-        {indicators && (
-          <div className="rounded-3xl bg-white p-6 shadow-sm">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">机构核心指标</p>
-            <div className="mt-4 space-y-3">
-              <div className="rounded-2xl bg-surface-container-low px-4 py-3">
-                <p className="text-[11px] font-black text-on-surface-variant">综合评价结果</p>
-                <p className="mt-1 text-sm font-bold text-primary">{indicators.overallStatus}</p>
+        <div className="rounded-3xl bg-white p-6 shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">参考模板</p>
+          <div className="mt-4 space-y-3">
+            {groupedResources.templates.map((item) => (
+              <div key={item.id} className="rounded-2xl border border-outline-variant/20 bg-surface-container-low px-4 py-4">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-black text-primary">{item.title}</p>
+                  <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-black text-primary">
+                    {formatResourceKind(item.kind)}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-on-surface">{item.purpose}</p>
+                {item.path ? <p className="mt-2 break-all text-xs leading-5 text-on-surface-variant">{item.path}</p> : null}
               </div>
-              <div className="rounded-2xl bg-surface-container-low px-4 py-3">
-                <p className="text-[11px] font-black text-on-surface-variant">新增担保业务规模完成率</p>
-                <p className="mt-1 text-sm font-bold text-primary">{(indicators.scaleCompletionRate * 100).toFixed(1)}%</p>
-              </div>
-              <div className="rounded-2xl bg-surface-container-low px-4 py-3">
-                <p className="text-[11px] font-black text-on-surface-variant">小微三农占比完成率</p>
-                <p className="mt-1 text-sm font-bold text-primary">{(indicators.customerRatioCompletionRate * 100).toFixed(1)}%</p>
-              </div>
-              <div className="rounded-2xl bg-surface-container-low px-4 py-3">
-                <p className="text-[11px] font-black text-on-surface-variant">代偿率状态</p>
-                <p className="mt-1 text-sm font-bold text-primary">{indicators.compensationRateStatus}</p>
-              </div>
-            </div>
+            ))}
           </div>
-        )}
+        </div>
 
         <div className="rounded-3xl bg-white p-6 shadow-sm">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">相关附件</p>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">参考资料</p>
           <div className="mt-4 space-y-3">
-            <div className="rounded-2xl bg-surface-container-low px-4 py-3 text-sm font-semibold text-on-surface">
-              输入 1：{institutionName}年度业务数据统计表
-            </div>
-            <div className="rounded-2xl bg-surface-container-low px-4 py-3 text-sm font-semibold text-on-surface">
-              输入 2：陕西省政府性融资担保机构综合评价办法
-            </div>
-            <div className="rounded-2xl bg-surface-container-low px-4 py-3 text-sm font-semibold text-on-surface">
-              输入 3：保后评价报告模板
-            </div>
+            {groupedResources.references.map((item) => (
+              <div key={item.id} className="rounded-2xl border border-outline-variant/20 bg-surface-container-low px-4 py-4">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-black text-primary">{item.title}</p>
+                  <span className="shrink-0 rounded-full bg-secondary/10 px-2.5 py-1 text-[11px] font-black text-secondary">
+                    {formatResourceKind(item.kind)}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-on-surface">{item.purpose}</p>
+                {item.path ? <p className="mt-2 break-all text-xs leading-5 text-on-surface-variant">{item.path}</p> : null}
+              </div>
+            ))}
           </div>
         </div>
       </aside>

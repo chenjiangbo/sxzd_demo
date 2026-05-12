@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import type { AnalysisDocument, CaseAnalysis, MaterialItem, RuleResult } from '@/lib/server/case-analysis';
 import type { GeneratedCompensationReport } from '@/lib/compensation-report-format';
+import type { CompensationPromptConfig } from '@/lib/server/compensation-report-prompt-config';
 import type { StepArtifact } from '@/lib/server/step-artifacts';
 import { getStep, WORKBENCH_STEPS } from '@/lib/workbench';
 
@@ -41,6 +42,7 @@ type Props = {
   selectedDraftKey?: 'worksheet' | 'approval' | 'oa';
   stepArtifact?: StepArtifact;
   initialGeneratedReport?: GeneratedCompensationReport | null;
+  compensationPromptConfig?: CompensationPromptConfig;
 };
 
 function stepStatusLabel(stepKey: string, analysis: CaseAnalysis) {
@@ -833,11 +835,16 @@ function VerifyContent({ analysis, stepArtifact }: { analysis: CaseAnalysis; ste
 function DocumentContent({
   analysis,
   initialGeneratedReport,
+  compensationPromptConfig,
 }: {
   analysis: CaseAnalysis;
   initialGeneratedReport?: GeneratedCompensationReport | null;
+  compensationPromptConfig?: CompensationPromptConfig;
 }) {
-  return <CompensationApprovalPreviewClient analysis={analysis} initialReport={initialGeneratedReport ?? null} />;
+  if (!compensationPromptConfig) {
+    throw new Error('缺少代偿补偿审批表 AI 指令配置');
+  }
+  return <CompensationApprovalPreviewClient analysis={analysis} initialReport={initialGeneratedReport ?? null} promptConfig={compensationPromptConfig} />;
 }
 
 function ReviewContent({ analysis, stepArtifact }: { analysis: CaseAnalysis; stepArtifact?: StepArtifact }) {
@@ -978,6 +985,7 @@ function ContentByStep({
   selectedDraftKey,
   stepArtifact,
   initialGeneratedReport,
+  compensationPromptConfig,
 }: {
   currentStepKey: string;
   analysis: CaseAnalysis;
@@ -987,10 +995,11 @@ function ContentByStep({
   selectedDraftKey?: 'worksheet' | 'approval' | 'oa';
   stepArtifact?: StepArtifact;
   initialGeneratedReport?: GeneratedCompensationReport | null;
+  compensationPromptConfig?: CompensationPromptConfig;
 }) {
   if (currentStepKey === 'integrity') return <IntegrityContent analysis={analysis} stepArtifact={stepArtifact} />;
   if (currentStepKey === 'verify') return <VerifyContent analysis={analysis} stepArtifact={stepArtifact} />;
-  if (currentStepKey === 'document') return <DocumentContent analysis={analysis} initialGeneratedReport={initialGeneratedReport} />;
+  if (currentStepKey === 'document') return <DocumentContent analysis={analysis} initialGeneratedReport={initialGeneratedReport} compensationPromptConfig={compensationPromptConfig} />;
   if (currentStepKey === 'review') return <ReviewContent analysis={analysis} stepArtifact={stepArtifact} />;
   return <OverviewContent analysis={analysis} />;
 }
@@ -1012,6 +1021,7 @@ export default function CaseWorkbench({
   selectedDraftKey,
   stepArtifact,
   initialGeneratedReport,
+  compensationPromptConfig,
 }: Props) {
   const currentStep = getStep(currentStepKey);
   const content = titleMap[currentStep.key];
@@ -1063,6 +1073,7 @@ export default function CaseWorkbench({
             selectedDraftKey={selectedDraftKey}
             stepArtifact={stepArtifact}
             initialGeneratedReport={initialGeneratedReport}
+            compensationPromptConfig={compensationPromptConfig}
           />
         </section>
       </div>

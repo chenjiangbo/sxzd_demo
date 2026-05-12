@@ -1,18 +1,35 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
-import { Download, FileText, Pencil, RefreshCcw, Save, X } from 'lucide-react';
+import { Download, FileText, Pencil, Plus, RefreshCcw, Save, Trash2, X } from 'lucide-react';
 import type { CaseAnalysis } from '@/lib/server/case-analysis';
 import {
   REVEAL_ORDER,
   type ApprovalBorrowRow,
   type ApprovalRiskRow,
+  type CitationSource,
   type GeneratedCompensationReport,
 } from '@/lib/compensation-report-format';
 
 type Props = {
   analysis: CaseAnalysis;
   initialReport: GeneratedCompensationReport | null;
+  promptConfig: CompensationPromptConfig;
+};
+
+type CompensationPromptResource = {
+  id: string;
+  title: string;
+  kind: 'template' | 'case_cache' | 'material' | 'rule' | 'source';
+  path?: string;
+  purpose: string;
+};
+
+type CompensationPromptConfig = {
+  businessRequirements: string[];
+  technicalRequirements: string[];
+  templateConstraints: string[];
+  resources: CompensationPromptResource[];
 };
 
 type StreamEvent =
@@ -105,6 +122,14 @@ function buildKeyFacts(analysis: CaseAnalysis) {
     `建议补偿金额：${analysis.summary.compensationAmount}`,
     `责任比例：${analysis.keyFacts.reGuaranteeRatio}`,
   ];
+}
+
+function formatResourceKind(kind: CompensationPromptResource['kind']) {
+  if (kind === 'template') return '模板';
+  if (kind === 'case_cache') return '案件缓存';
+  if (kind === 'material') return '材料';
+  if (kind === 'rule') return '规则';
+  return '原始资料';
 }
 
 function buildEmptyReportSkeleton(target: GeneratedCompensationReport): GeneratedCompensationReport {
@@ -262,7 +287,7 @@ function ReportTable({
   rows,
 }: {
   headers: string[];
-  rows: string[][];
+  rows: React.ReactNode[][];
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-300">
@@ -278,7 +303,7 @@ function ReportTable({
         </thead>
         <tbody>
           {rows.map((row, rowIndex) => (
-            <tr key={`${rowIndex}-${row.join('-')}`} className="align-top">
+            <tr key={rowIndex} className="align-top">
               {row.map((cell, cellIndex) => (
                 <td key={`${rowIndex}-${cellIndex}`} className="border border-slate-300 px-3 py-3 text-on-surface">
                   {cell}
@@ -290,6 +315,136 @@ function ReportTable({
       </table>
     </div>
   );
+}
+
+function getSourceValue(citation: CitationSource) {
+  const match = citation.excerpt?.match(/值：([^；\n]+)/);
+  return match?.[1]?.trim() ?? '';
+}
+
+function formatChineseDateCandidate(value: string) {
+  const match = value.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (!match) return null;
+  return `${match[1]}年${Number(match[2])}月${Number(match[3])}日`;
+}
+
+function buildCitationCandidates(citation: CitationSource) {
+  const value = getSourceValue(citation);
+  const candidates = new Set<string>();
+  if (value) {
+    candidates.add(value);
+    candidates.add(value.replace(/,/g, ''));
+    const normalizedAmount = value.replace(/,/g, '').replace(/\.00$/, '');
+    if (normalizedAmount !== value) candidates.add(normalizedAmount);
+    const chineseDate = formatChineseDateCandidate(value);
+    if (chineseDate) candidates.add(chineseDate);
+  }
+  return Array.from(candidates)
+    .filter((candidate) => candidate.length > 0)
+    .sort((a, b) => b.length - a.length);
+}
+
+function CitationPopover({ citations, visible }: { citations: CitationSource[]; visible: boolean }) {
+  return (
+    <span
+      data-citation-popover="true"
+      className={`pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-[380px] -translate-x-1/2 rounded-2xl border border-primary/15 bg-[#fffaf0] p-3.5 text-left text-[12px] font-normal leading-relaxed text-slate-700 shadow-[0_18px_45px_rgba(11,28,48,0.18)] ring-1 ring-white/80 ${
+        visible ? 'block' : 'hidden'
+      }`}
+    >
+      <span className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-primary/15 bg-[#fffaf0]" />
+      {citations.map((citation) => (
+        <span key={citation.sourceId} className="relative block space-y-1.5 border-b border-primary/10 py-2.5 first:pt-0 last:border-b-0 last:pb-0">
+          <span className="mb-1 inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-black text-primary">
+            {citation.label}
+          </span>
+          <span className="block text-[12px] font-semibold text-slate-900">来源文件：{citation.fileName}</span>
+          {citation.sheet ? <span className="block text-slate-700">工作表：{citation.sheet}</span> : null}
+          {citation.field ? <span className="block text-slate-700">字段：{citation.field}</span> : null}
+          {citation.excerpt ? <span className="block rounded-lg bg-white/70 px-2 py-1 text-slate-700">取值：{citation.excerpt}</span> : null}
+          {citation.formula ? <span className="block rounded-lg bg-primary/5 px-2 py-1 font-semibold text-primary">计算：{citation.formula}</span> : null}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function CitationValue({
+  children,
+  citations,
+  className = '',
+}: {
+  children: React.ReactNode;
+  citations: CitationSource[];
+  className?: string;
+}) {
+  const [visible, setVisible] = useState(false);
+
+  if (citations.length === 0) {
+    return <>{children}</>;
+  }
+
+  return (
+    <span
+      className={`group relative inline cursor-pointer text-primary underline decoration-primary/50 decoration-dotted underline-offset-4 ${className}`.trim()}
+      data-citation="source"
+      onBlur={() => setVisible(false)}
+      onFocus={() => setVisible(true)}
+      onMouseEnter={() => setVisible(true)}
+      onMouseLeave={() => setVisible(false)}
+      tabIndex={0}
+    >
+      {children}
+      <CitationPopover citations={citations} visible={visible} />
+    </span>
+  );
+}
+
+function CitedText({ text, citations }: { text: string; citations: CitationSource[] }) {
+  if (citations.length === 0) return <>{text}</>;
+
+  const matches = citations
+    .flatMap((citation) =>
+      buildCitationCandidates(citation)
+        .map((candidate) => ({
+          candidate,
+          citation,
+          index: text.indexOf(candidate),
+        }))
+        .filter((match) => match.index >= 0),
+    )
+    .sort((a, b) => a.index - b.index || b.candidate.length - a.candidate.length);
+
+  const selected: Array<{ start: number; end: number; value: string; citation: CitationSource }> = [];
+  for (const match of matches) {
+    const start = match.index;
+    const end = start + match.candidate.length;
+    if (selected.some((item) => start < item.end && end > item.start)) continue;
+    selected.push({ start, end, value: match.candidate, citation: match.citation });
+  }
+
+  if (selected.length === 0) return <>{text}</>;
+
+  const nodes: React.ReactNode[] = [];
+  let cursor = 0;
+  selected
+    .sort((a, b) => a.start - b.start)
+    .forEach((match, index) => {
+      if (match.start > cursor) {
+        nodes.push(text.slice(cursor, match.start));
+      }
+      nodes.push(
+        <CitationValue key={`${match.citation.sourceId}-${index}`} citations={[match.citation]}>
+          {match.value}
+        </CitationValue>,
+      );
+      cursor = match.end;
+    });
+  if (cursor < text.length) {
+    nodes.push(text.slice(cursor));
+  }
+
+  return <>{nodes}</>;
 }
 
 function VerticalSectionLabel({ label, compact = false }: { label: string; compact?: boolean }) {
@@ -324,6 +479,11 @@ function ApprovalPreview({
 }) {
   const visible = new Set<RevealKey>(REVEAL_ORDER.slice(0, revealCount));
   const { header, sections } = report.structured;
+  const getCitations = (pathKey: string) =>
+    (report.citations[pathKey] ?? [])
+      .map((sourceId) => report.sourceCatalog[sourceId])
+      .filter((item): item is CitationSource => Boolean(item));
+
   return (
     <article className="mx-auto min-h-[72vh] max-w-[1180px] rounded-[1.25rem] bg-white px-10 py-12 font-['Songti_SC','STSong','SimSun',serif] text-[17px] leading-[2] text-on-surface shadow-[0_12px_30px_rgba(11,28,48,0.05)] md:px-14 md:py-16">
       {visible.has('header') ? (
@@ -362,8 +522,14 @@ function ApprovalPreview({
               </>
             ) : (
               <>
-                <span>担保机构名称：{header.guarantorName}</span>
-                <span>日期：{header.date}</span>
+                <span>
+                  担保机构名称：
+                  <CitationValue citations={getCitations('header.guarantorName')}>{header.guarantorName}</CitationValue>
+                </span>
+                <span>
+                  日期：
+                  <CitationValue citations={getCitations('header.date')}>{header.date}</CitationValue>
+                </span>
               </>
             )}
           </div>
@@ -383,9 +549,9 @@ function ApprovalPreview({
                   <ParagraphEditor values={sections.debtorProfile} onChange={(index, value) => onParagraphChange?.('debtorProfile', index, value)} />
                 ) : (
                   <div className="space-y-4 text-[16px] leading-[2.2] text-on-surface">
-                    {sections.debtorProfile.map((item) => (
-                      <p key={item} className="indent-8">
-                        {item}
+                    {sections.debtorProfile.map((item, index) => (
+                      <p key={`${index}-${item.slice(0, 16)}`} className="indent-8">
+                        <CitedText text={item} citations={getCitations(`sections.debtorProfile.${index}`)} />
                       </p>
                     ))}
                   </div>
@@ -410,7 +576,13 @@ function ApprovalPreview({
                 ) : (
                   <ReportTable
                     headers={['序号', '项目', '内容']}
-                    rows={sections.borrowRows.map((row) => [row.index, row.item, row.content])}
+                    rows={sections.borrowRows.map((row, index) => [
+                      row.index,
+                      row.item,
+                      <CitationValue key={`borrow-row-${index}`} citations={getCitations(`sections.borrowRows.${index}.content`)}>
+                        {row.content}
+                      </CitationValue>,
+                    ])}
                   />
                 )}
               </div>
@@ -425,8 +597,8 @@ function ApprovalPreview({
                   <ParagraphEditor values={sections.counterGuarantee} onChange={(index, value) => onParagraphChange?.('counterGuarantee', index, value)} />
                 ) : (
                   <div className="space-y-4 text-[16px] leading-[2.2] text-on-surface">
-                    {sections.counterGuarantee.map((item) => (
-                      <p key={item} className="indent-8">
+                    {sections.counterGuarantee.map((item, index) => (
+                      <p key={`${index}-${item.slice(0, 16)}`} className="indent-8">
                         {item}
                       </p>
                     ))}
@@ -444,9 +616,9 @@ function ApprovalPreview({
                   <ParagraphEditor values={sections.filingInfo} onChange={(index, value) => onParagraphChange?.('filingInfo', index, value)} />
                 ) : (
                   <div className="space-y-4 text-[16px] leading-[2.2] text-on-surface">
-                    {sections.filingInfo.map((item) => (
-                      <p key={item} className="indent-8">
-                        {item}
+                    {sections.filingInfo.map((item, index) => (
+                      <p key={`${index}-${item.slice(0, 16)}`} className="indent-8">
+                        <CitedText text={item} citations={getCitations(`sections.filingInfo.${index}`)} />
                       </p>
                     ))}
                   </div>
@@ -492,12 +664,22 @@ function ApprovalPreview({
                 ) : (
                   <ReportTable
                     headers={['代偿时间', '债务人未清偿本金（含银行债权人部分）', '原担保机构代偿金额（本金）', '省级再担保机构责任比例', '省级再担保机构代偿补偿金额（本金）']}
-                    rows={sections.riskRows.map((row) => [
-                      row.compensationDate,
-                      row.uncompensatedPrincipal,
-                      row.indemnityAmount,
-                      row.ratio,
-                      row.compensationAmount,
+                    rows={sections.riskRows.map((row, index) => [
+                      <CitationValue key={`risk-date-${index}`} citations={getCitations(`sections.riskRows.${index}.compensationDate`)}>
+                        {row.compensationDate}
+                      </CitationValue>,
+                      <CitationValue key={`risk-principal-${index}`} citations={getCitations(`sections.riskRows.${index}.uncompensatedPrincipal`)}>
+                        {row.uncompensatedPrincipal}
+                      </CitationValue>,
+                      <CitationValue key={`risk-indemnity-${index}`} citations={getCitations(`sections.riskRows.${index}.indemnityAmount`)}>
+                        {row.indemnityAmount}
+                      </CitationValue>,
+                      <CitationValue key={`risk-ratio-${index}`} citations={getCitations(`sections.riskRows.${index}.ratio`)}>
+                        {row.ratio}
+                      </CitationValue>,
+                      <CitationValue key={`risk-compensation-${index}`} citations={getCitations(`sections.riskRows.${index}.compensationAmount`)}>
+                        {row.compensationAmount}
+                      </CitationValue>,
                     ])}
                   />
                 )}
@@ -547,11 +729,11 @@ function ApprovalPreview({
               <ApprovalSectionTitle>结论</ApprovalSectionTitle>
               {editable ? (
                 <ParagraphEditor values={sections.conclusion} onChange={(index, value) => onParagraphChange?.('conclusion', index, value)} emphasize />
-              ) : (
-                <div className="space-y-4 text-[16px] leading-[2.2]">
-                  {sections.conclusion.map((item) => (
-                    <p key={item} className="indent-8 font-semibold text-primary">
-                      {item}
+                ) : (
+                  <div className="space-y-4 text-[16px] leading-[2.2]">
+                  {sections.conclusion.map((item, index) => (
+                    <p key={`${index}-${item.slice(0, 16)}`} className="indent-8 font-semibold text-primary">
+                      <CitedText text={item} citations={getCitations(`sections.conclusion.${index}`)} />
                     </p>
                   ))}
                 </div>
@@ -565,7 +747,7 @@ function ApprovalPreview({
   );
 }
 
-export default function CompensationApprovalPreviewClient({ analysis, initialReport }: Props) {
+export default function CompensationApprovalPreviewClient({ analysis, initialReport, promptConfig }: Props) {
   const [report, setReport] = useState<GeneratedCompensationReport | null>(initialReport);
   const [draftReport, setDraftReport] = useState<GeneratedCompensationReport | null>(initialReport ? cloneReport(initialReport) : null);
   const [editing, setEditing] = useState(false);
@@ -575,6 +757,10 @@ export default function CompensationApprovalPreviewClient({ analysis, initialRep
   const [progress, setProgress] = useState(initialReport ? 100 : 0);
   const [statusText, setStatusText] = useState(initialReport ? '已加载最新缓存审批表' : '点击按钮开始生成审批表');
   const [revealCount, setRevealCount] = useState(initialReport ? REVEAL_ORDER.length : 0);
+  const [promptDraft, setPromptDraft] = useState<CompensationPromptConfig>(promptConfig);
+  const [savingPrompt, setSavingPrompt] = useState(false);
+  const [promptError, setPromptError] = useState<string | null>(null);
+  const [expandedPromptKeys, setExpandedPromptKeys] = useState<Set<string>>(() => new Set());
 
   const scrollAnchorRef = useRef<HTMLDivElement | null>(null);
   const previewSectionRef = useRef<HTMLElement | null>(null);
@@ -591,6 +777,17 @@ export default function CompensationApprovalPreviewClient({ analysis, initialRep
   );
 
   const keyFacts = useMemo(() => buildKeyFacts(analysis), [analysis]);
+  const promptResources = useMemo(
+    () => ({
+      templates: promptDraft.resources.filter((item) => item.kind === 'template'),
+      references: promptDraft.resources.filter((item) => item.kind !== 'template'),
+    }),
+    [promptDraft.resources],
+  );
+
+  useEffect(() => {
+    setPromptDraft(promptConfig);
+  }, [promptConfig]);
 
   const stopPlayback = useCallback(() => {
     if (playbackTimerRef.current) {
@@ -808,6 +1005,104 @@ export default function CompensationApprovalPreviewClient({ analysis, initialRep
       reader.releaseLock();
     }
   }, [finishPlaybackIfReady, startPlayback, stopPlayback]);
+
+  const togglePromptLine = useCallback((key: string) => {
+    setExpandedPromptKeys((current) => {
+      const next = new Set(current);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }, []);
+
+  const updateBusinessRequirement = useCallback((index: number, value: string) => {
+    setPromptDraft((current) => ({
+      ...current,
+      businessRequirements: current.businessRequirements.map((item, itemIndex) => (itemIndex === index ? value : item)),
+    }));
+  }, []);
+
+  const addBusinessRequirement = useCallback(() => {
+    setPromptDraft((current) => ({
+      ...current,
+      businessRequirements: [...current.businessRequirements, ''],
+    }));
+  }, []);
+
+  const removeBusinessRequirement = useCallback((index: number) => {
+    setPromptDraft((current) => ({
+      ...current,
+      businessRequirements: current.businessRequirements.filter((_, itemIndex) => itemIndex !== index),
+    }));
+  }, []);
+
+  const persistPromptConfig = useCallback(async () => {
+    const payload = {
+      ...promptDraft,
+      businessRequirements: promptDraft.businessRequirements.map((item) => item.trim()).filter(Boolean),
+    };
+    if (!payload.businessRequirements.length) {
+      throw new Error('AI 指令至少保留 1 条');
+    }
+    const response = await fetch('/api/compensation-report/prompt-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => null);
+      throw new Error(result?.error ?? result?.message ?? '保存 AI 指令失败');
+    }
+    const result = (await response.json()) as { config: CompensationPromptConfig };
+    setPromptDraft(result.config);
+    return result.config;
+  }, [promptDraft]);
+
+  const savePromptConfig = useCallback(async () => {
+    setSavingPrompt(true);
+    setPromptError(null);
+    try {
+      await persistPromptConfig();
+    } catch (saveError) {
+      setPromptError((saveError as Error).message);
+    } finally {
+      setSavingPrompt(false);
+    }
+  }, [persistPromptConfig]);
+
+  const regenerateWithCurrentPrompt = useCallback(async () => {
+    setSavingPrompt(true);
+    setPromptError(null);
+    try {
+      await persistPromptConfig();
+    } catch (saveError) {
+      setPromptError((saveError as Error).message);
+      setSavingPrompt(false);
+      return;
+    }
+    setSavingPrompt(false);
+    await generate(true);
+  }, [generate, persistPromptConfig]);
+
+  const resetPromptConfig = useCallback(async () => {
+    setSavingPrompt(true);
+    setPromptError(null);
+    try {
+      const response = await fetch('/api/compensation-report/prompt-config', { method: 'DELETE' });
+      if (!response.ok) {
+        throw new Error('恢复默认指令失败');
+      }
+      const result = (await response.json()) as { config: CompensationPromptConfig };
+      setPromptDraft(result.config);
+    } catch (resetError) {
+      setPromptError((resetError as Error).message);
+    } finally {
+      setSavingPrompt(false);
+    }
+  }, []);
 
   const handleHeaderChange = useCallback((field: keyof GeneratedCompensationReport['structured']['header'], value: string) => {
     setDraftReport((current) => {
@@ -1046,55 +1341,195 @@ export default function CompensationApprovalPreviewClient({ analysis, initialRep
         </div>
       </section>
 
-      <aside className="space-y-6">
-        <div className="rounded-3xl bg-white p-6 shadow-sm">
+      <aside className="space-y-4">
+        <div className="rounded-3xl bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-container-low text-secondary">
+            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-surface-container-low text-secondary">
               <FileText className="h-4 w-4" />
             </span>
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">写入审批表的关键依据</p>
-              <p className="text-sm font-black text-primary">本次生成采用的核心口径</p>
-            </div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">AI 指令</p>
           </div>
-          <div className="space-y-3">
-            {keyFacts.map((item) => (
-              <div key={item} className="rounded-2xl bg-surface-container-low px-4 py-4 text-sm font-semibold leading-6 text-on-surface">
-                {item}
+          <div className="space-y-2">
+            {promptDraft.businessRequirements.map((item, index) => (
+              <div
+                key={`business-${index}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => togglePromptLine(`business-${index}`)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') togglePromptLine(`business-${index}`);
+                }}
+                className="flex items-start gap-2 rounded-2xl border border-outline-variant/15 bg-surface-container-low px-3 py-2"
+              >
+                <span className="mt-0.5 shrink-0 rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-secondary">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                {expandedPromptKeys.has(`business-${index}`) ? (
+                  <textarea
+                    rows={3}
+                    value={item}
+                    onChange={(event) => updateBusinessRequirement(index, event.target.value)}
+                    onClick={(event) => event.stopPropagation()}
+                    onKeyDown={(event) => event.stopPropagation()}
+                    className="min-h-0 flex-1 resize-y rounded-xl border border-outline-variant/15 bg-white px-3 py-2 text-sm font-semibold leading-6 text-on-surface outline-none"
+                  />
+                ) : (
+                  <p className="min-w-0 flex-1 truncate text-sm font-semibold leading-6 text-on-surface">{item}</p>
+                )}
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    removeBusinessRequirement(index);
+                  }}
+                  className="shrink-0 rounded-full p-1 text-on-surface-variant transition hover:bg-white hover:text-error"
+                  aria-label="删除 AI 指令"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+
+            {promptDraft.templateConstraints.map((item, index) => (
+              <div
+                key={`template-${index}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => togglePromptLine(`format-${index}`)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') togglePromptLine(`format-${index}`);
+                }}
+                className="flex items-start gap-2 rounded-2xl border border-secondary/15 bg-secondary-container/30 px-3 py-2 text-sm font-semibold leading-6 text-on-surface"
+              >
+                <span className="mt-0.5 shrink-0 rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-black text-secondary">
+                  格{String(index + 1).padStart(2, '0')}
+                </span>
+                <p className={expandedPromptKeys.has(`format-${index}`) ? '' : 'truncate'}>{item}</p>
+              </div>
+            ))}
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={addBusinessRequirement}
+                className="flex items-center gap-2 rounded-2xl border border-outline-variant/20 bg-white px-3 py-2 text-xs font-black text-primary"
+              >
+                <Plus className="h-4 w-4" />
+                新增
+              </button>
+              <button
+                type="button"
+                onClick={() => void savePromptConfig()}
+                disabled={savingPrompt}
+                className="flex items-center gap-2 rounded-2xl bg-primary px-3 py-2 text-xs font-black text-white disabled:opacity-60"
+              >
+                <Save className="h-4 w-4" />
+                保存
+              </button>
+              <button
+                type="button"
+                onClick={() => void regenerateWithCurrentPrompt()}
+                disabled={savingPrompt || loading}
+                className="flex items-center gap-2 rounded-2xl border border-outline-variant/20 bg-white px-3 py-2 text-xs font-black text-primary disabled:opacity-60"
+              >
+                <RefreshCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                重新生成
+              </button>
+              <button
+                type="button"
+                onClick={() => void resetPromptConfig()}
+                disabled={savingPrompt}
+                className="rounded-2xl border border-outline-variant/20 bg-white px-3 py-2 text-xs font-black text-primary disabled:opacity-60"
+              >
+                恢复默认
+              </button>
+            </div>
+
+            {promptError ? (
+              <div className="rounded-2xl border border-error/20 bg-error-container/30 px-4 py-3 text-sm leading-6 text-on-error-container">
+                {promptError}
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="rounded-3xl bg-white p-5 shadow-sm">
+          <div className="mb-3 flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-surface-container-low text-secondary">
+              <FileText className="h-4 w-4" />
+            </span>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">参考模板</p>
+          </div>
+          <div className="space-y-2">
+            {promptResources.templates.map((item) => (
+              <div key={item.id} className="rounded-2xl bg-surface-container-low px-3 py-2">
+                <p className="text-sm font-black text-primary">{item.title}</p>
+                <p className="mt-1 text-xs leading-5 text-on-surface-variant">{item.purpose}</p>
+                {item.path ? <p className="mt-1 break-all text-[11px] leading-5 text-on-surface-variant">{item.path}</p> : null}
               </div>
             ))}
           </div>
         </div>
 
-        <div className="rounded-3xl bg-white p-6 shadow-sm">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">待人工复核点</p>
-          <div className="mt-4 space-y-3">
-            {manualReviewPoints.length > 0 ? (
-              manualReviewPoints.map((item) => (
-                <div key={item} className="rounded-2xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
-                  {item}
-                </div>
-              ))
-            ) : (
-              <div className="rounded-2xl bg-surface-container-low px-4 py-3 text-sm font-semibold text-on-surface">
-                当前规则结果未返回额外待确认项。
-              </div>
-            )}
+        <div className="rounded-3xl bg-white p-5 shadow-sm">
+          <div className="mb-3 flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-surface-container-low text-secondary">
+              <FileText className="h-4 w-4" />
+            </span>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">参考资料</p>
           </div>
-        </div>
-
-        <div className="rounded-3xl bg-white p-6 shadow-sm">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface-variant">关键引用材料</p>
-          <div className="mt-4 space-y-3">
-            {analysis.materials
-              .filter((item) => item.matchedFiles.length > 0)
-              .slice(0, 6)
-              .map((item) => (
-                <div key={item.name} className="rounded-2xl bg-surface-container-low px-4 py-3 text-sm font-semibold text-on-surface">
-                  <p className="font-black text-primary">{item.name}</p>
-                  <p className="mt-1 text-xs font-medium text-on-surface-variant">{item.matchedFiles[0]}</p>
+          <div className="space-y-2">
+            {promptResources.references.map((item) => (
+              <div key={item.id} className="rounded-2xl bg-surface-container-low px-3 py-2">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-black text-primary">{item.title}</p>
+                  <span className="shrink-0 rounded-full bg-white px-2 py-1 text-[10px] font-black tracking-[0.12em] text-secondary">{formatResourceKind(item.kind)}</span>
                 </div>
-              ))}
+                <p className="mt-1 text-xs leading-5 text-on-surface-variant">{item.purpose}</p>
+                {item.path ? <p className="mt-1 break-all text-[11px] leading-5 text-on-surface-variant">{item.path}</p> : null}
+              </div>
+            ))}
+
+            <div className="rounded-2xl bg-surface-container-low px-3 py-2">
+              <p className="text-sm font-black text-primary">写入审批表的核心口径</p>
+              <div className="mt-2 space-y-1.5">
+                {keyFacts.map((item) => (
+                  <p key={item} className="text-xs font-semibold leading-5 text-on-surface-variant">
+                    {item}
+                  </p>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-surface-container-low px-3 py-2">
+              <p className="text-sm font-black text-primary">待人工复核点</p>
+              <div className="mt-2 space-y-1.5">
+                {manualReviewPoints.length > 0 ? (
+                  manualReviewPoints.map((item) => (
+                    <p key={item} className="text-xs font-semibold leading-5 text-amber-700">
+                      {item}
+                    </p>
+                  ))
+                ) : (
+                  <p className="text-xs font-semibold leading-5 text-on-surface-variant">当前规则结果未返回额外待确认项。</p>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-surface-container-low px-3 py-2">
+              <p className="text-sm font-black text-primary">关键引用材料</p>
+              <div className="mt-2 space-y-2">
+                {analysis.materials
+                  .filter((item) => item.matchedFiles.length > 0)
+                  .slice(0, 5)
+                  .map((item) => (
+                    <div key={item.name}>
+                      <p className="text-xs font-black text-primary">{item.name}</p>
+                      <p className="mt-0.5 text-[11px] font-medium leading-5 text-on-surface-variant">{item.matchedFiles[0]}</p>
+                    </div>
+                  ))}
+              </div>
+            </div>
           </div>
         </div>
       </aside>

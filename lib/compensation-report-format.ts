@@ -1,3 +1,15 @@
+export type CitationSource = {
+  sourceId: string;
+  label: string;
+  fileName: string;
+  relativePath: string;
+  kind: 'xlsx' | 'pdf' | 'derived';
+  sheet?: string;
+  field?: string;
+  excerpt?: string;
+  formula?: string;
+};
+
 export type ApprovalBorrowRow = {
   index: string;
   item: string;
@@ -27,6 +39,8 @@ export const REVEAL_ORDER = [
 export type GeneratedCompensationReport = {
   rawText: string;
   generatedAt: string;
+  sourceCatalog: Record<string, CitationSource>;
+  citations: Record<string, string[]>;
   structured: {
     header: {
       guarantorName: string;

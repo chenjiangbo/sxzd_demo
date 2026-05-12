@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { blackwhiteJson } from '@/lib/server/blackwhite';
 import { getDemoCacheRoot } from '@/lib/server/runtime-root';
 import { getCaseAnalysis } from '@/lib/server/case-analysis';
-import type { GeneratedCompensationReport } from '@/lib/compensation-report-format';
+import type { CitationSource, GeneratedCompensationReport } from '@/lib/compensation-report-format';
+import { getCompensationPromptConfig, type CompensationPromptConfig } from '@/lib/server/compensation-report-prompt-config';
 
 const GENERATED_REPORT_CACHE = path.join(getDemoCacheRoot(), 'compensation-report', 'approval-report.json');
 const EDITED_REPORT_CACHE = path.join(getDemoCacheRoot(), 'compensation-report', 'approval-report-edited.json');
@@ -26,6 +27,21 @@ const approvalRiskRowSchema = z.object({
 const generatedCompensationReportSchema = z.object({
   rawText: z.string().min(1),
   generatedAt: z.string().min(1),
+  sourceCatalog: z.record(
+    z.string(),
+    z.object({
+      sourceId: z.string(),
+      label: z.string(),
+      fileName: z.string(),
+      relativePath: z.string(),
+      kind: z.enum(['xlsx', 'pdf', 'derived']),
+      sheet: z.string().optional(),
+      field: z.string().optional(),
+      excerpt: z.string().optional(),
+      formula: z.string().optional(),
+    }),
+  ).default({}),
+  citations: z.record(z.string(), z.array(z.string())).default({}),
   structured: z.object({
     header: z.object({
       guarantorName: z.string(),
@@ -106,6 +122,180 @@ function buildPromptPayload(analysis: Awaited<ReturnType<typeof getCaseAnalysis>
   };
 }
 
+function buildGenerationMessages(payload: ReturnType<typeof buildPromptPayload>, promptConfig: CompensationPromptConfig) {
+  return [
+    {
+      role: 'system' as const,
+      content: [
+        '你是一名担保行业代偿补偿审批表写作助手。',
+        '你的任务不是生成长篇散文，而是生成一份结构化审批表内容，用于渲染成正式审批表页面。',
+        ...promptConfig.businessRequirements,
+        ...promptConfig.templateConstraints,
+        ...promptConfig.technicalRequirements,
+      ].join('\n'),
+    },
+    {
+      role: 'user' as const,
+      content: JSON.stringify(
+        {
+          template_goal: '生成《宝鸡三家村餐饮管理有限公司项目再担保代偿补偿审批表》的结构化内容，页面最终会渲染成正式审批表版式。',
+          output_schema: {
+            header: {
+              guarantorName: 'string',
+              date: 'string',
+              title: 'string',
+            },
+            sections: {
+              debtorProfile: ['string'],
+              borrowRows: [{ index: 'string', item: 'string', content: 'string' }],
+              counterGuarantee: ['string'],
+              filingInfo: ['string'],
+              compensationReason: ['string'],
+              riskRows: [
+                {
+                  compensationDate: 'string',
+                  uncompensatedPrincipal: 'string',
+                  indemnityAmount: 'string',
+                  ratio: 'string',
+                  compensationAmount: 'string',
+                },
+              ],
+              riskExplanation: ['string'],
+              recoveryPlan: ['string'],
+              conclusion: ['string'],
+            },
+          },
+          business_requirements: promptConfig.businessRequirements.map((item, index) => `${index + 1}. ${item}`),
+          template_constraints: promptConfig.templateConstraints.map((item, index) => `${index + 1}. ${item}`),
+          output_requirements: promptConfig.technicalRequirements.map((item, index) => `${index + 1}. ${item}`),
+          reference_resources: promptConfig.resources,
+          data: payload,
+        },
+        null,
+        2,
+      ),
+    },
+  ];
+}
+
+function normalizeBorrowItemLabel(item: string) {
+  if (item.includes('债权人')) return 'bank';
+  if (item.includes('主债权金额')) return 'amount';
+  if (item.includes('借款合同')) return 'contractNo';
+  if (item.includes('保证合同')) return 'guaranteeNo';
+  if (item.includes('委保合同') || item.includes('委托保证合同')) return 'entrustNo';
+  if (item.includes('主债权起始日期')) return 'debtStartDate';
+  if (item.includes('主债权到期日期')) return 'debtMaturityDate';
+  return null;
+}
+
+function formatChineseDate(value: string | null | undefined) {
+  if (!value) return null;
+  const match = value.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (!match) return null;
+  return `${match[1]}年${Number(match[2])}月${Number(match[3])}日`;
+}
+
+function addSourceIfMatched(sourceIds: string[], text: string, sourceId: string, values: Array<string | null | undefined>) {
+  if (values.some((value) => value && text.includes(value))) {
+    sourceIds.push(sourceId);
+  }
+}
+
+function buildReportCitations(analysis: Awaited<ReturnType<typeof getCaseAnalysis>>, report: GeneratedCompensationReport) {
+  const sourceCatalog: Record<string, CitationSource> = {};
+  const citations: Record<string, string[]> = {};
+
+  for (const sources of Object.values(analysis.factSources)) {
+    for (const source of sources) {
+      sourceCatalog[source.sourceId] = {
+        sourceId: source.sourceId,
+        label: source.label,
+        fileName: source.fileName,
+        relativePath: source.relativePath,
+        kind: source.kind,
+        sheet: source.sheet,
+        field: source.field,
+        excerpt: source.excerpt,
+        formula: source.formula,
+      };
+    }
+  }
+
+  citations['header.guarantorName'] = ['guarantor'];
+  citations['header.date'] = ['reportDate'];
+
+  report.structured.sections.borrowRows.forEach((row, index) => {
+    const sourceId = normalizeBorrowItemLabel(row.item);
+    if (sourceId) {
+      citations[`sections.borrowRows.${index}.content`] = [sourceId];
+    }
+  });
+
+  report.structured.sections.riskRows.forEach((_, index) => {
+    citations[`sections.riskRows.${index}.compensationDate`] = ['compensationDate'];
+    citations[`sections.riskRows.${index}.uncompensatedPrincipal`] = ['uncompensatedPrincipal'];
+    citations[`sections.riskRows.${index}.indemnityAmount`] = ['indemnityAmount'];
+    citations[`sections.riskRows.${index}.ratio`] = ['reGuaranteeRatio'];
+    citations[`sections.riskRows.${index}.compensationAmount`] = ['compensationAmount'];
+  });
+
+  report.structured.sections.debtorProfile.forEach((text, index) => {
+    const sourceIds: string[] = [];
+    addSourceIfMatched(sourceIds, text, 'company', [analysis.summary.company]);
+    addSourceIfMatched(sourceIds, text, 'unifiedCode', [analysis.keyFacts.unifiedCode]);
+    addSourceIfMatched(sourceIds, text, 'bank', [analysis.summary.bank]);
+    addSourceIfMatched(sourceIds, text, 'amount', [analysis.summary.amount, analysis.summary.amount.replace(/\s+/g, '')]);
+    addSourceIfMatched(sourceIds, text, 'guarantor', [analysis.summary.guarantor]);
+    addSourceIfMatched(sourceIds, text, 'debtStartDate', [analysis.keyFacts.debtStartDate, formatChineseDate(analysis.keyFacts.debtStartDate)]);
+    if (sourceIds.length > 0) {
+      citations[`sections.debtorProfile.${index}`] = Array.from(new Set(sourceIds));
+    }
+  });
+
+  report.structured.sections.filingInfo.forEach((text, index) => {
+    const sourceIds = [];
+    if (text.includes(analysis.keyFacts.businessNo)) sourceIds.push('businessNo');
+    if (analysis.keyFacts.initialBusinessNo && text.includes(analysis.keyFacts.initialBusinessNo)) sourceIds.push('initialBusinessNo');
+    if (text.includes(analysis.keyFacts.contractNo)) sourceIds.push('contractNo');
+    if (analysis.keyFacts.initialContractNo && text.includes(analysis.keyFacts.initialContractNo)) sourceIds.push('initialContractNo');
+    if (sourceIds.length > 0) {
+      citations[`sections.filingInfo.${index}`] = Array.from(new Set(sourceIds));
+    }
+  });
+
+  report.structured.sections.conclusion.forEach((text, index) => {
+    const sourceIds = [];
+    if (text.includes(analysis.keyFacts.compensationAmount)) sourceIds.push('compensationAmount');
+    if (text.includes(analysis.keyFacts.uncompensatedPrincipal)) sourceIds.push('uncompensatedPrincipal');
+    if (text.includes(analysis.keyFacts.reGuaranteeRatio)) sourceIds.push('reGuaranteeRatio');
+    if (sourceIds.length > 0) {
+      citations[`sections.conclusion.${index}`] = Array.from(new Set(sourceIds));
+    }
+  });
+
+  return {
+    sourceCatalog,
+    citations,
+  };
+}
+
+async function enrichReportWithCitations(report: GeneratedCompensationReport) {
+  const analysis = await getCaseAnalysis('baoji-sanjiacun');
+  const citationBundle = buildReportCitations(analysis, report);
+  return {
+    ...report,
+    sourceCatalog: {
+      ...report.sourceCatalog,
+      ...citationBundle.sourceCatalog,
+    },
+    citations: {
+      ...report.citations,
+      ...citationBundle.citations,
+    },
+  };
+}
+
 export async function generateCompensationApprovalReport(force = false) {
   if (!force) {
     const cached = await getGeneratedCompensationReport();
@@ -114,88 +304,24 @@ export async function generateCompensationApprovalReport(force = false) {
 
   const analysis = await getCaseAnalysis('baoji-sanjiacun');
   const payload = buildPromptPayload(analysis);
+  const promptConfig = await getCompensationPromptConfig();
 
   const structured = await blackwhiteJson(
     generatedCompensationReportSchema.shape.structured,
-    [
-      {
-        role: 'system',
-        content: [
-          '你是一名担保行业代偿补偿审批表写作助手。',
-          '你的任务不是生成长篇散文，而是生成一份结构化审批表内容，用于渲染成正式审批表页面。',
-          '必须严格基于输入数据，不得编造事实、金额、合同号、业务编号和结论。',
-          '对于需要人工确认的内容，必须在具体文本里写出【人工复核】。',
-          '只返回 JSON，不要输出 markdown，不要输出解释。',
-        ].join('\n'),
-      },
-      {
-        role: 'user',
-        content: JSON.stringify(
-          {
-            template_goal: '生成《宝鸡三家村餐饮管理有限公司项目再担保代偿补偿审批表》的结构化内容，页面最终会渲染成正式审批表版式。',
-            output_schema: {
-              header: {
-                guarantorName: 'string',
-                date: 'string',
-                title: 'string',
-              },
-              sections: {
-                debtorProfile: ['string'],
-                borrowRows: [{ index: 'string', item: 'string', content: 'string' }],
-                counterGuarantee: ['string'],
-                filingInfo: ['string'],
-                compensationReason: ['string'],
-                riskRows: [
-                  {
-                    compensationDate: 'string',
-                    uncompensatedPrincipal: 'string',
-                    indemnityAmount: 'string',
-                    ratio: 'string',
-                    compensationAmount: 'string',
-                  },
-                ],
-                riskExplanation: ['string'],
-                recoveryPlan: ['string'],
-                conclusion: ['string'],
-              },
-            },
-            requirements: [
-              '标题固定为“宝鸡三家村餐饮管理有限公司项目再担保代偿补偿审批表”。',
-              'header.guarantorName 必须写担保机构名称，header.date 必须写审批表日期。',
-              'debtProfile、counterGuarantee、filingInfo、compensationReason、riskExplanation、recoveryPlan、conclusion 都写成适合审批表直接展示的完整句子数组。',
-              'borrowRows 必须严格按“序号 / 项目 / 内容”结构输出，不要合并成段落。',
-              'borrowRows 的项目字段优先对齐审批表常见行：债权人、主债权金额、担保费率、借款合同号、保证合同号、委保合同号、主债权起始日期、主债权到期日期。',
-              'riskRows 必须严格输出表格行，不要合并成段落；列含义固定为：代偿时间、债务人未清偿本金、原担保机构代偿金额、省级再担责任比例、省级再担代偿补偿金额。',
-              '三、反担保措施 需要写成完整说明，不要只写一个比例。',
-              '四、备案情况 需要同时体现首次备案、展期续备案以及当前备案确认情况，不要只写日期。',
-              '五、代偿原因 需要写成审批表式说明，不要写成聊天总结。',
-              '七、追偿方案 需要写明确的追偿方式和计划，不要只写“建议进入OA流程”。',
-              '结论 只写审批结论，不要重复整页所有风险点。',
-              '整体版式请尽量贴近正式审批表，而不是普通报告：正文应以短段落和表格行为主，不要输出散文化长篇论述。',
-              '一、债务人基本情况 优先写成 1 段主体画像说明，必要时补 1 段经营情况说明。',
-              '四、备案情况 需要明确“首次备案”“展期续备案”“当前备案确认”的时间与关系。',
-              '五、代偿原因 需要说明企业经营情况导致代偿，以及代偿证明/付款凭证对应的代偿金额。',
-              '六、分险比例与分险金额 在表格之后补 1 段责任比例和补偿金额计算说明。',
-              '结论请尽量贴近正式审批口径，例如“经审查，该项目符合我司代偿补偿条件，建议对该项目进行代偿补偿，我司需补偿XXX元。”',
-              '金额、比例、合同号、业务编号必须与输入数据一致。',
-              '结论必须与当前规则结果一致。',
-              '不要输出 markdown 符号，不要输出 **、#、-、```。',
-            ],
-            data: payload,
-          },
-          null,
-          2,
-        ),
-      },
-    ],
+    buildGenerationMessages(payload, promptConfig),
     { temperature: 0.15 },
   );
 
   const report: GeneratedCompensationReport = {
     rawText: renderRawText(structured),
     generatedAt: new Date().toISOString(),
+    sourceCatalog: {},
+    citations: {},
     structured,
   };
+  const citationBundle = buildReportCitations(analysis, report);
+  report.sourceCatalog = citationBundle.sourceCatalog;
+  report.citations = citationBundle.citations;
 
   await ensureDir(path.dirname(GENERATED_REPORT_CACHE));
   await fs.writeFile(GENERATED_REPORT_CACHE, JSON.stringify(report, null, 2), 'utf8');
@@ -206,7 +332,15 @@ export async function generateCompensationApprovalReport(force = false) {
 export async function getGeneratedCompensationReport() {
   try {
     const raw = await fs.readFile(GENERATED_REPORT_CACHE, 'utf8');
-    return generatedCompensationReportSchema.parse(JSON.parse(raw));
+    const parsed = generatedCompensationReportSchema.parse(JSON.parse(raw));
+    const enriched = await enrichReportWithCitations(parsed);
+    if (
+      Object.keys(parsed.sourceCatalog).length !== Object.keys(enriched.sourceCatalog).length ||
+      Object.keys(parsed.citations).length !== Object.keys(enriched.citations).length
+    ) {
+      await fs.writeFile(GENERATED_REPORT_CACHE, JSON.stringify(enriched, null, 2), 'utf8');
+    }
+    return enriched;
   } catch {
     return null;
   }
@@ -215,7 +349,15 @@ export async function getGeneratedCompensationReport() {
 export async function getEditedCompensationReport() {
   try {
     const raw = await fs.readFile(EDITED_REPORT_CACHE, 'utf8');
-    return generatedCompensationReportSchema.parse(JSON.parse(raw));
+    const parsed = generatedCompensationReportSchema.parse(JSON.parse(raw));
+    const enriched = await enrichReportWithCitations(parsed);
+    if (
+      Object.keys(parsed.sourceCatalog).length !== Object.keys(enriched.sourceCatalog).length ||
+      Object.keys(parsed.citations).length !== Object.keys(enriched.citations).length
+    ) {
+      await fs.writeFile(EDITED_REPORT_CACHE, JSON.stringify(enriched, null, 2), 'utf8');
+    }
+    return enriched;
   } catch {
     return null;
   }

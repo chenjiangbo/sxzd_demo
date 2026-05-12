@@ -25,11 +25,13 @@ export async function GET(request: NextRequest) {
     
     // 将 HTML 转换为 Word 文档（MHTML 格式）
     // Word 可以直接打开 HTML 格式的文档并保存为.doc
+    const fallbackFileName = `${institution.id}-evaluation-report.doc`;
+
     return new NextResponse(htmlContent, {
       status: 200,
       headers: {
-        'Content-Type': 'application/msword',
-        'Content-Disposition': `attachment; filename="${encodeURIComponent(institution.name)}评价报告.doc"`,
+        'Content-Type': 'application/msword; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${fallbackFileName}"; filename*=UTF-8''${encodeURIComponent(`${institution.name}评价报告.doc`)}`,
       },
     });
   } catch (error) {

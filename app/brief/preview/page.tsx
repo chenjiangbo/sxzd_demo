@@ -1,6 +1,7 @@
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import BriefPreviewClient from '@/components/BriefPreviewClient';
+import { getBriefPromptConfig } from '@/lib/server/brief-prompt-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,9 @@ const references = [
   '输入 3：2025 年全省担保业务运行情况通报样稿',
 ];
 
-export default function BriefPreviewPage() {
+export default async function BriefPreviewPage() {
+  const promptConfig = await getBriefPromptConfig();
+
   return (
     <>
       <Sidebar />
@@ -39,7 +42,7 @@ export default function BriefPreviewPage() {
           </div>
         </header>
 
-        <BriefPreviewClient adoptedCriteria={adoptedCriteria} references={references} />
+        <BriefPreviewClient adoptedCriteria={adoptedCriteria} references={references} promptConfig={promptConfig} />
       </main>
     </>
   );

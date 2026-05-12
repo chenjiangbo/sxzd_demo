@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { blackwhiteJson } from '@/lib/server/blackwhite';
 import { getDemoCacheRoot } from '@/lib/server/runtime-root';
 import type { EvaluationReportDocument, EvaluationInstitutionSnapshot, EvaluationReportNarrative } from '@/lib/server/evaluation-report-html';
+import { getEvaluationPromptConfig } from '@/lib/server/evaluation-report-prompt-config';
 
 const EVALUATION_REPORT_GENERATION_VERSION = '2026-04-02-evaluation-report-template-v2';
 
@@ -19,21 +20,38 @@ function getCachePath(institutionId: string) {
   return path.join(getDemoCacheRoot(), 'evaluation-report', 'generated', `${institutionId}-${EVALUATION_REPORT_GENERATION_VERSION}.json`);
 }
 
+export async function hasGeneratedEvaluationReport(institutionId: string) {
+  try {
+    await fs.access(getCachePath(institutionId));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function ensureParent(filePath: string) {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
 }
 
-function buildPrompt(institution: EvaluationInstitutionSnapshot) {
+function buildPrompt(institution: EvaluationInstitutionSnapshot, promptConfig: Awaited<ReturnType<typeof getEvaluationPromptConfig>>) {
+  const resourceLines = promptConfig.resources.map((item, index) => {
+    const pathLine = item.path ? `；路径：${item.path}` : '';
+    return `${index + 1}. ${item.title}（类型：${item.kind}；用途：${item.purpose}${pathLine}）`;
+  });
+
   return [
     '你是政府性融资担保机构年度评价报告撰写专家。',
     '任务：根据给定机构指标，为“陕西省政府性融资担保机构综合评价报告”生成结构化正文内容。',
-    '要求：',
-    '1. 只输出 JSON，不要输出 markdown、HTML、标题页。',
-    '2. 不得编造未提供的机构基础信息；对于无法从输入直接确认的数据，不要主动补写。',
-    '3. 语言风格必须正式、审慎、接近公文。',
-    '4. 正文是给固定 Word 模板填充的，所以只生成段落内容，不生成版式说明。',
-    '5. “年度政策目标完成情况”要严格围绕提供的 8 项指标完成情况分析，不要再额外造表。',
-    '6. “授信使用及业务开展”允许引用授信、代偿返还等已有信息；如果业务分类明细缺失，不要虚构明细数据。',
+    `今天是：${new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+    '',
+    '业务要求：',
+    ...promptConfig.businessRequirements.map((item, index) => `${index + 1}. ${item}`),
+    '',
+    '格式要求：',
+    ...promptConfig.templateConstraints.map((item, index) => `${index + 1}. ${item}`),
+    '',
+    '参考模板与资料：',
+    ...resourceLines,
     '',
     '输入机构数据：',
     `机构名称：${institution.name}`,
@@ -84,8 +102,8 @@ export async function generateEvaluationReportDocument(institution: EvaluationIn
   }
 
   console.log(`[评价报告] 开始生成: ${institution.shortName}`);
-  
-  const promptContent = buildPrompt(institution);
+  const promptConfig = await getEvaluationPromptConfig();
+  const promptContent = buildPrompt(institution, promptConfig);
   console.log(`[评价报告] Prompt长度: ${promptContent.length} 字符`);
   
   try {
@@ -94,7 +112,11 @@ export async function generateEvaluationReportDocument(institution: EvaluationIn
       [
         {
           role: 'system',
-          content: '你是政府性融资担保机构年度评价报告撰写专家。回答必须严格基于提供数据，不得虚构缺失事实，只返回 JSON。',
+          content: [
+            '你是政府性融资担保机构年度评价报告撰写专家。',
+            '回答必须严格基于提供数据，不得虚构缺失事实。',
+            ...promptConfig.technicalRequirements.map((item, index) => `技术要求 ${index + 1}：${item}`),
+          ].join('\n'),
         },
         {
           role: 'user',

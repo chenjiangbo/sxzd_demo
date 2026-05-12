@@ -2,10 +2,138 @@ import ejs from 'ejs';
 import fs from 'node:fs';
 import path from 'node:path';
 
+type CitationSource = {
+  label: string;
+  fileName: string;
+  field: string;
+  method: string;
+};
+
+const BRIEF_SOURCE_LABEL = '担保业务统计表';
+const BRIEF_TABLE_CAPTIONS = [
+  '合作担保机构全口径新增担保业务规模统计表',
+  '担保机构再担保业务统计表',
+  '合作银行业务统计表',
+  '再担保业务综合融资成本统计表',
+  '银行参与分险再担保业务统计表',
+  '合作银行分险业务统计表',
+  '地市银行参与分险业务规模统计表',
+  '国担基金"总对总"批量担保业务统计表',
+  '地方版"总对总"批量担保业务统计表',
+  '合作银行"总对总"批量担保业务统计表',
+  '创业担保贷款再担保业务统计表',
+  '"科技创新专项担保计划"业务统计表',
+];
+
+const briefCitationCss = `
+        .brief-citation {
+            position: relative;
+            display: inline;
+            color: #002b5b;
+            text-decoration-line: underline;
+            text-decoration-style: dotted;
+            text-decoration-color: rgba(0, 43, 91, 0.45);
+            text-underline-offset: 3px;
+            cursor: help;
+        }
+
+        .brief-citation-popover {
+            display: none;
+            pointer-events: none;
+            position: absolute;
+            left: 50%;
+            bottom: 100%;
+            z-index: 100;
+            width: 360px;
+            transform: translateX(-50%);
+            margin-bottom: 8px;
+            padding: 12px 14px;
+            border: 1px solid rgba(0, 43, 91, 0.14);
+            border-radius: 14px;
+            background: #fffaf0;
+            color: #334155;
+            box-shadow: 0 16px 40px rgba(11, 28, 48, 0.18);
+            font-size: 12px;
+            line-height: 1.7;
+            text-align: left;
+            text-indent: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-weight: 400;
+            white-space: normal;
+        }
+
+        .brief-citation:hover .brief-citation-popover,
+        .brief-citation:focus .brief-citation-popover {
+            display: block;
+        }
+
+        .brief-citation-popover::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 100%;
+            width: 12px;
+            height: 12px;
+            transform: translate(-50%, -50%) rotate(45deg);
+            background: #fffaf0;
+            border-right: 1px solid rgba(0, 43, 91, 0.14);
+            border-bottom: 1px solid rgba(0, 43, 91, 0.14);
+        }
+
+        .brief-citation-title {
+            display: inline-block;
+            margin-bottom: 6px;
+            padding: 2px 10px;
+            border-radius: 999px;
+            background: rgba(0, 43, 91, 0.1);
+            color: #002b5b;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .brief-citation-line {
+            display: block;
+            margin-top: 3px;
+        }
+
+        .brief-citation-box {
+            display: block;
+            margin-top: 6px;
+            padding: 6px 8px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.72);
+        }
+`;
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function createCitationMarkup(value: string, source: CitationSource): string {
+  return `
+<span class="brief-citation" tabindex="0" data-brief-citation="source">
+    ${escapeHtml(value)}
+    <span class="brief-citation-popover" data-brief-citation-popover="true">
+        <span class="brief-citation-title">数据来源</span>
+        <span class="brief-citation-box"><strong>来源文件：</strong>${escapeHtml(source.fileName)}</span>
+    </span>
+</span>`.trim();
+}
+
+function injectCitationStyles(html: string): string {
+  if (html.includes('.brief-citation-popover')) return html;
+  return html.replace('</style>', `${briefCitationCss}\n    </style>`);
+}
+
 /**
  * 将 CSV 表格数据转换为 HTML 表格
  */
-function createHTMLTable(headers: string[], rows: string[][]): string {
+function createHTMLTable(headers: string[], rows: string[][], tableName: string): string {
   const headerRow = `<tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr>`;
   const dataRows = rows
     .map((row, rowIndex) => {
@@ -15,7 +143,14 @@ function createHTMLTable(headers: string[], rows: string[][]): string {
       }
       return `<tr>${row.map((cell, cellIndex) => {
         const align = cellIndex === 0 ? 'left' : 'right';
-        return `<td style="text-align: ${align}">${escapeHtml(cell)}</td>`;
+        const header = headers[cellIndex] || `第${cellIndex + 1}列`;
+        const value = createCitationMarkup(cell, {
+          label: `${tableName} / ${header}`,
+          fileName: BRIEF_SOURCE_LABEL,
+          field: `${tableName} / 第${rowIndex + 1}行 / ${header}`,
+          method: '读取 CSV 表格对应单元格',
+        });
+        return `<td style="text-align: ${align}">${value}</td>`;
       }).join('')}</tr>`;
     })
     .filter(row => row !== null)
@@ -25,18 +160,6 @@ function createHTMLTable(headers: string[], rows: string[][]): string {
 <thead>${headerRow}</thead>
 <tbody>${dataRows}</tbody>
 </table>`;
-}
-
-/**
- * HTML 转义
- */
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }
 
 /**
@@ -95,24 +218,9 @@ export function getBriefTableData() {
     const tables = splitCSVToTables(csvContent);
     console.log('CSV 解析完成，共', tables.length, '个表格');
 
-    const tableNames = [
-      '合作担保机构全口径新增担保业务规模统计表',
-      '担保机构再担保业务统计表',
-      '合作银行业务统计表',
-      '再担保业务综合融资成本统计表',
-      '银行参与分险再担保业务统计表',
-      '合作银行分险业务统计表',
-      '地市银行参与分险业务规模统计表',
-      '国担基金"总对总"批量担保业务统计表',
-      '地方版"总对总"批量担保业务统计表',
-      '合作银行"总对总"批量担保业务统计表',
-      '创业担保贷款再担保业务统计表',
-      '"科技创新专项担保计划"业务统计表',
-    ];
-
     return tables.map((table, index) => ({
-      name: tableNames[index] || `表${index + 1}`,
-      caption: `表${index + 1}：${tableNames[index] || ''}`,
+      name: BRIEF_TABLE_CAPTIONS[index] || `表${index + 1}`,
+      caption: `表${index + 1}：${BRIEF_TABLE_CAPTIONS[index] || ''}`,
       headers: table.headers || [],
       rows: table.rows || [],
     }));
@@ -155,7 +263,8 @@ function prepareRenderData(mappingData: Record<string, any>, csvPath: string): R
   for (let i = 0; i < tables.length; i++) {
     const table = tables[i];
     const tableName = tableNames[i] || `table_${i + 1}`;
-    flatData[tableName] = createHTMLTable(table.headers, table.rows);
+    const tableCaption = BRIEF_TABLE_CAPTIONS[i] || tableName;
+    flatData[tableName] = createHTMLTable(table.headers, table.rows, `表${i + 1}：${tableCaption}`);
     console.log(`${tableName}: ${table.headers.length} 列，${table.rows.length} 行`);
   }
   
@@ -171,6 +280,46 @@ function prepareRenderData(mappingData: Record<string, any>, csvPath: string): R
   flatData['remark'] = '数据来源于业务系统，统计截止日期为报告期末最后一个工作日。';
   
   return flatData;
+}
+
+function buildCitationMarker(key: string) {
+  return `__BRIEF_CITATION__${key}__`;
+}
+
+function buildCitationRenderData(flatData: Record<string, string>) {
+  const renderData: Record<string, string> = {};
+  const markerMap = new Map<string, string>();
+
+  for (const [key, value] of Object.entries(flatData)) {
+    if (key.endsWith('_table')) {
+      renderData[key] = value;
+      continue;
+    }
+
+    if (key === 'report_title') {
+      renderData[key] = value;
+      continue;
+    }
+
+    const marker = buildCitationMarker(key);
+    renderData[key] = marker;
+    markerMap.set(marker, createCitationMarkup(value, {
+      label: key,
+      fileName: BRIEF_SOURCE_LABEL,
+      field: key.replaceAll('_', '.'),
+      method: '读取简报映射数据对应字段',
+    }));
+  }
+
+  return { renderData, markerMap };
+}
+
+function applyCitationMarkers(html: string, markerMap: Map<string, string>) {
+  let result = html;
+  for (const [marker, markup] of markerMap.entries()) {
+    result = result.split(marker).join(markup);
+  }
+  return result;
 }
 
 function flattenObject(obj: Record<string, any>, prefix: string, result: Record<string, string>): void {
@@ -213,11 +362,13 @@ export async function generateBriefHTML(periodText: string): Promise<string> {
     const templateContent = await fs.promises.readFile(templatePath, 'utf-8');
     
     // 5. 使用 EJS 渲染
-    const html = ejs.render(templateContent, renderData);
+    const { renderData: citationRenderData, markerMap } = buildCitationRenderData(renderData);
+    const html = ejs.render(templateContent, citationRenderData);
+    const htmlWithCitations = injectCitationStyles(applyCitationMarkers(html, markerMap));
     
     console.log('HTML 简报生成成功！');
     
-    return html;
+    return htmlWithCitations;
   } catch (error) {
     console.error('生成 HTML 简报失败:', error);
     throw new Error(`HTML 简报生成失败：${error instanceof Error ? error.message : '未知错误'}`);

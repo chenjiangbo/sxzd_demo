@@ -217,6 +217,20 @@ export type RuleResult = {
   explanation: string;
 };
 
+export type FactSource = {
+  sourceId: string;
+  label: string;
+  fileName: string;
+  relativePath: string;
+  kind: 'xlsx' | 'pdf' | 'derived';
+  sheet?: string;
+  field?: string;
+  excerpt?: string;
+  formula?: string;
+};
+
+export type FactSourceMap = Record<string, FactSource[]>;
+
 export type DraftDocument = {
   title: string;
   body: string;
@@ -255,6 +269,7 @@ export type CaseAnalysis = {
     originalLegalRep: string;
     currentLegalRep: string | null;
   };
+  factSources: FactSourceMap;
   timeline: Array<{
     date: string;
     title: string;
@@ -315,6 +330,44 @@ function normalizeStatus(status: MaterialItem['status']) {
 
 function latestNonEmpty(values: Array<string | null | undefined>) {
   return values.find((value) => typeof value === 'string' && value.trim().length > 0) ?? null;
+}
+
+function compactValue(value: string | number | null | undefined) {
+  if (value == null) return '';
+  return String(value).replace(/\s+/g, ' ').trim();
+}
+
+function createSpreadsheetFactSource(params: {
+  sourceId: string;
+  label: string;
+  filePath: string;
+  field: string;
+  value: string | number | null | undefined;
+  rowHint: string;
+  formula?: string;
+  kind?: 'xlsx' | 'derived';
+}): FactSource {
+  const relativePath = path.relative(BAOJI_DIR, params.filePath);
+  const excerptParts = [`字段「${params.field}」`];
+  const compact = compactValue(params.value);
+  if (compact) {
+    excerptParts.push(`值：${compact}`);
+  }
+  if (params.rowHint) {
+    excerptParts.push(`定位：${params.rowHint}`);
+  }
+
+  return {
+    sourceId: params.sourceId,
+    label: params.label,
+    fileName: path.basename(params.filePath),
+    relativePath,
+    kind: params.kind ?? 'xlsx',
+    sheet: 'Sheet1',
+    field: params.field,
+    excerpt: excerptParts.join('；'),
+    formula: params.formula,
+  };
 }
 
 function materialStatusPriority(status: MaterialItem['status']) {
@@ -518,6 +571,222 @@ function buildCaseSummary(record: SpreadsheetRow, compensationAmount: number): C
     statusLabel: '待人工复核',
     riskLabel: '中风险',
     materialDir: BAOJI_DIR,
+  };
+}
+
+function buildFactSources(params: {
+  summary: CaseSummary;
+  keyFacts: CaseAnalysis['keyFacts'];
+  firstRecord: SpreadsheetRow | undefined;
+  latestRecord: SpreadsheetRow;
+  latestResolve: SpreadsheetRow;
+}): FactSourceMap {
+  const { summary, keyFacts, firstRecord, latestRecord, latestResolve } = params;
+  const recordRowHint = `债务人名称=${summary.company}`;
+  const firstRecordRowHint = `首次备案记录，债务人名称=${summary.company}`;
+  const resolveRowHint = `解保台账最新记录，债务人名称=${summary.company}`;
+
+  return {
+    company: [
+      createSpreadsheetFactSource({
+        sourceId: 'company',
+        label: '债务人名称',
+        filePath: BAOJI_RECORD_FILE,
+        field: '债务人名称',
+        value: latestRecord['债务人名称'],
+        rowHint: recordRowHint,
+      }),
+    ],
+    guarantor: [
+      createSpreadsheetFactSource({
+        sourceId: 'guarantor',
+        label: '担保机构名称',
+        filePath: BAOJI_RECORD_FILE,
+        field: '直担机构名称',
+        value: latestRecord['直担机构名称'],
+        rowHint: recordRowHint,
+      }),
+    ],
+    bank: [
+      createSpreadsheetFactSource({
+        sourceId: 'bank',
+        label: '债权人名称',
+        filePath: BAOJI_RECORD_FILE,
+        field: '债权人名称',
+        value: latestRecord['债权人名称'],
+        rowHint: recordRowHint,
+      }),
+    ],
+    amount: [
+      createSpreadsheetFactSource({
+        sourceId: 'amount',
+        label: '主债权金额',
+        filePath: BAOJI_RECORD_FILE,
+        field: '主债权金额（万元）',
+        value: latestRecord['主债权金额（万元）'],
+        rowHint: recordRowHint,
+      }),
+    ],
+    unifiedCode: [
+      createSpreadsheetFactSource({
+        sourceId: 'unifiedCode',
+        label: '统一社会信用代码',
+        filePath: BAOJI_RECORD_FILE,
+        field: latestRecord['债务人证件号码'] ? '债务人证件号码' : '债务人经营主体统一社会信用代码',
+        value: latestRecord['债务人证件号码'] ?? latestRecord['债务人经营主体统一社会信用代码'],
+        rowHint: recordRowHint,
+      }),
+    ],
+    businessNo: [
+      createSpreadsheetFactSource({
+        sourceId: 'businessNo',
+        label: '唯一业务编号',
+        filePath: BAOJI_RECORD_FILE,
+        field: '唯一业务编号',
+        value: latestRecord['唯一业务编号'],
+        rowHint: recordRowHint,
+      }),
+    ],
+    initialBusinessNo: firstRecord
+      ? [
+          createSpreadsheetFactSource({
+            sourceId: 'initialBusinessNo',
+            label: '首次备案业务编号',
+            filePath: BAOJI_RECORD_FILE,
+            field: '唯一业务编号',
+            value: firstRecord['唯一业务编号'],
+            rowHint: firstRecordRowHint,
+          }),
+        ]
+      : [],
+    contractNo: [
+      createSpreadsheetFactSource({
+        sourceId: 'contractNo',
+        label: '借款合同号',
+        filePath: BAOJI_RECORD_FILE,
+        field: '借款合同号',
+        value: latestRecord['借款合同号'],
+        rowHint: recordRowHint,
+      }),
+    ],
+    initialContractNo: firstRecord
+      ? [
+          createSpreadsheetFactSource({
+            sourceId: 'initialContractNo',
+            label: '首次备案借款合同号',
+            filePath: BAOJI_RECORD_FILE,
+            field: '借款合同号',
+            value: firstRecord['借款合同号'],
+            rowHint: firstRecordRowHint,
+          }),
+        ]
+      : [],
+    guaranteeNo: [
+      createSpreadsheetFactSource({
+        sourceId: 'guaranteeNo',
+        label: '保证合同号',
+        filePath: BAOJI_RECORD_FILE,
+        field: '保证合同号',
+        value: latestRecord['保证合同号'],
+        rowHint: recordRowHint,
+      }),
+    ],
+    entrustNo: [
+      createSpreadsheetFactSource({
+        sourceId: 'entrustNo',
+        label: '委托保证合同号',
+        filePath: BAOJI_RECORD_FILE,
+        field: '委托保证合同号',
+        value: latestRecord['委托保证合同号'],
+        rowHint: recordRowHint,
+      }),
+    ],
+    debtStartDate: [
+      createSpreadsheetFactSource({
+        sourceId: 'debtStartDate',
+        label: '主债权起始日期',
+        filePath: BAOJI_RECORD_FILE,
+        field: '主债权起始日期',
+        value: latestRecord['主债权起始日期'],
+        rowHint: recordRowHint,
+      }),
+    ],
+    debtMaturityDate: [
+      createSpreadsheetFactSource({
+        sourceId: 'debtMaturityDate',
+        label: '主债权到期日期',
+        filePath: BAOJI_RECORD_FILE,
+        field: '主债权到期日期',
+        value: latestRecord['主债权到期日期'],
+        rowHint: recordRowHint,
+      }),
+    ],
+    compensationDate: [
+      createSpreadsheetFactSource({
+        sourceId: 'compensationDate',
+        label: '代偿时间',
+        filePath: BAOJI_RESOLVE_FILE,
+        field: '解保日期',
+        value: latestResolve['解保日期'],
+        rowHint: resolveRowHint,
+      }),
+    ],
+    reportDate: [
+      createSpreadsheetFactSource({
+        sourceId: 'reportDate',
+        label: '审批表日期',
+        filePath: BAOJI_RESOLVE_FILE,
+        field: '操作日期',
+        value: latestResolve['操作日期'],
+        rowHint: resolveRowHint,
+      }),
+    ],
+    uncompensatedPrincipal: [
+      createSpreadsheetFactSource({
+        sourceId: 'uncompensatedPrincipal',
+        label: '债务人未清偿本金',
+        filePath: BAOJI_RESOLVE_FILE,
+        field: '债务人未清偿本金（含债权人部分）（万元）',
+        value: latestResolve['债务人未清偿本金（含债权人部分）（万元）'],
+        rowHint: resolveRowHint,
+        formula: '债务人未清偿本金（含债权人部分）（万元） × 10000',
+        kind: 'derived',
+      }),
+    ],
+    indemnityAmount: [
+      createSpreadsheetFactSource({
+        sourceId: 'indemnityAmount',
+        label: '原担保机构代偿金额',
+        filePath: BAOJI_RESOLVE_FILE,
+        field: '累计代偿本金（万元）',
+        value: latestResolve['累计代偿本金（万元）'],
+        rowHint: resolveRowHint,
+        formula: '累计代偿本金（万元） × 10000',
+        kind: 'derived',
+      }),
+    ],
+    reGuaranteeRatio: [
+      createSpreadsheetFactSource({
+        sourceId: 'reGuaranteeRatio',
+        label: '省级再担责任比例',
+        filePath: BAOJI_RESOLVE_FILE,
+        field: '分险比例（省级再担保）',
+        value: latestResolve['分险比例（省级再担保）'],
+        rowHint: resolveRowHint,
+      }),
+    ],
+    compensationAmount: [
+      createSpreadsheetFactSource({
+        sourceId: 'compensationAmount',
+        label: '省级再担代偿补偿金额',
+        filePath: BAOJI_RESOLVE_FILE,
+        field: '债务人未清偿本金（含债权人部分）（万元）',
+        value: keyFacts.compensationAmount,
+        rowHint: resolveRowHint,
+        formula: '债务人未清偿本金（含债权人部分）（万元） × 10000 × 0.4',
+        kind: 'derived',
+      }),
+    ],
   };
 }
 
@@ -813,6 +1082,13 @@ async function buildCaseFromBaoji(options: { forceReextract?: boolean } = {}) {
     originalLegalRep: String(latestRecord['法定代表人姓名'] ?? ''),
     currentLegalRep: null,
   };
+  const factSources = buildFactSources({
+    summary,
+    keyFacts,
+    firstRecord,
+    latestRecord,
+    latestResolve,
+  });
 
   const materialInventory = documentsWithPreview.map((document) => ({
     file_name: document.name,
@@ -1060,6 +1336,7 @@ async function buildCaseFromBaoji(options: { forceReextract?: boolean } = {}) {
       missingCount: materials.filter((item) => item.status === '缺失').length,
     },
     keyFacts,
+    factSources,
     timeline: buildTimeline(baojiRecords, latestRecord, latestResolve),
     documents: documentsWithPreview,
     materials,
@@ -1124,7 +1401,13 @@ export async function getCaseAnalysis(caseId = BAOJI_CASE_ID, options: { refresh
   if (!options.refresh && !options.forceReextract) {
     try {
       const raw = await fs.readFile(cacheFile, 'utf8');
-      return JSON.parse(raw) as CaseAnalysis;
+      const parsed = JSON.parse(raw) as Partial<CaseAnalysis>;
+      if (parsed && parsed.factSources && typeof parsed.factSources === 'object') {
+        return parsed as CaseAnalysis;
+      }
+      const analysis = await buildCaseFromBaoji({ forceReextract: options.forceReextract });
+      await writeJsonAtomically(cacheFile, analysis);
+      return analysis;
     } catch {}
   }
 

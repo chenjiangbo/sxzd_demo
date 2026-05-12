@@ -18,6 +18,7 @@ function EvaluationReportGenerateContent() {
   const [statusText, setStatusText] = useState('');
   const [reportHtml, setReportHtml] = useState('');
   const [institutionName, setInstitutionName] = useState('');
+  const [indicators, setIndicators] = useState<Record<string, any> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {

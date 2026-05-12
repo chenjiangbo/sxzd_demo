@@ -1,6 +1,7 @@
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import CompensationBriefPreviewClient from '@/components/CompensationBriefPreviewClient';
+import { getCompensationBriefPromptConfig } from '@/lib/server/compensation-brief-prompt-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,9 @@ const references = [
   '输入 3：2025 年度全省再担保代偿补偿及风险情况通报样稿',
 ];
 
-export default function CompensationBriefPreviewPage() {
+export default async function CompensationBriefPreviewPage() {
+  const promptConfig = await getCompensationBriefPromptConfig();
+
   return (
     <>
       <Sidebar />
@@ -39,7 +42,7 @@ export default function CompensationBriefPreviewPage() {
           </div>
         </header>
 
-        <CompensationBriefPreviewClient adoptedCriteria={adoptedCriteria} references={references} />
+        <CompensationBriefPreviewClient adoptedCriteria={adoptedCriteria} references={references} promptConfig={promptConfig} />
       </main>
     </>
   );

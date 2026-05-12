@@ -2,6 +2,7 @@ import EvaluationReportPreviewClient from '@/components/evaluation/EvaluationRep
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import { getEvaluationReportData } from '@/lib/server/evaluation-report';
+import { getEvaluationPromptConfig } from '@/lib/server/evaluation-report-prompt-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,8 +17,8 @@ type Props = {
 
 export default async function EvaluationReportPreviewPage({ searchParams }: Props) {
   const params = await searchParams;
-  const data = await getEvaluationReportData();
-  const autoGenerate = params?.generate === '1';
+  await getEvaluationReportData();
+  const promptConfig = await getEvaluationPromptConfig();
   const institutionId = params?.id ?? '';
   const selectedGroup = params?.group ?? null;
   const currentPage = params?.page ?? null;
@@ -50,6 +51,7 @@ export default async function EvaluationReportPreviewPage({ searchParams }: Prop
               institutionId={institutionId}
               selectedGroup={selectedGroup}
               currentPage={currentPage}
+              promptConfig={promptConfig}
             />
           </div>
         </div>

@@ -2,10 +2,12 @@
 
 import { Download, FileText, LoaderCircle, RefreshCcw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import BriefAiInstructionPanel, { type BriefPromptConfig } from '@/components/BriefAiInstructionPanel';
 
 type Props = {
   adoptedCriteria: string[];
   references: string[];
+  promptConfig: BriefPromptConfig;
 };
 
 type StreamEvent =
@@ -59,7 +61,7 @@ function parseSseEvent(frame: string): StreamEvent | null {
   }
 }
 
-export default function BriefPreviewClient({ adoptedCriteria, references }: Props) {
+export default function BriefPreviewClient({ adoptedCriteria, references, promptConfig }: Props) {
   const [htmlContent, setHtmlContent] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -274,6 +276,8 @@ export default function BriefPreviewClient({ adoptedCriteria, references }: Prop
       </section>
 
       <aside className="col-span-12 space-y-6 xl:col-span-4">
+        <BriefAiInstructionPanel config={promptConfig} onRegenerate={() => void generate()} loading={loading} />
+
         <div className="rounded-3xl bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-container-low text-secondary">

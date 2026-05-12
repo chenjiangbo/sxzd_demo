@@ -3,6 +3,8 @@ import { Download, FileSpreadsheet, Target, TrendingUp } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { getEvaluationReportData } from '@/lib/server/evaluation-report';
+import { hasGeneratedEvaluationReport } from '@/lib/server/evaluation-report-generation';
+import { getEvaluationPromptConfig } from '@/lib/server/evaluation-report-prompt-config';
 import { Suspense } from 'react';
 import EvaluationReportPreviewClient from '@/components/evaluation/EvaluationReportPreviewClient';
 
@@ -30,6 +32,7 @@ function formatRatio(value: number, digits = 2) {
 export default async function EvaluationReportPage({ searchParams }: Props) {
   const params = await searchParams;
   const data = await getEvaluationReportData();
+  const promptConfig = await getEvaluationPromptConfig();
   const selectedGroup = typeof params?.group === 'string' ? params.group : undefined;
   const currentPage = parseInt(params?.page ?? '1');
   const pageSize = 10;
@@ -39,6 +42,12 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
   const institutions = selectedGroup
     ? data.institutions.filter((item) => item.overallStatus === selectedGroup)
     : data.institutions;
+
+  const generatedStatusMap = new Map(
+    await Promise.all(
+      institutions.map(async (item) => [item.id, await hasGeneratedEvaluationReport(item.id)] as const),
+    ),
+  );
 
   // 分页计算
   const totalPages = Math.ceil(institutions.length / pageSize);
@@ -55,7 +64,12 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
         {showPreview && institutionId ? (
           <section className="mb-6">
             <Suspense fallback={<div className="flex min-h-[40vh] items-center justify-center rounded-3xl bg-white shadow-sm"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>}>
-              <EvaluationReportPreviewClient institutionId={institutionId} selectedGroup={selectedGroup || null} currentPage={currentPage > 1 ? currentPage.toString() : null} />
+              <EvaluationReportPreviewClient
+                institutionId={institutionId}
+                selectedGroup={selectedGroup || null}
+                currentPage={currentPage > 1 ? currentPage.toString() : null}
+                promptConfig={promptConfig}
+              />
             </Suspense>
           </section>
         ) : (
@@ -216,12 +230,21 @@ export default async function EvaluationReportPage({ searchParams }: Props) {
                       </span>
                     </td>
                     <td className="px-3 py-3 w-[100px]">
+                      {(() => {
+                        const hasGenerated = generatedStatusMap.get(item.id) === true;
+                        return (
                       <Link
                         href={`/evaluation-report?generate=1&id=${item.id}${selectedGroup ? `&group=${selectedGroup}` : ''}${currentPage > 1 ? `&page=${currentPage}` : ''}`}
-                        className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-white hover:bg-primary/90"
+                        className={
+                          hasGenerated
+                            ? 'rounded-full bg-emerald-600 px-3 py-1 text-[10px] font-bold text-white hover:bg-emerald-700'
+                            : 'rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-white hover:bg-primary/90'
+                        }
                       >
                         生成评价报告
                       </Link>
+                        );
+                      })()}
                     </td>
                   </tr>
                 ))}

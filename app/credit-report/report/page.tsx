@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import { getCreditReportData } from '@/lib/server/credit-report';
 import { getGeneratedCreditReport } from '@/lib/server/credit-report-draft';
+import { getCreditPromptConfig } from '@/lib/server/credit-report-prompt-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,9 +16,10 @@ type Props = {
 
 export default async function CreditReportPreviewPage({ searchParams }: Props) {
   const params = await searchParams;
-  const [data, initialReport] = await Promise.all([
+  const [data, initialReport, promptConfig] = await Promise.all([
     getCreditReportData(),
     getGeneratedCreditReport(),
+    getCreditPromptConfig(),
   ]);
   const autoGenerate = params?.generate === '1' || !initialReport;
 
@@ -48,9 +50,9 @@ export default async function CreditReportPreviewPage({ searchParams }: Props) {
           <CreditReportPreviewClient
             initialReport={initialReport}
             autoGenerate={autoGenerate}
-            adoptedCriteria={data.report.adoptedCriteria}
             references={data.report.references}
             oaMemo={data.oaPreview.summary}
+            promptConfig={promptConfig}
           />
         </div>
       </main>
