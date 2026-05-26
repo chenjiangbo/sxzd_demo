@@ -20,6 +20,19 @@ export async function GET() {
   const docxPath = path.join(exportDir, '关于2025年度合作担保机构再担保业务授信的报告.docx');
 
   await fs.writeFile(htmlPath, renderCreditReportHtml(report), 'utf8');
+
+  if (process.platform === 'win32') {
+    // Windows 下 textutil 不可用，直接返回 HTML 文件
+    const fileBuffer = await fs.readFile(htmlPath);
+    return new NextResponse(fileBuffer, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent('关于2025年度合作担保机构再担保业务授信的报告.html')}`,
+      },
+    });
+  }
+
   await fs.rm(docxPath, { force: true });
   await execFileAsync('textutil', ['-convert', 'docx', htmlPath, '-output', docxPath], {
     timeout: 120_000,
