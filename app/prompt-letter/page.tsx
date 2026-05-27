@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Upload, FileText, Download, X, LoaderCircle, Sparkles } from 'lucide-react';
 import PromptLetterPreviewClient from '@/components/PromptLetterPreviewClient';
 import Sidebar from '@/components/Sidebar';
@@ -10,7 +10,7 @@ type FileItem = {
   id: string;
   name: string;
   type: 'oneDept' | 'threeDept';
-  file: File;
+  file?: File; // 从服务端恢复的文件没有 File 对象
   status: 'idle' | 'uploading' | 'success' | 'error';
   progress: number;
   serverId?: string;
@@ -35,6 +35,32 @@ export default function PromptLetterTaskPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // 页面加载时从服务端恢复已上传的文件列表
+  useEffect(() => {
+    const loadExistingFiles = async () => {
+      try {
+        const res = await fetch('/api/prompt-letter/upload');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success && Array.isArray(data.files) && data.files.length > 0) {
+          const restored: FileItem[] = data.files.map((sf: { id: string; name: string; department: string }) => ({
+            id: `restored_${sf.id}`,
+            name: sf.name,
+            type: (sf.department === 'threeDept' ? 'threeDept' : 'oneDept') as 'oneDept' | 'threeDept',
+            file: undefined,
+            status: 'success' as const,
+            progress: 100,
+            serverId: sf.id,
+          }));
+          setFiles(restored);
+        }
+      } catch {
+        // 静默失败
+      }
+    };
+    loadExistingFiles();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
@@ -67,13 +93,33 @@ export default function PromptLetterTaskPage() {
     }
   };
 
-  const removeFile = (fileId: string) => {
+  const removeFile = useCallback(async (fileId: string) => {
+    // 先获取 serverId（在从 state 中移除之前）
+    const fileObj = files.find(f => f.id === fileId);
+    
+    // 从前端移除
     setFiles(prev => prev.filter(f => f.id !== fileId));
-  };
+    
+    // 同时删除关联的报告
+    if (fileObj?.reportId) {
+      setGeneratedReports(prev => prev.filter(r => r.id !== fileObj.reportId));
+    }
+    
+    // 如果有 serverId，调用 DELETE API 删除服务端文件
+    if (fileObj?.serverId) {
+      try {
+        await fetch(`/api/prompt-letter/upload?id=${encodeURIComponent(fileObj.serverId)}`, {
+          method: 'DELETE',
+        });
+      } catch {
+        // 静默失败，前端已经移除
+      }
+    }
+  }, [files]);
 
   const uploadFile = async (fileId: string) => {
     const fileObj = files.find(f => f.id === fileId);
-    if (!fileObj) return;
+    if (!fileObj || !fileObj.file) return;
 
     setFiles(prev =>
       prev.map(f =>
@@ -85,7 +131,7 @@ export default function PromptLetterTaskPage() {
 
     try {
       const formData = new FormData();
-      formData.append('files', fileObj.file);
+      formData.append('files', fileObj.file!);
       formData.append('department', fileObj.type);
 
       // 模拟上传进度
@@ -178,7 +224,9 @@ export default function PromptLetterTaskPage() {
       const response = await fetch('/api/prompt-letter/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          fileIds: files.filter(f => f.status === 'success' && f.serverId).map(f => f.serverId),
+        }),
       });
 
       if (!response.ok) {

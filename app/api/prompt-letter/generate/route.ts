@@ -24,8 +24,14 @@ export async function POST(request: Request) {
 
   const stream = new ReadableStream({
     async start(controller) {
+      let closed = false;
       const send = (event: string, data: Record<string, unknown>) => {
-        controller.enqueue(encoder.encode(createSseMessage(event, data)));
+        if (closed) return;
+        try {
+          controller.enqueue(encoder.encode(createSseMessage(event, data)));
+        } catch {
+          closed = true;
+        }
       };
 
       try {
@@ -40,6 +46,7 @@ export async function POST(request: Request) {
 
         if (files.length === 0) {
           send('error', { message: '未找到上传的文件，请先上传文件' });
+          closed = true;
           controller.close();
           return;
         }
@@ -56,6 +63,7 @@ export async function POST(request: Request) {
 
         if (wordFiles.length === 0) {
           send('error', { message: '未找到 Word 文档，请先上传 .docx 文件' });
+          closed = true;
           controller.close();
           return;
         }
@@ -157,7 +165,9 @@ export async function POST(request: Request) {
         });
       }
 
-      controller.close();
+      if (!closed) {
+        try { controller.close(); } catch { /* already closed */ }
+      }
     },
   });
 
