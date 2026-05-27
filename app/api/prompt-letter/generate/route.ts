@@ -10,8 +10,17 @@ function createSseMessage(event: string, data: Record<string, unknown>) {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   const encoder = new TextEncoder();
+
+  // 从请求体中获取客户端指定的文件 ID 列表
+  let clientFileIds: string[] = [];
+  try {
+    const body = await request.json();
+    clientFileIds = (body.fileIds as string[]) || [];
+  } catch {
+    clientFileIds = [];
+  }
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -20,9 +29,14 @@ export async function POST() {
       };
 
       try {
-        // Step 1: 获取上传的文件列表
+        // Step 1: 获取上传的文件列表，只处理客户端指定的文件
         send('status', { text: '正在读取上传的文件列表...', fileId: '' });
-        const files = await listUploadedFiles();
+        const allFiles = await listUploadedFiles();
+
+        // 如果客户端传了 fileIds，只处理这些文件；否则处理所有文件
+        const files = clientFileIds.length > 0
+          ? allFiles.filter(f => clientFileIds.includes(f.id))
+          : allFiles;
 
         if (files.length === 0) {
           send('error', { message: '未找到上传的文件，请先上传文件' });

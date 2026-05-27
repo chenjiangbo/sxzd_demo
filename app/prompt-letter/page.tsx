@@ -268,7 +268,7 @@ export default function PromptLetterTaskPage() {
                 }];
               });
 
-              // 自动选中第一个正在生成的报告
+              // 自动选中当前正在生成的报告（根据当前报告数量推算索引）
               setGeneratedReports(prev => {
                 const idx = prev.findIndex(r => r.id === rId);
                 if (idx >= 0) setActiveReport(idx);
@@ -346,6 +346,13 @@ export default function PromptLetterTaskPage() {
 
             case 'all-done':
               setStatusMessage('');
+              setIsGenerating(false);
+              // 安全网：将所有仍处于 generating 的文件标记为 done
+              setFiles(prev => prev.map(f =>
+                f.generateStatus === 'generating'
+                  ? { ...f, generateStatus: 'done' as const, generateProgress: 100 }
+                  : f
+              ));
               break;
           }
         }
