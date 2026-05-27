@@ -3,6 +3,7 @@ import {
   extractFileContent,
   generatePromptLetterWithAI,
   saveGeneratedPromptLetter,
+  getGeneratedPromptLetters,
   type ExtractedData,
 } from '@/lib/server/prompt-letter';
 
@@ -114,7 +115,7 @@ export async function POST(request: Request) {
 
           let letter;
           try {
-            letter = await generatePromptLetterWithAI(combinedData);
+            letter = await generatePromptLetterWithAI(combinedData, fileId);
           } finally {
             clearInterval(heartbeatInterval);
           }
@@ -178,4 +179,15 @@ export async function POST(request: Request) {
       Connection: 'keep-alive',
     },
   });
+}
+
+// GET: 获取已生成的报告列表（用于页面刷新后恢复）
+export async function GET() {
+  try {
+    const letters = await getGeneratedPromptLetters();
+    return Response.json({ success: true, letters });
+  } catch (err) {
+    console.error('[GET /generate] 读取报告失败:', err);
+    return Response.json({ success: false, letters: [] });
+  }
 }

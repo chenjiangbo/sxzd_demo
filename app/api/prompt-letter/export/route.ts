@@ -1,17 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { getGeneratedPromptLetters } from '@/lib/server/prompt-letter';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const fileName = searchParams.get('fileName') || '综合评价提示函';
+    const institutionName = searchParams.get('institutionName') || '';
 
-    // 获取最新生成的提示函
+    // 获取生成的提示函列表
     const letters = await getGeneratedPromptLetters();
-    const letter = letters[0]; // 获取最新的
+    // 按机构名过滤，找不到就取最新的
+    const letter = institutionName
+      ? letters.find(l => l.institutionName === institutionName) || letters[0]
+      : letters[0];
 
     if (!letter) {
-      return NextResponse.json(
+      return Response.json(
         { error: '未找到生成的提示函，请先生成提示函' },
         { status: 404 }
       );
@@ -72,9 +76,9 @@ ${letter.rawText
 </html>`;
 
     // 将HTML转换为Buffer
-    const buffer = Buffer.from(htmlContent, 'utf-8');
+    const htmlBuffer = new TextEncoder().encode(htmlContent);
 
-    return new NextResponse(buffer, {
+    return new Response(htmlBuffer, {
       status: 200,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
@@ -84,7 +88,7 @@ ${letter.rawText
     });
   } catch (error) {
     console.error('导出提示函时出错:', error);
-    return NextResponse.json(
+    return Response.json(
       { error: '导出失败: ' + (error instanceof Error ? error.message : '未知错误') },
       { status: 500 }
     );

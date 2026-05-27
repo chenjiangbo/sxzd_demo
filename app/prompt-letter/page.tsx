@@ -36,30 +36,108 @@ export default function PromptLetterTaskPage() {
   const [statusMessage, setStatusMessage] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // 页面加载时从服务端恢复已上传的文件列表
+  // 页面加载时从服务端恢复已上传的文件列表 + 已生成的报告
   useEffect(() => {
-    const loadExistingFiles = async () => {
+    const loadExistingData = async () => {
       try {
-        const res = await fetch('/api/prompt-letter/upload');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.success && Array.isArray(data.files) && data.files.length > 0) {
-          const restored: FileItem[] = data.files.map((sf: { id: string; name: string; department: string }) => ({
-            id: `restored_${sf.id}`,
-            name: sf.name,
-            type: (sf.department === 'threeDept' ? 'threeDept' : 'oneDept') as 'oneDept' | 'threeDept',
-            file: undefined,
-            status: 'success' as const,
-            progress: 100,
-            serverId: sf.id,
-          }));
-          setFiles(restored);
+        // 并行获取上传文件和已生成报告
+        const [filesRes, reportsRes] = await Promise.all([
+          fetch('/api/prompt-letter/upload'),
+          fetch('/api/prompt-letter/generate'),
+        ]);
+
+        // 恢复上传文件
+        let restoredFiles: FileItem[] = [];
+        if (filesRes.ok) {
+          const filesData = await filesRes.json();
+          if (filesData.success && Array.isArray(filesData.files) && filesData.files.length > 0) {
+            restoredFiles = filesData.files.map((sf: { id: string; name: string; department: string }) => ({
+              // 直接用 sf.id 作为文件 id，这样才能和报告的 sourceFileId 匹配
+              id: sf.id,
+              name: sf.name,
+              type: (sf.department === 'threeDept' ? 'threeDept' : 'oneDept') as 'oneDept' | 'threeDept',
+              file: undefined,
+              status: 'success' as const,
+              progress: 100,
+              serverId: sf.id,
+            }));
+            setFiles(restoredFiles);
+          }
+        }
+
+        // 恢复已生成的报告
+        if (reportsRes.ok) {
+          const reportsData = await reportsRes.json();
+          if (reportsData.success && Array.isArray(reportsData.letters) && reportsData.letters.length > 0) {
+            const restoredFileIds = new Set(restoredFiles.map(f => f.id));
+
+            // 先通过 sourceFileId 匹配，找出有对应文件的报告
+            const matchedBySourceId = reportsData.letters.filter(
+              (l: { sourceFileId?: string }) => l.sourceFileId && restoredFileIds.has(l.sourceFileId)
+            );
+            // 没有 sourceFileId 的报告也保留（旧报告，通过名称回退匹配）
+            const withoutSourceId = reportsData.letters.filter(
+              (l: { sourceFileId?: string }) => !l.sourceFileId
+            );
+            const allRestoredLetters = [...matchedBySourceId, ...withoutSourceId];
+
+            const restored: GeneratedReport[] = allRestoredLetters.map(
+              (letter: {
+                institutionName: string;
+                rawText: string;
+                generatedAt: string;
+                fileName: string;
+                sourceFileId?: string;
+              }, idx: number) => ({
+                id: `report_restored_${idx}_${letter.sourceFileId || letter.institutionName}`,
+                fileName: letter.fileName,
+                institutionName: letter.institutionName,
+                content: letter.rawText,
+                generatedAt: letter.generatedAt,
+                sourceFileId: letter.sourceFileId || '',
+              })
+            );
+            setGeneratedReports(restored);
+
+            // 建立文件 → 报告的映射（恢复 reportId 和 generateStatus）
+            if (restoredFiles.length > 0 && restored.length > 0) {
+              setFiles(prev =>
+                prev.map(f => {
+                  // 优先按 sourceFileId 匹配
+                  let matchedReport = restored.find(r => r.sourceFileId === f.id);
+                  // 回退：按文件名/机构名匹配（处理旧报告没有 sourceFileId 的情况）
+                  if (!matchedReport) {
+                    const fileBaseName = f.name.replace(/\.(docx|doc|xlsx|xls)$/i, '');
+                    matchedReport = restored.find(r =>
+                      !r.sourceFileId && (
+                        r.institutionName.includes(fileBaseName) ||
+                        fileBaseName.includes(r.institutionName) ||
+                        r.fileName.includes(fileBaseName) ||
+                        fileBaseName.includes(r.fileName)
+                      )
+                    );
+                  }
+                  if (matchedReport) {
+                    return {
+                      ...f,
+                      generateStatus: 'done' as const,
+                      generateProgress: 100,
+                      reportId: matchedReport.id,
+                    };
+                  }
+                  return f;
+                })
+              );
+              // 默认选中第一个报告
+              setActiveReport(0);
+            }
+          }
         }
       } catch {
         // 静默失败
       }
     };
-    loadExistingFiles();
+    loadExistingData();
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -638,7 +716,8 @@ export default function PromptLetterTaskPage() {
                   {activeReport !== null && generatedReports[activeReport] && (
                     <button
                       onClick={() => {
-                        const url = `/api/prompt-letter/export?fileName=${encodeURIComponent(generatedReports[activeReport!].fileName)}`;
+                        const report = generatedReports[activeReport!];
+                        const url = `/api/prompt-letter/export?fileName=${encodeURIComponent(report.fileName)}&institutionName=${encodeURIComponent(report.institutionName)}`;
                         window.open(url, '_blank');
                       }}
                       className="flex items-center gap-2 rounded-2xl border border-outline-variant/30 bg-white px-4 py-2 text-sm font-black text-primary"

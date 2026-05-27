@@ -37,6 +37,7 @@ export type GeneratedPromptLetter = {
   rawText: string;
   generatedAt: string;
   fileName: string;
+  sourceFileId?: string; // 关联到上传文件的 serverId
 };
 
 // ============================================
@@ -251,7 +252,10 @@ function buildUserPrompt(extractedData: ExtractedData[]): string {
   ].join('\n');
 }
 
-export async function generatePromptLetterWithAI(extractedData: ExtractedData[]): Promise<GeneratedPromptLetter> {
+export async function generatePromptLetterWithAI(
+  extractedData: ExtractedData[],
+  sourceFileId?: string
+): Promise<GeneratedPromptLetter> {
   console.log('[提示函生成] 开始加载 Skill 规则...');
   const skillContent = await loadSkillContent();
   const referenceContent = await loadReferenceContent();
@@ -305,6 +309,7 @@ export async function generatePromptLetterWithAI(extractedData: ExtractedData[])
     rawText: processedText,
     generatedAt: new Date().toISOString(),
     fileName: `${institutionName}-综合评价提示函`,
+    sourceFileId,
   };
 }
 
