@@ -1,0 +1,208 @@
+# 建议生成规则配置
+# 用于生成"三、相关建议"章节的内容
+
+# ============================================
+# 一、建议列表
+# ============================================
+
+suggestions:
+
+  # 建议1：全力完成年度任务（必有）
+  suggestion_1:
+    id: 1
+    title: "全力完成年度任务"
+    trigger: "always"  # 无条件触发
+
+    # 格式1：有问题的机构
+    format_with_problems: |
+      全力完成{year}年度各项目标任务。贵司全年指标任务中{indicators}指标完成情况与时间节点要求{gap_level}，建议压实责任，切实把工作落到实处，坚决保质保量完成年度任务目标；
+
+    # 格式2：无问题的机构
+    format_without_problems: |
+      全力完成{year}年度各项目标任务。压实责任，切实把工作落到实处，坚决保质保量完成年度任务目标；
+
+    # 格式3：有个性问题时的格式（加个性化描述）
+    format_with_custom: |
+      全力完成{year}年度各项目标任务。贵司全年指标任务中{indicators}指标完成情况与时间节点要求{gap_level}，建议压实责任，切实把工作落到实处，坚决保质保量完成年度任务目标；{custom_suggestions}
+
+    variables:
+      year: 当前年度，如"2024"
+      indicators: 问题指标列表，如"银担分险业务占比、新增比例再担保业务规模"
+      gap_level: 差距程度，如"有一定差距"
+      custom_suggestions: 个性化建议，用分号分隔
+
+  # 建议2：积极谋划下一年工作（必有）
+  suggestion_2:
+    id: 2
+    title: "积极谋划下一年工作"
+    trigger: "always"
+
+    format: |
+      积极谋划{next_year}年工作目标任务。结合实际，找准工作着力点，进一步提升明年工作的时效性，确保目标任务圆满完成；
+
+    variables:
+      next_year: 下一年份，如"2025"
+
+  # 建议3：加大创新产品开发力度（必有）
+  suggestion_3:
+    id: 3
+    title: "加大创新产品开发力度"
+    trigger: "always"
+
+    format: |
+      加大创新产品开发力度。深化银行批量业务合作，优化产品结构，形成自身特色的创新产品；
+
+  # 建议4：加大代偿清收工作力度（条件触发）
+  suggestion_4:
+    id: 4
+    title: "加大代偿清收工作力度"
+    trigger:
+      condition: "total_compensation > 0"
+      # 或有代偿追偿相关数据
+
+    # 标准版格式
+    format_standard: |
+      加大代偿清收工作力度。拓宽追偿渠道，提高追偿效率，确保代偿资金有效追回并及时返还我司；
+
+    # 加强版格式（有个性化代偿问题时使用）
+    format_enhanced: |
+      加大代偿清收工作力度。加强规范项目代偿追偿管理工作，拓宽追偿渠道，提高追偿效率，确保代偿资金有效追回并及时返还我司；
+
+    trigger_conditions:
+      - total_compensation > 0
+      - # 或有代偿追偿相关数据
+
+  # 建议5：持续加强风险防控工作（必有）
+  suggestion_5:
+    id: 5
+    title: "持续加强风险防控工作"
+    trigger: "always"
+
+    format: |
+      持续加强风险防控工作。将风险防控工作提高至战略高度，严把业务风险入口关，不断加强业务保后管理。
+
+# ============================================
+# 二、建议组合规则
+# ============================================
+
+combination_rules:
+  # 规则1：无问题的机构
+  no_problems:
+    condition: "problem_count == 0 AND not has_custom_problems"
+    suggestions:
+      - id: 1
+        format: "format_without_problems"
+      - id: 2
+      - id: 3
+      - id: 5
+    total_count: 4
+
+  # 规则2：有问题的机构，但无数代偿数据
+  has_problems_no_compensation:
+    condition: "problem_count > 0 AND total_compensation == 0"
+    suggestions:
+      - id: 1
+        format: "format_with_problems"
+      - id: 2
+      - id: 3
+      - id: 5
+    total_count: 4
+
+  # 规则3：有问题的机构，且有代偿数据
+  has_problems_and_compensation:
+    condition: "problem_count > 0 AND total_compensation > 0"
+    suggestions:
+      - id: 1
+        format: "format_with_problems"
+      - id: 2
+      - id: 3
+      - id: 4
+        format: "format_standard"
+      - id: 5
+    total_count: 5
+
+  # 规则4：无问题，但有代偿数据
+  no_problems_has_compensation:
+    condition: "problem_count == 0 AND total_compensation > 0"
+    suggestions:
+      - id: 1
+        format: "format_without_problems"
+      - id: 2
+      - id: 3
+      - id: 4
+        format: "format_standard"
+      - id: 5
+    total_count: 5
+
+  # 规则5：有个性问题时的规则
+  has_custom_suggestions:
+    condition: "has_custom_suggestions == true"
+    # 个性建议追加在建议5之后，序号根据总条数递增
+    append_after: 5
+
+# ============================================
+# 三、序号生成规则
+# ============================================
+
+numbering:
+  # 序号前缀
+  prefix: "一是、二是、三是、四是、五是、六是、七是"
+
+  # 最大条数限制
+  max_suggestions: 7
+
+# ============================================
+# 四、示例
+# ============================================
+
+examples:
+  - name: "陕西文化产业"
+    type: "has_problems_no_compensation"
+    problem_indicators:
+      - "银担分险业务占比"
+      - "新增比例再担保业务规模"
+    gap_level: "有一定差距"
+    output: |
+      一是全力完成2024年度各项目标任务。贵司全年指标任务中银担分险业务占比、新增比例再担保业务规模指标完成情况与时间节点要求有一定差距，建议压实责任，切实把工作落到实处，坚决保质保量完成年度任务目标；
+      二是积极谋划2025年工作目标任务。结合实际，找准工作着力点，进一步提升明年工作的时效性，确保目标任务圆满完成；
+      三是加大创新产品开发力度。深化银行批量业务合作，优化产品结构，形成自身特色的创新产品；
+      四是持续加强风险防控工作。将风险防控工作提高至战略高度，严把业务风险入口关，不断加强业务保后管理。
+
+  - name: "西安沣东融资担保"
+    type: "has_problems_and_compensation"
+    problem_indicators:
+      - "新增担保业务规模"
+      - "银担分险业务占比"
+      - "新增比例再担保业务规模"
+    gap_level: "有一定差距"
+    has_compensation: true
+    output: |
+      一是全力完成2024年度各项目标任务。贵司全年指标任务中新增担保业务规模、银担分险业务占比、新增比例再担保业务规模指标完成情况与时间节点要求有一定差距，建议压实责任，切实把工作落到实处，坚决保质保量完成年度任务目标；
+      二是积极谋划2025年工作目标任务。结合实际，找准工作着力点，进一步提升明年工作的时效性，确保目标任务圆满完成；
+      三是加大创新产品开发力度。深化银行批量业务合作，优化产品结构，形成自身特色的创新产品；
+      四是加大代偿清收工作力度。拓宽追偿渠道，提高追偿效率，确保代偿资金有效追回并及时返还我司；
+      五是持续加强风险防控工作。将风险防控工作提高至战略高度，严把业务风险入口关，不断加强业务保后管理。
+
+  - name: "安塞金诚融资担保"
+    type: "no_problems"
+    output: |
+      一是全力完成2024年度各项目标任务。压实责任，切实把工作落到实处，坚决保质保量完成年度任务目标；
+      二是积极谋划2025年工作目标任务。结合实际，找准工作着力点，进一步提升明年工作的时效性，确保目标任务圆满完成；
+      三是加大创新产品开发力度。深化银行批量业务合作，优化产品结构，形成自身特色的创新产品；
+      四是持续加强风险防控工作。将风险防控工作提高至战略高度，严把业务风险入口关，不断加强业务保后管理.
+
+  - name: "汉中市资信融资担保"
+    type: "has_problems_and_compensation"
+    problem_indicators:
+      - "新增担保业务规模"
+      - "新增比例再担保业务规模"
+    gap_level: "有一定差距"
+    has_compensation: true
+    has_custom_suggestions: true
+    custom_suggestions: "加强规范项目代偿追偿管理工作"
+    output: |
+      一是全力完成2024年度各项目标任务。贵司全年指标任务中新增担保业务规模、新增比例再担保业务规模指标完成情况与时间节点要求有一定差距，建议压实责任，切实把工作落到实处，坚决保质保量完成年度任务目标；
+      二是积极谋划2025年工作目标任务。结合实际，找准工作着力点，进一步提升明年工作的时效性，确保目标任务圆满完成；
+      三是加大创新产品开发力度。深化银行批量业务合作，优化产品结构，形成自身特色的创新产品；
+      四是加大代偿清收工作力度。加强规范项目代偿追偿管理工作，拓宽追偿渠道，提高追偿效率，确保代偿资金有效追回并及时返还我司；
+      五是持续加强风险防控工作。将风险防控工作提高至战略高度，严把业务风险入口关，不断加强业务保后管理.

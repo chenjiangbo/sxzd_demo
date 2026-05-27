@@ -1,0 +1,242 @@
+# 非结构化文档解析规则
+# 用于从一部的docx模板和三部的xlsx表格中提取数据
+
+# ============================================
+# 一、一部提供的docx模板解析
+# ============================================
+
+docx_parser:
+  # 文档来源：一部的"综合评价提示函-xxx.docx"模板
+
+  # 机构基本信息（从标题和称呼提取）
+  org_info:
+    org_name:
+      # 从第一行提取：如"关于西安沣东融资担保有限公司"
+      pattern: "^关于(.+)202?\\d+年下半年综合评价的提示函$"
+      group: 1
+
+    contact_info:
+      # 从第二行提取：如"冯健董事长："
+      pattern: "^(.+?)(董事长|执行董事|总经理|执行董事兼总经理)："
+      name_group: 1
+      title_group: 2
+
+    report_period:
+      # 从"截至xxxx年x季度末"提取
+      pattern: "截至(\\d{4}年[一二三四]季度末)"
+      group: 1
+
+  # 6项业务指标（从总体情况段落提取）
+  indicators:
+    # 正则匹配格式：指标名目标值XX亿元，实际值XX亿元，完成率XX%
+    patterns:
+      - name: "new_guarantee"
+        display: "新增担保业务规模"
+        regex: "新增担保业务规模目标值([\\d.]+)亿元，实际值([\\d.]+)亿元，完成率([\\d.]+)%"
+        unit: "亿元"
+
+      - name: "risk_sharing"
+        display: "银担分险业务占比"
+        regex: "银担分险业务占比目标值([\\d.]+)%，实际值([\\d.]+)%，完成率([\\d.]+)%"
+        unit: "%"
+
+      - name: "reinsurance"
+        display: "新增比例再担保业务规模"
+        regex: "新增比例再担保业务规模目标值([\\d.]+)亿元，实际值([\\d.]+)亿元，完成率([\\d.]+)%"
+        unit: "亿元"
+
+      - name: "smes"
+        display: "小微三农融资担保业务占比"
+        regex: "小微三农融资担保业务占比目标值([\\d.]+)%，实际值([\\d.]+)%，完成率([\\d.]+)%"
+        unit: "%"
+
+      - name: "leverage"
+        display: "担保放大倍数"
+        regex: "担保放大倍数目标值([\\d.]+)倍，实际值([\\d.]+)倍，完成率([\\d.]+)%"
+        unit: "倍"
+
+      - name: "compensation_rate"
+        display: "比例再担保业务代偿率"
+        regex: "比例再担保业务代偿率目标值不超过2%，实际值([\\d.]+)%"
+        unit: "%"
+        special: true  # 完成率不是直接计算的，是代偿率本身
+
+  # 代偿追偿数据（从"（二）代偿追偿及返还情况"提取）
+  compensation_section:
+    section_header: "（二）代偿追偿及返还情况"
+    # 如果值是"**"，表示数据待确认，需要从xlsx补充
+    placeholder: "\\*\\*"  # 匹配 "**" 表示待填
+    has_data: false  # 当placeholder时设为false
+
+# ============================================
+# 二、三部提供的xlsx表格解析
+# ============================================
+
+xlsx_parser:
+  # 文档来源：三部的"担保机构名单-业务三部填写部分xxxx.xlsx"
+
+  # Sheet名称
+  sheet_names:
+    - "2025.11"  # 最新季度
+    - "Sheet2"   # 历史或备份
+
+  # 代偿追偿数据列
+  compensation_columns:
+    section_header: "代偿追偿及返还情况。截至XXXX年X季度末，累计代偿补偿金额**，累计回收**，XXXX年回收**，代偿款返还率**。"
+
+    fields:
+      - display: "累计代偿补偿金额"
+        pattern: "累计代偿补偿金额([\\d.]+)元"
+        unit: "元"
+
+      - display: "累计回收"
+        pattern: "累计回收([\\d.]+)元"
+        unit: "元"
+
+      - display: "本年回收"
+        pattern: "\\d{4}年回收([\\d.]+)元"
+        unit: "元"
+
+      - display: "代偿款返还率"
+        pattern: "代偿款返还率([\\d.]+)%"
+        unit: "%"
+
+  # 个性问题列
+  problem_columns:
+    header: "二、存在问题"
+    # 问题可能用序号（1. 2.）或多条用分号；分隔
+    separators:
+      - "\\n"        # 换行
+      - "；"         # 中文分号
+      - ";"          # 英文分号
+      - "^\\d+\\."   # 序号
+
+    # 问题类型映射（用于区分一部问题和三部问题）
+    problem_types:
+      - type: "indicator"  # 指标完成问题（一部的）
+        patterns:
+          - "完成情况与时间节点要求"
+          - "较序时进度"
+          - "差距较大"
+          - "指标压力"
+
+      - type: "compensation"  # 代偿追偿问题（三部的）
+        patterns:
+          - "制度建设"
+          - "项目管理"
+          - "代偿项目追偿"
+          - "返还"
+          - "SaaS"
+          - "合同管理"
+          - "保后管理"
+
+  # 个性建议列
+  suggestion_columns:
+    header: "三、相关建议"
+    separators:
+      - "\\n"
+      - "；"
+      - ";"
+      - "^\\d+\\."
+
+# ============================================
+# 三、数据合并规则
+# ============================================
+
+data_merge:
+  # 当docx中代偿数据为placeholder时，用xlsx数据补充
+  use_xlsx_compensation_when:
+    condition: "docx_compensation == '**' OR docx_compensation == null"
+
+  # 问题合并规则
+  problem_merge:
+    # 一部的问题（指标完成情况）
+    indicator_problems:
+      source: "docx"
+      extraction: "从docx中提取的指标完成描述"
+      # 如："7项年度政策任务目标中仅支小支农业务占比、合作业务代偿率等3项指标按序时进度完成，其余指标较序时进度有较大差距"
+
+    # 三部的问题（代偿追偿专项问题）
+    compensation_problems:
+      source: "xlsx"
+      extraction: "从xlsx的'二、存在问题'列提取"
+      # 如："制度建设不完善；代偿项目追偿结果不显著"
+
+  # 建议合并规则
+  suggestion_merge:
+    # 三部的建议（代偿追偿相关）
+    compensation_suggestions:
+      source: "xlsx"
+      extraction: "从xlsx的'三、相关建议'列提取"
+      # 如："细化完善管理办法；加强追偿力度"
+
+# ============================================
+# 四、特殊情况处理
+# ============================================
+
+special_cases:
+  # 情况1：xlsx中"业务三部暂无问题"或"无"
+  no_compensation_problem:
+    condition: "problem_text in ['2025年发生代偿补偿，故业务三部暂无问题', '无', None]"
+    action: "忽略，不作为问题"
+
+  # 情况2：docx中代偿数据为placeholder且xlsx无数据
+  missing_compensation:
+    condition: "docx_compensation == '**' AND xlsx_compensation == None"
+    action: "不显示'代偿追偿'章节"
+
+  # 情况3：xlsx中建议为"无"
+  no_suggestion:
+    condition: "suggestion_text in ['无', None]"
+    action: "不追加个性建议"
+
+# ============================================
+# 五、输出格式
+# ============================================
+
+output:
+  # 解析后的结构化数据
+  format:
+    org_info:
+      org_name: "提取的机构名称"
+      contact_name: "提取的联系人姓名"
+      contact_title: "提取的职务"
+      report_period: "提取的报告期"
+
+    indicators:
+      new_guarantee:
+        target: 35
+        actual: 15.28
+        rate: 43.66
+      risk_sharing:
+        target: 47.8
+        actual: 32.72
+        rate: 68.45
+      reinsurance:
+        target: 2
+        actual: 0.82
+        rate: 41
+      smes:
+        target: 80
+        actual: 100
+        rate: 125
+      leverage:
+        target: 1.54
+        actual: 0.88
+        rate: 57.14
+      compensation_rate:
+        actual: 0  # 代偿率是实际值，完成率不适用
+
+    compensation:
+      total_compensation: 2299789.33  # 从xlsx补充
+      total_recovery: 399375.8
+      recovery_current_year: 39827.8
+      recovery_rate: 17.37
+
+    custom_problems:
+      - "制度建设不完善"
+      - "代偿项目追偿结果不显著"
+
+    custom_suggestions:
+      - "细化完善管理办法"
+      - "加强追偿力度"

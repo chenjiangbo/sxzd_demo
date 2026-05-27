@@ -1,0 +1,155 @@
+# 字段映射配置
+# 将数据库字段映射到文档展示
+
+# ============================================
+# 一、机构基本信息
+# ============================================
+
+org_info:
+  org_name:
+    display_name: "机构名称"
+    required: true
+    template: "关于{org_name}"
+
+  contact_name:
+    display_name: "联系人姓名"
+    required: true
+
+  contact_title:
+    display_name: "职务"
+    required: true
+    options:
+      - 董事长
+      - 执行董事
+      - 总经理
+      - 执行董事兼总经理
+
+  year:
+    display_name: "报告年度"
+    required: true
+    example: "2024"
+
+  report_period:
+    display_name: "报告期"
+    required: true
+    example: "2024年三季度末"
+
+  letter_date:
+    display_name: "发函日期"
+    required: true
+    example: "2024年11月25日"
+
+# ============================================
+# 二、业务指标配置（6项）
+# ============================================
+
+indicators:
+  new_guarantee:
+    display_name: "新增担保业务规模"
+    unit: "亿元"
+    fields:
+      target: "new_guarantee_target"
+      actual: "new_guarantee_actual"
+    display_order: 1
+    # 模板：目标值XX亿元，实际值XX亿元，完成率XX%
+    template: "新增担保业务规模目标值{target}亿元，实际值{actual}亿元，完成率{rate}%"
+
+  risk_sharing:
+    display_name: "银担分险业务占比"
+    unit: "%"
+    fields:
+      target: "risk_sharing_target"
+      actual: "risk_sharing_actual"
+    display_order: 2
+    template: "银担分险业务占比目标值{target}%，实际值{actual}%，完成率{rate}%"
+
+  reinsurance:
+    display_name: "新增比例再担保业务规模"
+    unit: "亿元"
+    fields:
+      target: "reinsurance_target"
+      actual: "reinsurance_actual"
+    display_order: 3
+    template: "新增比例再担保业务规模目标值{target}亿元，实际值{actual}亿元，完成率{rate}%"
+
+  smes:
+    display_name: "小微三农融资担保业务占比"
+    unit: "%"
+    fields:
+      target: "smes_target"
+      actual: "smes_actual"
+    display_order: 4
+    template: "小微三农融资担保业务占比目标值{target}%，实际值{actual}%，完成率{rate}%"
+
+  leverage:
+    display_name: "担保放大倍数"
+    unit: "倍"
+    fields:
+      target: "leverage_target"
+      actual: "leverage_actual"
+    display_order: 5
+    template: "担保放大倍数目标值{target}倍，实际值{actual}倍，完成率{rate}%"
+
+  compensation_rate:
+    display_name: "比例再担保业务代偿率"
+    unit: "%"
+    fields:
+      target: "compensation_rate_target"  # 固定为2%
+      actual: "compensation_rate_actual"
+    display_order: 6
+    special_note: "目标值不超过2%"
+    is_lower_better: true
+    # 代偿率不参与问题判定中的完成率计算，单独做风险判定
+
+# ============================================
+# 三、代偿追偿配置
+# ============================================
+
+compensation_recovery:
+  display_section: true  # 有数据时才显示章节
+
+  section_title: "（二）代偿追偿及返还情况"
+
+  fields:
+    total_compensation:
+      display_name: "累计代偿补偿金额"
+      unit: "元"
+      convert_to_display: "亿"  # 转亿元显示
+      precision: 2
+
+    total_recovery:
+      display_name: "累计回收金额"
+      unit: "元"
+      convert_to_display: "亿"
+      precision: 2
+
+    recovery_current_year:
+      display_name: "{year}年回收金额"
+      unit: "元"
+      convert_to_display: "亿"
+      precision: 2
+      year_placeholder: "{year}"
+
+    recovery_rate:
+      display_name: "代偿款返还率"
+      unit: "%"
+      precision: 2
+
+  # 无数据时的显示规则
+  no_data_rule:
+    action: "hide_section"  # 隐藏整个"代偿追偿"章节
+
+# ============================================
+# 四、个性内容配置
+# ============================================
+
+custom_content:
+  custom_problems:
+    display_name: "个性问题"
+    separator: "；"
+    max_count: 3  # 最多3条个性问题
+
+  custom_suggestions:
+    display_name: "个性建议"
+    separator: "；"
+    position: "append_to_fixed"  # 追加到固定建议之后

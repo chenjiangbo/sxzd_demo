@@ -1,0 +1,168 @@
+# 问题判定规则配置
+# 用于判定"二、存在问题"章节的内容
+
+# ============================================
+# 一、指标问题判定
+# ============================================
+
+indicator_problems:
+  # 完成率低于100%的指标都会被纳入问题
+  threshold: 100  # 完成率低于此值视为有问题（单位：%）
+
+  # 差距程度判定
+  gap_levels:
+    large_gap:
+      max_rate: 60   # 完成率 < 60% 为"有较大差距"
+      description: "有较大差距"
+    general_gap:
+      max_rate: 100  # 60% <= 完成率 < 100% 为"有一定差距"
+      description: "有一定差距"
+
+  # 问题描述模板
+  # {indicators} - 问题指标列表，用顿号分隔
+  # {gap_level} - 差距程度描述
+  template: "贵司全年指标任务中{indicators}指标完成情况与时间节点要求{gap_level}。"
+  template_with_custom: "贵司全年指标任务中{indicators}指标完成情况与时间节点要求{gap_level}；{custom_problems}。"
+
+  # 指标名称映射（与field_mapping.yaml保持一致）
+  indicator_names:
+    new_guarantee: "新增担保业务规模"
+    risk_sharing: "银担分险业务占比"
+    reinsurance: "新增比例再担保业务规模"
+    smes: "小微三农融资担保业务占比"
+    leverage: "担保放大倍数"
+    # compensation_rate 单独处理，不纳入常规问题
+
+  # 指标分隔符
+  indicator_separator: "、"
+
+  # 特殊处理：完成率0%视为"有较大差距"
+  special_cases:
+    zero_actual:
+      condition: "actual == 0 AND target > 0"
+      gap_level: "有较大差距"
+
+# ============================================
+# 二、风险预警判定（代偿率）
+# ============================================
+
+risk_warnings:
+  # 代偿率预警阈值
+  compensation_rate_thresholds:
+    high_risk: 5      # 代偿率 > 5% 为高风险
+    elevated_risk: 3  # 代偿率 > 3% 为需关注风险
+
+  # 高风险描述模板（代偿率 > 5%）
+  high_risk_template: "比例再担保业务代偿率已超过5%，合作业务风险明显提升。"
+
+  # 需关注风险描述模板（3% < 代偿率 ≤ 5%）
+  elevated_risk_template: "比例再担保业务代偿率超过3%，合作业务风险较高。"
+
+  # 代偿率越低越好，判定逻辑与其他指标相反
+  is_lower_better: true
+
+# ============================================
+# 三、代偿追偿问题判定
+# ============================================
+
+recovery_problems:
+  # 代偿未回收问题
+  no_recovery:
+    condition: "total_compensation > 0 AND total_recovery == 0"
+    template: "代偿补偿项目尚未实现资金回流，追偿工作力度有待加强。"
+
+  # 代偿款返还率低问题
+  low_recovery_rate:
+    condition: "recovery_rate < 50"
+    template: "代偿款返还率偏低，建议加大追偿力度。"
+
+  # 合并模板：当同时满足上述两个条件时
+  combined_template: "代偿补偿项目尚未实现资金回流，追偿工作力度有待加强；代偿款返还率偏低，建议加大追偿力度。"
+
+# ============================================
+# 四、问题章节输出规则
+# ============================================
+
+output_rules:
+  # 是否显示"二、存在问题"章节
+  show_section:
+    condition: "has_problems OR has_risk OR has_custom_problems"
+    # has_problems: 有指标完成率 < 100%
+    # has_risk: 代偿率 > 3%
+    # has_custom_problems: 有个性化问题
+
+  # 无问题时的处理方式
+  no_problems:
+    action: "skip_section"  # 跳过整个章节，不显示"二、存在问题"
+
+  # 问题描述条数规则
+  multi_problem_format:
+    # 当问题指标超过1个或有自定义问题时，使用序号格式
+    use_numbered_format:
+      condition: "problem_count >= 2 OR has_custom_problems"
+    # 序号格式：
+    # 一是...；二是...；三是...
+    single_problem_format:
+      # 当只有1个问题指标且无自定义问题时，使用简单格式
+      condition: "problem_count == 1 AND not has_custom_problems"
+
+# ============================================
+# 五、问题合并规则
+# ============================================
+
+problem_merge:
+  # 当同时存在指标问题、代偿率风险、代偿追偿问题时
+  # 合并顺序：指标问题 + 代偿率风险 + 代偿追偿问题
+  merge_order:
+    - indicator_problems
+    - compensation_rate_risk
+    - recovery_problems
+
+  # 合并时的连接符
+  connector: "，"  # 逗号连接
+
+# ============================================
+# 六、示例
+# ============================================
+
+examples:
+  - name: "陕西文化产业"
+    indicators:
+      new_guarantee_rate: 174.55   # ≥100%，无问题
+      risk_sharing_rate: 0         # <60%，有较大差距
+      reinsurance_rate: 38.17      # <60%，有较大差距
+    expected_problems:
+      - text: "银担分险业务占比、新增比例再担保业务规模"
+        gap_level: "有一定差距"
+        # 注：实际样本中用"有一定差距"，虽然计算出来<60%
+
+  - name: "西安沣东融资担保"
+    indicators:
+      new_guarantee_rate: 59
+      risk_sharing_rate: 57.74
+      reinsurance_rate: 26
+      compensation_rate: 10.71
+    expected_problems:
+      - indicators: "新增担保业务规模、银担分险业务占比、新增比例再担保业务规模"
+        gap_level: "有一定差距"
+      - risk: "比例再担保业务代偿率已超过5%，合作业务风险明显提升。"
+
+  - name: "汉中市资信融资担保"
+    indicators:
+      reinsurance_rate: 31.65
+      compensation_rate: 3.62
+    recovery:
+      total_compensation: 14394103.99
+      total_recovery: 1474256
+    expected_problems:
+      - indicators: "新增担保业务规模、新增比例再担保业务规模"
+        gap_level: "有一定差距"
+      - risk: "比例再担保业务代偿率超过3%，合作业务风险较高。"
+      - recovery: "部分代偿项目未及时召开风险化解会、形成风险处置会议纪要，未按规定及时返还追偿收入。"
+
+  - name: "咸阳市融资担保"
+    indicators:
+      reinsurance_rate: 64.87   # 60%~99%，有一定差距
+    expected_problems:
+      - indicators: "新增比例再担保业务规模"
+        gap_level: "有较大差距"  # 实际样本用"有较大差距"
