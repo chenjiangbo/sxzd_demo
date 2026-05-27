@@ -268,27 +268,35 @@ export default function PromptLetterTaskPage() {
   };
 
   const generateAllReports = async () => {
-    const successFiles = files.filter(f => f.status === 'success');
+    // 只生成未完成的 Word 文件，已完成和 Excel 不需要重新生成
+    const pendingWordFiles = files.filter(f => {
+      const isDoc = f.name.toLowerCase().endsWith('.docx') || f.name.toLowerCase().endsWith('.doc');
+      return f.status === 'success' && isDoc && f.generateStatus !== 'done';
+    });
+    const excelFiles = files.filter(f => {
+      const isXls = f.name.toLowerCase().endsWith('.xlsx') || f.name.toLowerCase().endsWith('.xls');
+      return f.status === 'success' && isXls;
+    });
 
-    if (successFiles.length === 0) {
-      alert('请先上传文件');
+    if (pendingWordFiles.length === 0) {
+      alert('所有 Word 文件已生成完成，无需重复生成');
       return;
     }
 
     setIsGenerating(true);
-    setStatusMessage('正在准备生成...');
+    setStatusMessage(`正在准备生成 ${pendingWordFiles.length} 个文件...`);
 
-    // 只对 Word 文件设置生成状态（Excel 不需要显示生成进度）
-    setFiles(prev => prev.map(f => {
-      const isDocx = f.name.toLowerCase().endsWith('.docx') || f.name.toLowerCase().endsWith('.doc');
-      return f.status === 'success' && isDocx
+    // 只对未完成的 Word 文件设置生成状态
+    const pendingIds = new Set(pendingWordFiles.map(f => f.id));
+    setFiles(prev => prev.map(f =>
+      pendingIds.has(f.id)
         ? { ...f, generateStatus: 'generating' as const, generateProgress: 0 }
-        : f;
-    }));
+        : f
+    ));
 
-    // 预建 serverId -> 本地文件信息的映射（避免闭包中引用过时的 files 状态）
+    // 预建 serverId -> 本地文件信息的映射（只包含待生成的 Word + Excel 参考文件）
     const serverToFileMap: Record<string, { localId: string; name: string }> = {};
-    files.forEach(f => {
+    [...pendingWordFiles, ...excelFiles].forEach(f => {
       if (f.serverId) {
         serverToFileMap[f.serverId] = { localId: f.id, name: f.name };
       }
@@ -299,12 +307,15 @@ export default function PromptLetterTaskPage() {
     const reportMap: Record<string, string> = {}; // fileId -> reportId
 
     try {
+      // 只发送待生成的 Word 文件 ID + Excel 文件 ID
+      const fileIdsToSend = [
+        ...pendingWordFiles.map(f => f.serverId!),
+        ...excelFiles.map(f => f.serverId!),
+      ];
       const response = await fetch('/api/prompt-letter/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileIds: files.filter(f => f.status === 'success' && f.serverId).map(f => f.serverId),
-        }),
+        body: JSON.stringify({ fileIds: fileIdsToSend }),
       });
 
       if (!response.ok) {
