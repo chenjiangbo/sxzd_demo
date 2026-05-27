@@ -135,18 +135,28 @@ function classifyLine(line: string): {
 } {
   const trimmed = line.trim();
 
-  // 主标题：包含 "综合评价的提示函" 或 "关于xxx"
-  if (trimmed.startsWith('关于') && trimmed.includes('综合评价的提示函')) {
+  // 主标题第一行："关于xxx" 或 "关于xxx公司"
+  if (trimmed.startsWith('关于') && trimmed.length >= 4 && trimmed.length <= 30) {
     return { type: 'title', text: trimmed };
   }
 
-  // 副标题：主标题的第二行（xxx年xx半年综合评价的提示函）
-  if (/^\d{4}年.*综合评价的提示函$/.test(trimmed)) {
+  // 主标题第二行：xxx年xx半年综合评价的提示函（容许数字与汉字之间有空格）
+  if (/^\d{4}\s*年.*综合评价的提示函$/.test(trimmed)) {
     return { type: 'title', text: trimmed };
   }
 
-  // 称谓行：以姓名+职务+冒号开头（如 "童彦董事长："、"滑全民总经理："）
+  // 称谓行：姓名+职务+冒号（如 "童彦董事长："、"滑全民总经理："）
   if (/^.{2,6}(董事长|总经理|执行董事|执行董事兼总经理|监事长)[：:]$/.test(trimmed)) {
+    return { type: 'greeting', text: trimmed };
+  }
+
+  // 称谓行（无职务）：纯姓名+冒号（如 "张宇婷："），2-6个汉字后紧跟全角冒号
+  if (/^[\u4e00-\u9fa5]{2,6}[：:]$/.test(trimmed)) {
+    return { type: 'greeting', text: trimmed };
+  }
+
+  // 称谓行占位符："联系人 职务：" 等 AI 未替换的字面占位符
+  if (/^联系人\s*职务[：:]$/.test(trimmed)) {
     return { type: 'greeting', text: trimmed };
   }
 
@@ -205,7 +215,7 @@ function buildDocumentBody(rawText: string): string {
       case 'title':
         paragraphs.push(buildParagraph({
           text: classified.text,
-          fontFamily: '黑体',
+          fontFamily: '仿宋',
           fontSize: FONT_SIZE.TITLE,
           bold: true,
           align: 'center',

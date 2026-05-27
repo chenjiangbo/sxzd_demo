@@ -300,6 +300,18 @@ export async function generatePromptLetterWithAI(
   processedText = processedText.replace(/\{current_date\}/gi, letterDate);
   processedText = processedText.replace(/\{date\}/gi, letterDate);
 
+  // 替换联系人/职务等可能未被 AI 替换的占位符
+  processedText = processedText.replace(/\{联系人姓名\}/g, '');
+  processedText = processedText.replace(/\{职务\}/g, '');
+  processedText = processedText.replace(/\{contact_name\}/gi, '');
+  processedText = processedText.replace(/\{contact_title\}/gi, '');
+  processedText = processedText.replace(/\{org_name\}/gi, '');
+  processedText = processedText.replace(/\{prev_year\}/gi, String(year - 1));
+  processedText = processedText.replace(/\{report_period\}/g, `${year - 1}年年末`);
+
+  // 清理残留的字面占位符文本（如 "联系人 职务：" 或 "联系人职务："）
+  processedText = processedText.replace(/^联系人\s*职务[：:]$/gm, '');
+
   console.log(`[提示函生成] 后处理完成，替换了占位符`);
 
   const institutionName = extractedData[0]?.institutionName || '未知机构';
