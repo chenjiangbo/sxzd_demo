@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import {
   listUploadedFiles,
   extractFileContent,
@@ -22,7 +21,7 @@ export async function POST() {
 
       try {
         // Step 1: 获取上传的文件列表
-        send('status', { text: '正在读取上传的文件列表...' });
+        send('status', { text: '正在读取上传的文件列表...', fileId: '' });
         const files = await listUploadedFiles();
 
         if (files.length === 0) {
@@ -31,84 +30,112 @@ export async function POST() {
           return;
         }
 
-        send('status', { text: `找到 ${files.length} 个文件，正在提取内容...` });
+        // 分离 Word 文件和 Excel 文件
+        const wordFiles = files.filter(f => {
+          const ext = f.name.toLowerCase();
+          return ext.endsWith('.docx') || ext.endsWith('.doc');
+        });
+        const excelFiles = files.filter(f => {
+          const ext = f.name.toLowerCase();
+          return ext.endsWith('.xlsx') || ext.endsWith('.xls');
+        });
 
-        // Step 2: 提取文件内容
-        const extractedDataList: ExtractedData[] = [];
-        for (let i = 0; i < files.length; i++) {
-          const fileInfo = files[i];
-          send('status', { text: `正在提取: ${fileInfo.name} (${i + 1}/${files.length})` });
-          try {
-            const extracted = await extractFileContent(fileInfo);
-            extractedDataList.push(extracted);
-            console.log(`[生成路由] 提取完成: ${fileInfo.name}, ${extracted.rawText.length} 字符`);
-          } catch (err) {
-            console.error(`[生成路由] 提取失败: ${fileInfo.name}`, err);
-            send('status', { text: `警告: 文件 ${fileInfo.name} 提取失败，跳过` });
-          }
-        }
-
-        if (extractedDataList.length === 0) {
-          send('error', { message: '所有文件提取失败，无法生成提示函' });
+        if (wordFiles.length === 0) {
+          send('error', { message: '未找到 Word 文档，请先上传 .docx 文件' });
           controller.close();
           return;
         }
 
-        send('status', { text: `成功提取 ${extractedDataList.length} 个文件的内容` });
+        send('status', { text: `找到 ${wordFiles.length} 个 Word 文档和 ${excelFiles.length} 个 Excel 文件`, fileId: '' });
 
-        // Step 3: 加载 Skill 规则并调用 AI
-        send('status', { text: '正在加载 Skill 规则文件...' });
-        send('status', { text: '正在调用 AI 模型生成提示函（这可能需要 1-3 分钟）...' });
-
-        // 心跳定时器：每 10 秒发送一次保持连接活跃
-        let heartbeatCounter = 0;
-        const heartbeatInterval = setInterval(() => {
-          heartbeatCounter++;
-          send('status', { text: `AI 正在生成中... (${heartbeatCounter * 10}s)` });
-        }, 10000);
-
-        let letter;
-        try {
-          letter = await generatePromptLetterWithAI(extractedDataList);
-        } finally {
-          clearInterval(heartbeatInterval);
-        }
-
-        // Step 4: 保存生成的结果
-        send('status', { text: 'AI 生成完成，正在保存结果...' });
-        const filePath = await saveGeneratedPromptLetter(letter);
-        console.log(`[生成路由] 已保存: ${filePath}`);
-
-        // Step 5: 分块发送生成的内容
-        send('status', { text: '正在逐段输出提示函预览...' });
-
-        const paragraphs = letter.rawText.split(/\n\n+/);
-        let accumulatedText = '';
-
-        for (let i = 0; i < paragraphs.length; i++) {
-          const paragraph = paragraphs[i];
-          if (paragraph.trim()) {
-            accumulatedText += (accumulatedText ? '\n\n' : '') + paragraph;
-            send('chunk', {
-              text: paragraph,
-              accumulatedText,
-              paragraphIndex: i,
-              totalParagraphs: paragraphs.length,
-            });
-            await new Promise((resolve) => setTimeout(resolve, 150));
+        // Step 2: 提取 Excel 数据（作为共享参考数据）
+        const excelDataList: ExtractedData[] = [];
+        for (const excelFile of excelFiles) {
+          try {
+            const extracted = await extractFileContent(excelFile);
+            excelDataList.push(extracted);
+            send('status', { text: `已提取 Excel 数据: ${excelFile.name}`, fileId: '' });
+          } catch (err) {
+            console.error(`[生成路由] Excel 提取失败: ${excelFile.name}`, err);
           }
         }
 
-        // Step 6: 发送完成信号
-        send('complete', {
-          text: '生成完成',
-          institutionName: letter.institutionName,
-          fileName: letter.fileName,
-          generatedAt: letter.generatedAt,
-          cached: false,
-        });
+        // Step 3: 逐个 Word 文件生成提示函
+        for (let fi = 0; fi < wordFiles.length; fi++) {
+          const wordFile = wordFiles[fi];
+          const fileId = wordFile.id;
 
-        console.log(`[生成路由] 生成完成: ${letter.institutionName}`);
+          send('status', { text: `正在处理: ${wordFile.name} (${fi + 1}/${wordFiles.length})`, fileId });
+
+          // 提取 Word 文件内容
+          let wordData: ExtractedData;
+          try {
+            wordData = await extractFileContent(wordFile);
+            console.log(`[生成路由] Word 提取完成: ${wordFile.name}, ${wordData.rawText.length} 字符`);
+          } catch (err) {
+            console.error(`[生成路由] Word 提取失败: ${wordFile.name}`, err);
+            send('error', { message: `文件 ${wordFile.name} 内容提取失败`, fileId });
+            continue;
+          }
+
+          // 组合: 当前 Word 文件 + 所有 Excel 数据
+          const combinedData: ExtractedData[] = [wordData, ...excelDataList];
+
+          send('status', { text: `正在调用 AI 生成: ${wordFile.name}`, fileId });
+
+          // 心跳定时器
+          let heartbeatCounter = 0;
+          const heartbeatInterval = setInterval(() => {
+            heartbeatCounter++;
+            send('status', { text: `AI 正在生成中... (${heartbeatCounter * 10}s)`, fileId });
+          }, 10000);
+
+          let letter;
+          try {
+            letter = await generatePromptLetterWithAI(combinedData);
+          } finally {
+            clearInterval(heartbeatInterval);
+          }
+
+          // 保存结果
+          send('status', { text: 'AI 生成完成，正在保存...', fileId });
+          const filePath = await saveGeneratedPromptLetter(letter);
+          console.log(`[生成路由] 已保存: ${filePath}`);
+
+          // 分块发送内容
+          send('status', { text: '正在输出预览...', fileId });
+          const paragraphs = letter.rawText.split(/\n\n+/);
+          let accumulatedText = '';
+
+          for (let i = 0; i < paragraphs.length; i++) {
+            const paragraph = paragraphs[i];
+            if (paragraph.trim()) {
+              accumulatedText += (accumulatedText ? '\n\n' : '') + paragraph;
+              send('chunk', {
+                text: paragraph,
+                accumulatedText,
+                paragraphIndex: i,
+                totalParagraphs: paragraphs.length,
+                fileId,
+              });
+              await new Promise((resolve) => setTimeout(resolve, 100));
+            }
+          }
+
+          // 发送完成信号（包含 fileId）
+          send('complete', {
+            text: '生成完成',
+            institutionName: letter.institutionName,
+            fileName: letter.fileName,
+            generatedAt: letter.generatedAt,
+            fileId,
+          });
+
+          console.log(`[生成路由] 文件 ${wordFile.name} 生成完成: ${letter.institutionName}`);
+        }
+
+        // 所有文件生成完毕
+        send('all-done', { text: `全部 ${wordFiles.length} 个文件生成完成` });
       } catch (err) {
         console.error('[生成路由] 生成提示函时出错:', err);
         send('error', {

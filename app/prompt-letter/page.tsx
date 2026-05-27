@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Upload, FileText, Download, X, LoaderCircle, Sparkles } from 'lucide-react';
 import PromptLetterPreviewClient from '@/components/PromptLetterPreviewClient';
 import Sidebar from '@/components/Sidebar';
@@ -13,7 +13,10 @@ type FileItem = {
   file: File;
   status: 'idle' | 'uploading' | 'success' | 'error';
   progress: number;
-  serverId?: string; // 服务端返回的文件 ID
+  serverId?: string;
+  generateStatus?: 'idle' | 'generating' | 'done' | 'error';
+  generateProgress?: number;
+  reportId?: string; // 关联到生成的报告
 };
 
 type GeneratedReport = {
@@ -22,6 +25,7 @@ type GeneratedReport = {
   institutionName: string;
   content: string;
   generatedAt: string;
+  sourceFileId: string; // 关联到源文件
 };
 
 export default function PromptLetterTaskPage() {
@@ -30,7 +34,7 @@ export default function PromptLetterTaskPage() {
   const [activeReport, setActiveReport] = useState<number | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string>('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
@@ -59,7 +63,7 @@ export default function PromptLetterTaskPage() {
 
     // 清空input，允许选择相同文件
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      (fileInputRef.current as HTMLInputElement).value = '';
     }
   };
 
@@ -150,11 +154,31 @@ export default function PromptLetterTaskPage() {
     setIsGenerating(true);
     setStatusMessage('正在准备生成...');
 
+    // 只对 Word 文件设置生成状态（Excel 不需要显示生成进度）
+    setFiles(prev => prev.map(f => {
+      const isDocx = f.name.toLowerCase().endsWith('.docx') || f.name.toLowerCase().endsWith('.doc');
+      return f.status === 'success' && isDocx
+        ? { ...f, generateStatus: 'generating' as const, generateProgress: 0 }
+        : f;
+    }));
+
+    // 预建 serverId -> 本地文件信息的映射（避免闭包中引用过时的 files 状态）
+    const serverToFileMap: Record<string, { localId: string; name: string }> = {};
+    files.forEach(f => {
+      if (f.serverId) {
+        serverToFileMap[f.serverId] = { localId: f.id, name: f.name };
+      }
+    });
+
+    // 用于跟踪每个文件的累积内容（按 fileId）
+    const contentMap: Record<string, string> = {};
+    const reportMap: Record<string, string> = {}; // fileId -> reportId
+
     try {
       const response = await fetch('/api/prompt-letter/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}), // 服务端会自动获取已上传的文件列表
+        body: JSON.stringify({}),
       });
 
       if (!response.ok) {
@@ -169,7 +193,6 @@ export default function PromptLetterTaskPage() {
 
       const decoder = new TextDecoder();
       let buffer = '';
-      let accumulatedContent = '';
 
       while (true) {
         const { done, value } = await reader.read();
@@ -177,14 +200,12 @@ export default function PromptLetterTaskPage() {
 
         buffer += decoder.decode(value, { stream: true });
 
-        // 按双换行分割 SSE 事件
         const events = buffer.split('\n\n');
         buffer = events.pop() || '';
 
         for (const eventStr of events) {
           if (!eventStr.trim()) continue;
 
-          // 解析 SSE 事件: event: xxx\ndata: {...}
           const eventMatch = eventStr.match(/event:\s*(\S+)/);
           const dataMatch = eventStr.match(/data:\s*(.+)/);
 
@@ -199,40 +220,133 @@ export default function PromptLetterTaskPage() {
             continue;
           }
 
+          const fileId = (data.fileId as string) || '';
+
           switch (eventType) {
             case 'status':
               setStatusMessage(data.text as string);
+              if (fileId) {
+                // 更新特定文件的生成进度
+                setFiles(prev => prev.map(f => {
+                  return f.serverId === fileId && f.generateStatus === 'generating'
+                    ? { ...f, generateProgress: Math.min((f.generateProgress || 0) + 3, 90) }
+                    : f;
+                }));
+              }
               break;
 
-            case 'chunk':
-              // 累积内容
-              accumulatedContent = (data.accumulatedText as string) || accumulatedContent + (data.text as string);
-              // 实时更新当前报告的预览
-              setGeneratedReports([{
-                id: `report_${Date.now()}`,
-                fileName: '提示函生成中...',
-                institutionName: '生成中',
-                content: accumulatedContent,
-                generatedAt: new Date().toISOString(),
-              }]);
-              setActiveReport(0);
-              break;
+            case 'chunk': {
+              const chunkFileId = data.fileId as string;
+              if (!chunkFileId) break;
 
-            case 'complete':
-              // 生成完成，更新报告列表
-              setGeneratedReports([{
-                id: `report_${Date.now()}`,
-                fileName: (data.fileName as string) || successFiles[0]?.name || '生成的提示函',
-                institutionName: (data.institutionName as string) || '未知机构',
-                content: accumulatedContent,
-                generatedAt: (data.generatedAt as string) || new Date().toISOString(),
-              }]);
-              setActiveReport(0);
+              const accText = (data.accumulatedText as string) || '';
+              contentMap[chunkFileId] = accText;
+
+              // 为该 fileId 创建或更新 reportId
+              if (!reportMap[chunkFileId]) {
+                reportMap[chunkFileId] = `report_${chunkFileId}_${Date.now()}`;
+              }
+              const rId = reportMap[chunkFileId];
+
+              // 查找对应的本地文件
+              const localFileInfo = serverToFileMap[chunkFileId];
+              const fileLabel = localFileInfo?.name || '提示函';
+
+              // 更新或添加报告
+              setGeneratedReports(prev => {
+                const existing = prev.find(r => r.id === rId);
+                if (existing) {
+                  return prev.map(r => r.id === rId ? { ...r, content: accText } : r);
+                }
+                return [...prev, {
+                  id: rId,
+                  fileName: fileLabel.replace(/\.(docx|doc)$/i, '') + '-提示函',
+                  institutionName: '生成中...',
+                  content: accText,
+                  generatedAt: new Date().toISOString(),
+                  sourceFileId: localFileInfo?.localId || '',
+                }];
+              });
+
+              // 自动选中第一个正在生成的报告
+              setGeneratedReports(prev => {
+                const idx = prev.findIndex(r => r.id === rId);
+                if (idx >= 0) setActiveReport(idx);
+                return prev;
+              });
+
+              // 更新特定文件的生成进度
+              const chunkProgress = ((data.paragraphIndex as number) || 0) / ((data.totalParagraphs as number) || 1) * 100;
+              setFiles(prev => prev.map(f => {
+                return f.serverId === chunkFileId && f.generateStatus === 'generating'
+                  ? { ...f, generateProgress: Math.max(f.generateProgress || 0, Math.min(chunkProgress, 95)) }
+                  : f;
+              }));
+              break;
+            }
+
+            case 'complete': {
+              const completeFileId = data.fileId as string;
+              if (!completeFileId) break;
+
+              const completeRId = reportMap[completeFileId];
+              if (!completeRId) break;
+
+              const completeContent = contentMap[completeFileId] || '';
+              const completeLocalInfo = serverToFileMap[completeFileId];
+
+              // 更新报告为最终状态
+              setGeneratedReports(prev => {
+                return prev.map(r => r.id === completeRId ? {
+                  ...r,
+                  fileName: (data.fileName as string) || r.fileName,
+                  institutionName: (data.institutionName as string) || '未知机构',
+                  content: completeContent,
+                  generatedAt: (data.generatedAt as string) || new Date().toISOString(),
+                } : r);
+              });
+
+              // 标记对应文件为完成
+              setFiles(prev => prev.map(f => {
+                return f.serverId === completeFileId && f.generateStatus === 'generating'
+                  ? { ...f, generateStatus: 'done' as const, generateProgress: 100, reportId: completeRId }
+                  : f;
+              }));
+
+              // 自动选中该报告
+              setGeneratedReports(prev => {
+                const idx = prev.findIndex(r => r.id === completeRId);
+                if (idx >= 0) setActiveReport(idx);
+                return prev;
+              });
+              break;
+            }
+
+            case 'error': {
+              const errFileId = data.fileId as string;
+              if (errFileId) {
+                // 特定文件错误
+                setFiles(prev => prev.map(f => {
+                  return f.serverId === errFileId && f.generateStatus === 'generating'
+                    ? { ...f, generateStatus: 'error' as const, generateProgress: 0 }
+                    : f;
+                }));
+              } else {
+                // 全局错误
+                setFiles(prev => prev.map(f => {
+                  const isDoc = f.name.toLowerCase().endsWith('.docx') || f.name.toLowerCase().endsWith('.doc');
+                  return f.generateStatus === 'generating' && isDoc
+                    ? { ...f, generateStatus: 'error' as const, generateProgress: 0 }
+                    : f;
+                }));
+                throw new Error((data.message as string) || '生成过程中出现错误');
+              }
+              break;
+            }
+
+            case 'all-done':
               setStatusMessage('');
               break;
-
-            case 'error':
-              throw new Error((data.message as string) || '生成过程中出现错误');
           }
         }
       }
@@ -240,8 +354,25 @@ export default function PromptLetterTaskPage() {
       console.error('生成报告时出错:', error);
       alert('生成报告失败: ' + (error as Error).message);
       setStatusMessage('');
+      // 全局错误：所有 Word 文件标记为错误
+      setFiles(prev => prev.map(f => {
+        const isDoc = f.name.toLowerCase().endsWith('.docx') || f.name.toLowerCase().endsWith('.doc');
+        return f.generateStatus === 'generating' && isDoc
+          ? { ...f, generateStatus: 'error' as const, generateProgress: 0 }
+          : f;
+      }));
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  // 点击文件选择对应的报告
+  const handleFileClick = (file: FileItem) => {
+    if (file.generateStatus === 'done' && file.reportId) {
+      const reportIndex = generatedReports.findIndex(r => r.id === file.reportId);
+      if (reportIndex >= 0) {
+        setActiveReport(reportIndex);
+      }
     }
   };
 
@@ -334,55 +465,93 @@ export default function PromptLetterTaskPage() {
                   <p className="text-sm text-on-surface-variant">暂无上传文件</p>
                 ) : (
                   <ul className="space-y-2">
-                    {files.map(file => (
-                      <li 
-                        key={file.id} 
-                        className={`rounded-2xl border p-3 ${file.type === 'oneDept' ? 'border-blue-200 bg-blue-50' : 'border-green-200 bg-green-50'}`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-primary" />
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-medium text-primary">{file.name}</p>
-                              <p className="text-xs text-on-surface-variant">
-                                {file.type === 'oneDept' ? '一部资料' : '三部资料'}
-                              </p>
-                            </div>
-                          </div>
-                          <button 
-                            onClick={() => removeFile(file.id)}
-                            className="rounded-full p-1 text-on-surface-variant hover:bg-surface-container"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                        
-                        {file.status !== 'idle' && (
-                          <div className="mt-2">
-                            <div className="flex justify-between text-xs text-on-surface-variant">
-                              <span>
-                                {file.status === 'uploading' ? '上传中...' : 
-                                 file.status === 'success' ? '上传成功' : '错误'}
-                              </span>
-                              <span>{file.progress}%</span>
-                            </div>
-                            <div className="mt-1 h-2 overflow-hidden rounded-full bg-surface-container">
-                              <div 
-                                className={`h-full ${file.status === 'error' ? 'bg-error' : 'bg-primary'}`}
-                                style={{ width: `${file.progress}%` }}
-                              />
-                            </div>
-                            
-                            {file.status === 'uploading' && (
-                              <div className="mt-2 flex items-center justify-center">
-                                <LoaderCircle className="h-4 w-4 animate-spin text-primary" />
-                                <span className="ml-2 text-xs text-on-surface-variant">处理中...</span>
+                    {files.map(file => {
+                      const isActive = file.reportId && generatedReports[activeReport ?? -1]?.id === file.reportId;
+                      const canClick = file.generateStatus === 'done';
+                      
+                      return (
+                        <li
+                          key={file.id}
+                          onClick={() => canClick && handleFileClick(file)}
+                          className={`rounded-2xl border p-3 transition-all ${
+                            file.type === 'oneDept' ? 'border-blue-200 bg-blue-50' : 'border-green-200 bg-green-50'
+                          } ${canClick ? 'cursor-pointer hover:shadow-md' : ''} ${isActive ? 'ring-2 ring-primary' : ''}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-primary" />
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-primary">{file.name}</p>
+                                <p className="text-xs text-on-surface-variant">
+                                  {file.type === 'oneDept' ? '一部资料' : '三部资料'}
+                                </p>
                               </div>
-                            )}
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeFile(file.id);
+                              }}
+                              className="rounded-full p-1 text-on-surface-variant hover:bg-surface-container"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
                           </div>
-                        )}
-                      </li>
-                    ))}
+
+                          {/* 上传进度 */}
+                          {file.status !== 'idle' && (
+                            <div className="mt-2">
+                              <div className="flex justify-between text-xs text-on-surface-variant">
+                                <span>
+                                  {file.status === 'uploading' ? '上传中...' :
+                                   file.status === 'success' ? '上传成功' : '错误'}
+                                </span>
+                                <span>{file.progress}%</span>
+                              </div>
+                              <div className="mt-1 h-2 overflow-hidden rounded-full bg-surface-container">
+                                <div
+                                  className={`h-full ${file.status === 'error' ? 'bg-error' : 'bg-primary'}`}
+                                  style={{ width: `${file.progress}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 生成进度 */}
+                          {file.generateStatus && file.generateStatus !== 'idle' && (
+                            <div className="mt-2">
+                              <div className="flex justify-between text-xs">
+                                <span className={
+                                  file.generateStatus === 'generating' ? 'text-orange-600' :
+                                  file.generateStatus === 'done' ? 'text-green-600' :
+                                  file.generateStatus === 'error' ? 'text-red-600' : 'text-gray-500'
+                                }>
+                                  {file.generateStatus === 'generating' ? '生成中...' :
+                                   file.generateStatus === 'done' ? '生成完成' :
+                                   file.generateStatus === 'error' ? '生成失败' : ''}
+                                </span>
+                                <span>{file.generateProgress ?? 0}%</span>
+                              </div>
+                              <div className="mt-1 h-2 overflow-hidden rounded-full bg-surface-container">
+                                <div
+                                  className={`h-full transition-all ${
+                                    file.generateStatus === 'error' ? 'bg-red-500' :
+                                    file.generateStatus === 'done' ? 'bg-green-500' : 'bg-orange-500'
+                                  }`}
+                                  style={{ width: `${file.generateProgress ?? 0}%` }}
+                                />
+                              </div>
+                              {file.generateStatus === 'generating' && (
+                                <div className="mt-1 flex items-center justify-center">
+                                  <LoaderCircle className="h-3 w-3 animate-spin text-orange-500" />
+                                  <span className="ml-1 text-xs text-orange-600">AI 生成中...</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>
@@ -394,42 +563,49 @@ export default function PromptLetterTaskPage() {
             {generatedReports.length > 0 ? (
               <div className="rounded-3xl bg-white p-5 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="font-headline text-lg font-black text-primary">生成的提示函</h2>
-                  <div className="flex gap-2">
-                    <select 
-                      value={activeReport ?? ''}
-                      onChange={(e) => setActiveReport(e.target.value ? parseInt(e.target.value) : null)}
-                      className="rounded-lg border border-outline-variant/30 bg-surface-container px-3 py-2 text-sm"
-                    >
-                      <option value="">选择报告</option>
-                      {generatedReports.map((report, index) => (
-                        <option key={report.id} value={index}>
-                          {report.fileName}
-                        </option>
-                      ))}
-                    </select>
-                    {activeReport !== null && (
-                      <button 
-                        onClick={() => {
-                          // 创建下载链接
-                          const url = `/api/prompt-letter/export?fileName=${encodeURIComponent(generatedReports[activeReport!].fileName)}`;
-                          window.open(url, '_blank');
-                        }}
-                        className="flex items-center gap-2 rounded-2xl border border-outline-variant/30 bg-white px-4 py-2 text-sm font-black text-primary"
+                  <div className="flex items-center gap-3">
+                    <h2 className="font-headline text-lg font-black text-primary">生成的提示函</h2>
+                    {generatedReports.length >= 1 && (
+                      <select
+                        value={activeReport ?? ''}
+                        onChange={(e) => setActiveReport(e.target.value ? parseInt(e.target.value) : null)}
+                        className="rounded-lg border border-outline-variant/30 bg-surface-container px-3 py-1.5 text-sm"
                       >
-                        <Download className="h-4 w-4" />
-                        导出
-                      </button>
+                        <option value="">选择报告</option>
+                        {generatedReports.map((report, index) => (
+                          <option key={report.id} value={index}>
+                            {report.fileName}
+                          </option>
+                        ))}
+                      </select>
                     )}
                   </div>
+                  {activeReport !== null && generatedReports[activeReport] && (
+                    <button
+                      onClick={() => {
+                        const url = `/api/prompt-letter/export?fileName=${encodeURIComponent(generatedReports[activeReport!].fileName)}`;
+                        window.open(url, '_blank');
+                      }}
+                      className="flex items-center gap-2 rounded-2xl border border-outline-variant/30 bg-white px-4 py-2 text-sm font-black text-primary"
+                    >
+                      <Download className="h-4 w-4" />
+                      导出
+                    </button>
+                  )}
                 </div>
 
                 {activeReport !== null && generatedReports[activeReport] ? (
-                  <div className="border border-outline-variant/20 rounded-2xl p-6 min-h-[500px]">
-                    <PromptLetterPreviewClient 
-                      content={generatedReports[activeReport].content} 
-                      fileName={generatedReports[activeReport].fileName}
-                    />
+                  <div>
+                    <div className="mb-2">
+                      <p className="text-sm font-medium text-primary">{generatedReports[activeReport].fileName}</p>
+                      <p className="text-xs text-on-surface-variant">{generatedReports[activeReport].institutionName}</p>
+                    </div>
+                    <div className="border border-outline-variant/20 rounded-2xl p-6 min-h-[500px]">
+                      <PromptLetterPreviewClient
+                        content={generatedReports[activeReport].content}
+                        fileName={generatedReports[activeReport].fileName}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <div className="flex min-h-[500px] items-center justify-center rounded-2xl border border-dashed border-outline-variant/30 bg-surface-container-low">
@@ -444,7 +620,7 @@ export default function PromptLetterTaskPage() {
                     <FileText className="h-12 w-12 mx-auto text-primary/30" />
                     <h3 className="mt-4 text-lg font-bold text-primary">暂无生成的提示函</h3>
                     <p className="mt-2 text-sm text-on-surface-variant">
-                      请先上传一部和三部的资料，然后点击"生成全部"
+                      请先上传一部和三部的资料，然后点击“AI 生成”
                     </p>
                   </div>
                 </div>

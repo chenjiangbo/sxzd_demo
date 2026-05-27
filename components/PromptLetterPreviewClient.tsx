@@ -1,28 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-
 type Props = {
   content: string;
   fileName: string;
 };
 
 export default function PromptLetterPreviewClient({ content, fileName }: Props) {
-  const [displayContent, setDisplayContent] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // 模拟内容加载过程
-    setIsLoading(true);
-    
-    // 模拟加载延迟
-    const timer = setTimeout(() => {
-      setDisplayContent(content);
-      setIsLoading(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [content]);
 
   // 解析提示函内容结构
   const parsePromptLetterContent = (text: string) => {
@@ -66,17 +49,20 @@ export default function PromptLetterPreviewClient({ content, fileName }: Props) 
     return { title: sections[0]?.title || '综合评价提示函', sections: sections.slice(1) };
   };
 
-  const { title, sections } = parsePromptLetterContent(displayContent);
+  // 解析内容
+  const { title, sections } = parsePromptLetterContent(content);
+
+  if (!content) {
+    return (
+      <div className="flex items-center justify-center py-20 text-gray-400">
+        <p>暂无内容</p>
+      </div>
+    );
+  }
 
   return (
     <div className="font-['SimSun',serif] text-[15px] leading-relaxed">
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          <p className="mt-4 text-lg font-medium text-primary">正在加载提示函内容...</p>
-        </div>
-      ) : (
-        <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold mb-6">{title}</h1>
           </div>
@@ -96,9 +82,9 @@ export default function PromptLetterPreviewClient({ content, fileName }: Props) 
             ))}
 
             {/* 如果没有解析到特定结构，直接显示内容 */}
-            {sections.length === 0 && displayContent && (
+            {sections.length === 0 && content && (
               <div className="whitespace-pre-line text-left">
-                {displayContent}
+                {content}
               </div>
             )}
           </div>
@@ -106,10 +92,9 @@ export default function PromptLetterPreviewClient({ content, fileName }: Props) 
           <div className="mt-12 text-right">
             <div className="mb-20">陕西省信用再担保有限责任公司</div>
             <div>总经理 ：</div>
-            <div className="mt-10">{'{letter_date}'}</div>
+            <div className="mt-10">{new Date().getFullYear()}年{new Date().getMonth() + 1}月</div>
           </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getGeneratedPromptLetter } from '@/lib/server/prompt-letter';
+import { getGeneratedPromptLetters } from '@/lib/server/prompt-letter';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const fileName = searchParams.get('fileName') || '综合评价提示函';
 
-    const letter = await getGeneratedPromptLetter();
-    
+    // 获取最新生成的提示函
+    const letters = await getGeneratedPromptLetters();
+    const letter = letters[0]; // 获取最新的
+
     if (!letter) {
       return NextResponse.json(
         { error: '未找到生成的提示函，请先生成提示函' },

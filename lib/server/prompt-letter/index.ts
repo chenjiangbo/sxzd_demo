@@ -282,11 +282,27 @@ export async function generatePromptLetterWithAI(extractedData: ExtractedData[])
 
   console.log(`[提示函生成] AI 生成完成 (${rawText.length} 字符)`);
 
+  // 后处理：替换可能遗留的占位符
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const letterDate = `${year}年${month}月`;
+
+  let processedText = rawText.trim();
+  // 替换常见的占位符格式
+  processedText = processedText.replace(/\{letter_date\}/gi, letterDate);
+  processedText = processedText.replace(/\{year\}/gi, String(year));
+  processedText = processedText.replace(/\{month\}/gi, String(month));
+  processedText = processedText.replace(/\{current_date\}/gi, letterDate);
+  processedText = processedText.replace(/\{date\}/gi, letterDate);
+
+  console.log(`[提示函生成] 后处理完成，替换了占位符`);
+
   const institutionName = extractedData[0]?.institutionName || '未知机构';
 
   return {
     institutionName,
-    rawText: rawText.trim(),
+    rawText: processedText,
     generatedAt: new Date().toISOString(),
     fileName: `${institutionName}-综合评价提示函`,
   };
