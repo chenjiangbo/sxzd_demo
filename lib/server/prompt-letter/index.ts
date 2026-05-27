@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import * as XLSX from 'xlsx';
+import PizZip from 'pizzip';
 import { getDemoCacheRoot, getWorkspaceRoot } from '../runtime-root';
 import { blackwhiteChat, type ChatMessage } from '@/lib/server/blackwhite';
 
@@ -105,10 +106,33 @@ export async function removeUploadedFile(id: string): Promise<void> {
 
 async function extractDocxText(filePath: string): Promise<string> {
   try {
-    // 读取文件内容，docx 本质是 zip，直接返回文本
-    const content = await fs.readFile(filePath);
-    return content.toString();
-  } catch {
+    const buffer = await fs.readFile(filePath);
+    const zip = new PizZip(buffer);
+    const docXml = zip.file('word/document.xml');
+    if (!docXml) return '';
+    const xml = docXml.asText();
+    // 提取段落级文本，保留段落分隔
+    const paragraphs: string[] = [];
+    // 匹配 <w:p>...</w:p> 段落块
+    const paraRegex = /<w:p[^>]*>([\s\S]*?)<\/w:p>/g;
+    let paraMatch;
+    while ((paraMatch = paraRegex.exec(xml)) !== null) {
+      const paraContent = paraMatch[1];
+      // 从段落中提取所有 <w:t> 文本
+      const textParts: string[] = [];
+      const textRegex = /<w:t[^>]*>([^<]*)<\/w:t>/g;
+      let textMatch;
+      while ((textMatch = textRegex.exec(paraContent)) !== null) {
+        textParts.push(textMatch[1]);
+      }
+      const paraText = textParts.join('');
+      if (paraText.trim()) {
+        paragraphs.push(paraText.trim());
+      }
+    }
+    return paragraphs.join('\n');
+  } catch (err) {
+    console.error('[extractDocxText] 提取失败:', err);
     return '';
   }
 }
