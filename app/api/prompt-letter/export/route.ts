@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getGeneratedPromptLetters } from '@/lib/server/prompt-letter';
+import { generatePromptLetterDocx } from '@/lib/server/prompt-letter/docx-generator';
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,68 +22,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 创建简单的HTML格式文档
-    const htmlContent = `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="utf-8" />
-  <title>${fileName}</title>
-  <style>
-    body {
-      font-family: 'SimSun', '宋体', serif;
-      line-height: 2;
-      margin: 5%;
-      background: white;
-      font-size: 16px;
-    }
-    .center {
-      text-align: center;
-    }
-    .right {
-      text-align: right;
-    }
-    .indent {
-      text-indent: 2em;
-    }
-    h1 {
-      font-size: 18px;
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
-${letter.rawText
-  .split('\n')
-  .map(line => {
-    if (line.trim() === '') return '<br>';
-    if (line.includes('关于') && line.includes('综合评价的提示函')) {
-      return `<div class="center"><h1>${line.trim()}</h1></div>`;
-    }
-    if (line.includes('陕西省信用再担保有限责任公司') || 
-        line.includes('总经理') || 
-        line.match(/(\d{4}年\d{1,2}月|\d{4}年\d{1,2}月\d{1,2}日)/)) {
-      return `<div class="right">${line.trim()}</div>`;
-    }
-    if (line.match(/^.*?[：:]$/)) {
-      return `<p><strong>${line.trim()}</strong></p>`;
-    }
-    if (line.match(/^一、|^二、|^三、|^四、|^五、|^六、|^七、|^八、|^九、|^十、/)) {
-      return `<p><strong>${line.trim()}</strong></p>`;
-    }
-    return `<p class="indent">${line.trim()}</p>`;
-  })
-  .join('\n')}
-</body>
-</html>`;
+    // 调用 docx 生成器，生成真实的 Word 文档（带字体、字号、行距、首行缩进等公文排版）
+    const docxBuffer = await generatePromptLetterDocx(letter.rawText);
 
-    // 将HTML转换为Buffer
-    const htmlBuffer = new TextEncoder().encode(htmlContent);
+    // 文件名统一用 .docx
+    const downloadName = `${letter.fileName || fileName}.docx`;
 
-    return new Response(htmlBuffer, {
+    return new Response(docxBuffer, {
       status: 200,
       headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(fileName + '.html')}`,
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(downloadName)}`,
+        'Content-Length': String(docxBuffer.length),
         'Cache-Control': 'no-cache, no-store, must-revalidate',
       },
     });
