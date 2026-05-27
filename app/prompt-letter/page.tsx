@@ -525,8 +525,8 @@ export default function PromptLetterTaskPage() {
       <Sidebar />
       <Header />
 
-      <main className="ml-48 min-h-screen bg-surface px-6 pb-8 pt-20">
-        <section className="mb-6 flex items-end justify-between gap-6">
+      <main className="ml-48 flex min-h-0 flex-1 flex-col bg-surface px-6 pb-4 pt-20">
+        <section className="mb-4 flex shrink-0 items-end justify-between gap-6">
           <div>
             <nav className="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-on-surface-variant">
               <span>业务管理</span>
@@ -540,17 +540,17 @@ export default function PromptLetterTaskPage() {
           </div>
         </section>
 
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid flex-1 grid-cols-12 gap-6" style={{ minHeight: 0 }}>
           {/* 区域A - 文件上传和列表 */}
-          <div className="col-span-4">
-            <div className="rounded-3xl bg-white p-5 shadow-sm">
-              <div className="mb-4">
+          <div className="col-span-4 flex h-full min-h-0 flex-col">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl bg-white p-5 shadow-sm">
+              <div className="mb-4 shrink-0">
                 <h2 className="font-headline text-lg font-black text-primary">文件上传</h2>
                 <p className="text-sm text-on-surface-variant">上传一部和三部的资料以生成提示函</p>
               </div>
 
               <div 
-                className="mb-4 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-outline-variant/30 bg-surface-container-low p-6 text-center transition hover:border-primary/50"
+                className="mb-4 shrink-0 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-outline-variant/30 bg-surface-container-low p-6 text-center transition hover:border-primary/50"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload className="h-10 w-10 text-primary/60" />
@@ -566,7 +566,7 @@ export default function PromptLetterTaskPage() {
                 />
               </div>
 
-              <div className="mb-4 flex gap-3">
+              <div className="mb-4 shrink-0 flex gap-3">
                 <button
                   onClick={uploadAllFiles}
                   disabled={files.every(f => f.status !== 'idle') || isGenerating}
@@ -595,7 +595,7 @@ export default function PromptLetterTaskPage() {
 
               {/* 状态消息 */}
               {statusMessage && (
-                <div className="mb-4 rounded-xl bg-surface-container p-3">
+                <div className="mb-4 shrink-0 rounded-xl bg-surface-container p-3">
                   <div className="flex items-center gap-2">
                     <LoaderCircle className="h-4 w-4 animate-spin text-primary" />
                     <p className="text-sm text-primary">{statusMessage}</p>
@@ -603,7 +603,7 @@ export default function PromptLetterTaskPage() {
                 </div>
               )}
 
-              <div className="max-h-96 overflow-y-auto pr-2">
+              <div className="flex-1 overflow-y-auto pr-2">
                 <h3 className="mb-3 text-sm font-bold text-on-surface-variant">文件列表</h3>
                 {files.length === 0 ? (
                   <p className="text-sm text-on-surface-variant">暂无上传文件</p>
@@ -703,10 +703,10 @@ export default function PromptLetterTaskPage() {
           </div>
 
           {/* 右侧主界面 - 预览区域 */}
-          <div className="col-span-8">
+          <div className="col-span-8 flex h-full min-h-0 flex-col">
             {generatedReports.length > 0 ? (
-              <div className="rounded-3xl bg-white p-5 shadow-sm">
-                <div className="mb-4 flex items-center justify-between">
+              <div className="flex flex-1 flex-col overflow-hidden rounded-3xl bg-white p-5 shadow-sm">
+                <div className="mb-4 shrink-0 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <h2 className="font-headline text-lg font-black text-primary">生成的提示函</h2>
                     {generatedReports.length >= 1 && (
@@ -740,12 +740,12 @@ export default function PromptLetterTaskPage() {
                 </div>
 
                 {activeReport !== null && generatedReports[activeReport] ? (
-                  <div>
+                  <div className="flex min-h-0 flex-1 flex-col">
                     <div className="mb-2">
                       <p className="text-sm font-medium text-primary">{generatedReports[activeReport].fileName}</p>
                       <p className="text-xs text-on-surface-variant">{generatedReports[activeReport].institutionName}</p>
                     </div>
-                    <div className="border border-outline-variant/20 rounded-2xl p-6 min-h-[500px]">
+                    <div className="min-h-0 flex-1 overflow-y-auto border border-outline-variant/20 rounded-2xl p-6">
                       <PromptLetterPreviewClient
                         content={generatedReports[activeReport].content}
                         fileName={generatedReports[activeReport].fileName}
@@ -753,14 +753,14 @@ export default function PromptLetterTaskPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex min-h-[500px] items-center justify-center rounded-2xl border border-dashed border-outline-variant/30 bg-surface-container-low">
+                  <div className="flex min-h-0 flex-1 items-center justify-center rounded-2xl border border-dashed border-outline-variant/30 bg-surface-container-low">
                     <p className="text-gray-500">请选择要预览的提示函</p>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="rounded-3xl bg-white p-5 shadow-sm">
-                <div className="flex min-h-[600px] items-center justify-center rounded-2xl border border-dashed border-outline-variant/30 bg-surface-container-low">
+              <div className="flex flex-1 flex-col rounded-3xl bg-white p-5 shadow-sm">
+                <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-outline-variant/30 bg-surface-container-low">
                   <div className="text-center">
                     <FileText className="h-12 w-12 mx-auto text-primary/30" />
                     <h3 className="mt-4 text-lg font-bold text-primary">暂无生成的提示函</h3>

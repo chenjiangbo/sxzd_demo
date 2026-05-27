@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="zh-CN" className={`${inter.variable} ${manrope.variable}`}>
-      <body className="antialiased bg-surface text-on-surface min-h-screen flex" suppressHydrationWarning>{children}</body>
+      <body className="antialiased bg-surface text-on-surface min-h-screen flex flex-col" suppressHydrationWarning>{children}</body>
     </html>
   );
 }

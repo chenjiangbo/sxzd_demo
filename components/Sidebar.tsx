@@ -8,7 +8,7 @@ const topLevelItems = [
   { href: '/brief', label: '担保体系简报', icon: Presentation },
   { href: '/evaluation-report', label: '机构评价报告', icon: BotMessageSquare },
   { href: '/credit-report', label: '授信报告', icon: FileStack },
-  { href: '/prompt-letter', label: '综合评价提示函', icon: FileStack },
+  { href: '/prompt-letter', label: '综合评价提示函', icon: BotMessageSquare },
   { href: '/ai-review', label: 'AI 复核', icon: BrainCircuit },
 ];
 
