@@ -146,12 +146,12 @@ export default function PromptLetterTaskPage() {
 
     Array.from(selectedFiles).forEach(file => {
       const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+
       // 简单根据文件扩展名判断部门类型
-      const fileType = file.name.includes('一部') || file.name.includes('综合评价') || file.name.endsWith('.docx') 
-        ? 'oneDept' 
+      const fileType = file.name.includes('一部') || file.name.includes('综合评价') || file.name.endsWith('.docx')
+        ? 'oneDept'
         : 'threeDept';
-      
+
       setFiles(prev => [
         ...prev,
         {
@@ -174,15 +174,15 @@ export default function PromptLetterTaskPage() {
   const removeFile = useCallback(async (fileId: string) => {
     // 先获取 serverId（在从 state 中移除之前）
     const fileObj = files.find(f => f.id === fileId);
-    
+
     // 从前端移除
     setFiles(prev => prev.filter(f => f.id !== fileId));
-    
+
     // 同时删除关联的报告
     if (fileObj?.reportId) {
       setGeneratedReports(prev => prev.filter(r => r.id !== fileObj.reportId));
     }
-    
+
     // 如果有 serverId，调用 DELETE API 删除服务端文件
     if (fileObj?.serverId) {
       try {
@@ -560,7 +560,7 @@ export default function PromptLetterTaskPage() {
                 <p className="text-sm text-on-surface-variant">上传一部和三部的资料以生成提示函</p>
               </div>
 
-              <div 
+              <div
                 className="mb-4 shrink-0 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-outline-variant/30 bg-surface-container-low p-6 text-center transition hover:border-primary/50"
                 onClick={() => fileInputRef.current?.click()}
               >
@@ -623,7 +623,7 @@ export default function PromptLetterTaskPage() {
                     {files.map(file => {
                       const isActive = file.reportId && generatedReports[activeReport ?? -1]?.id === file.reportId;
                       const canClick = file.generateStatus === 'done';
-                      
+
                       return (
                         <li
                           key={file.id}
@@ -779,7 +779,7 @@ export default function PromptLetterTaskPage() {
                     <FileText className="h-12 w-12 mx-auto text-primary/30" />
                     <h3 className="mt-4 text-lg font-bold text-primary">暂无生成的提示函</h3>
                     <p className="mt-2 text-sm text-on-surface-variant">
-                      请先上传一部和三部的资料，然后点击“AI 生成”
+                      请先上传一部和三部的资料，然后点击“上传全部”,最后点击“AI 生成”
                     </p>
                   </div>
                 </div>
