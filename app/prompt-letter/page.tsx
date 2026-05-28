@@ -195,6 +195,17 @@ export default function PromptLetterTaskPage() {
     }
   }, [files]);
 
+  // 处理预览内容更新
+  const handleContentUpdated = useCallback((institutionName: string, newContent: string) => {
+    setGeneratedReports(prev =>
+      prev.map(r =>
+        r.institutionName === institutionName
+          ? { ...r, content: newContent, generatedAt: new Date().toISOString() }
+          : r
+      )
+    );
+  }, []);
+
   const uploadFile = async (fileId: string) => {
     const fileObj = files.find(f => f.id === fileId);
     if (!fileObj || !fileObj.file) return;
@@ -747,8 +758,11 @@ export default function PromptLetterTaskPage() {
                     </div>
                     <div className="min-h-0 flex-1 overflow-y-auto border border-outline-variant/20 rounded-2xl p-6">
                       <PromptLetterPreviewClient
+                        key={generatedReports[activeReport].id}
                         content={generatedReports[activeReport].content}
                         fileName={generatedReports[activeReport].fileName}
+                        institutionName={generatedReports[activeReport].institutionName}
+                        onContentUpdated={handleContentUpdated}
                       />
                     </div>
                   </div>

@@ -386,3 +386,25 @@ export async function clearGeneratedLetters(): Promise<void> {
     await fs.unlink(path.join(CACHE_DIR, file));
   }
 }
+
+export async function updateGeneratedPromptLetter(
+  institutionName: string,
+  newContent: string
+): Promise<boolean> {
+  await fs.mkdir(CACHE_DIR, { recursive: true });
+
+  const files = await fs.readdir(CACHE_DIR);
+  for (const fileName of files.sort().reverse()) {
+    try {
+      const content = await fs.readFile(path.join(CACHE_DIR, fileName), 'utf8');
+      const letter = JSON.parse(content) as GeneratedPromptLetter;
+      if (letter.institutionName === institutionName) {
+        letter.rawText = newContent;
+        letter.generatedAt = new Date().toISOString();
+        await fs.writeFile(path.join(CACHE_DIR, fileName), JSON.stringify(letter, null, 2), 'utf8');
+        return true;
+      }
+    } catch {}
+  }
+  return false;
+}

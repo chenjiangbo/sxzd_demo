@@ -1,11 +1,58 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 type Props = {
   content: string;
   fileName: string;
+  institutionName: string;
+  onContentUpdated?: (institutionName: string, newContent: string) => void;
 };
 
-export default function PromptLetterPreviewClient({ content, fileName }: Props) {
+export default function PromptLetterPreviewClient({ content, fileName, institutionName, onContentUpdated }: Props) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingContent, setEditingContent] = useState(content);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // 当外部 content 变化时，同步到编辑状态
+  useEffect(() => {
+    setEditingContent(content);
+  }, [content]);
+
+  // 保存编辑
+  const handleSave = async () => {
+    if (!institutionName) return;
+    setIsSaving(true);
+    try {
+      const res = await fetch('/api/prompt-letter/update-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          institutionName,
+          content: editingContent,
+        }),
+      });
+      if (res.ok) {
+        // 通知父组件更新
+        if (onContentUpdated) {
+          onContentUpdated(institutionName, editingContent);
+        }
+        setIsEditing(false);
+      } else {
+        alert('保存失败');
+      }
+    } catch {
+      alert('保存失败，请重试');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // 取消编辑
+  const handleCancel = () => {
+    setEditingContent(content);
+    setIsEditing(false);
+  };
 
   // 解析提示函内容结构
   const parsePromptLetterContent = (text: string) => {
@@ -84,9 +131,52 @@ export default function PromptLetterPreviewClient({ content, fileName }: Props) 
     );
   }
 
+  // 编辑模式：纯 textarea
+  if (isEditing) {
+    return (
+      <div className="font-['SimSun',serif] text-[15px] leading-relaxed">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              {isSaving ? '保存中...' : '保存'}
+            </button>
+            <button
+              onClick={handleCancel}
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+            >
+              取消
+            </button>
+          </div>
+          <textarea
+            value={editingContent}
+            onChange={(e) => setEditingContent(e.target.value)}
+            className="w-full h-[calc(100vh-200px)] p-4 border border-gray-300 rounded font-['SimSun',serif] text-[15px] leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="font-['SimSun',serif] text-[15px] leading-relaxed">
       <div className="max-w-4xl mx-auto">
+        {/* 编辑按钮 */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => {
+              setEditingContent(content);
+              setIsEditing(true);
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            编辑
+          </button>
+        </div>
+
           {/* 标题 */}
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold mb-2">{title}</h1>
