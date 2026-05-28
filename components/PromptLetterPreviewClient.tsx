@@ -56,12 +56,12 @@ export default function PromptLetterPreviewClient({ content, fileName, instituti
 
   // 解析提示函内容结构
   const parsePromptLetterContent = (text: string) => {
-    if (!text) return { title: '综合评价提示函', greeting: '', sections: [] };
+    if (!text) return { title: '综合评价提示函', titleLines: [], greeting: '', opening: '', sections: [] };
 
     const lines = text.split('\n').map(l => l.trim()).filter(l => l);
     
     // 提取标题行（前两行，直到遇到称谓行）
-    let titleLines: string[] = [];
+    let titleLinesArr: string[] = [];
     let greeting = '';
     let opening = '';  // 问候语（您好！...）
     let bodyLines: string[] = [];
@@ -84,15 +84,12 @@ export default function PromptLetterPreviewClient({ content, fileName, instituti
       }
       
       // 在称谓行之前的是标题
-      if (!inGreeting && titleLines.length < 2) {
-        titleLines.push(line);
+      if (!inGreeting && titleLinesArr.length < 2) {
+        titleLinesArr.push(line);
       } else {
         bodyLines.push(line);
       }
     }
-    
-    // 合并标题
-    const title = titleLines.join('') || '综合评价提示函';
     
     // 解析正文中的章节
     const sections: { title: string; level: 1 | 2; content: string[] }[] = [];
@@ -132,11 +129,11 @@ export default function PromptLetterPreviewClient({ content, fileName, instituti
       sections.push(currentSection);
     }
     
-    return { title, greeting, opening, sections };
+    return { title: titleLinesArr.join('') || '综合评价提示函', titleLines: titleLinesArr, greeting, opening, sections };
   };
 
   // 解析内容
-  const { title, greeting, opening, sections } = parsePromptLetterContent(content);
+  const { title, titleLines, greeting, opening, sections } = parsePromptLetterContent(content);
 
   if (!content) {
     return (
@@ -149,52 +146,53 @@ export default function PromptLetterPreviewClient({ content, fileName, instituti
   // 编辑模式：纯 textarea
   if (isEditing) {
     return (
-      <div className="font-['SimSun',serif] text-[16px] leading-[28pt]">
-        <div className="max-w-[21cm] mx-auto">
-          <div className="flex gap-2 mb-4">
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-            >
-              {isSaving ? '保存中...' : '保存'}
-            </button>
-            <button
-              onClick={handleCancel}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-            >
-              取消
-            </button>
-          </div>
-          <textarea
-            value={editingContent}
-            onChange={(e) => setEditingContent(e.target.value)}
-            className="w-full h-[calc(100vh-200px)] p-4 border border-gray-300 rounded font-['SimSun',serif] text-[16px] leading-[28pt] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+      <div className="font-['SimSun',serif] text-[16px] leading-[28pt] h-full flex flex-col">
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          >
+            {isSaving ? '保存中...' : '保存'}
+          </button>
+          <button
+            onClick={handleCancel}
+            className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+          >
+            取消
+          </button>
         </div>
+        <textarea
+          value={editingContent}
+          onChange={(e) => setEditingContent(e.target.value)}
+          className="flex-1 w-full p-4 border border-gray-300 rounded font-['SimSun',serif] text-[16px] leading-[28pt] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
       </div>
     );
   }
 
   return (
-    <div className="font-['SimSun',serif] text-[16px] leading-[28pt]">
-      <div className="max-w-[21cm] mx-auto">
-        {/* 编辑按钮 */}
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={() => {
-              setEditingContent(content);
-              setIsEditing(true);
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            编辑
-          </button>
-        </div>
+    <div className="font-['SimSun',serif] text-[16px] leading-[28pt] h-full flex flex-col">
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => {
+            setEditingContent(content);
+            setIsEditing(true);
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          编辑
+        </button>
+      </div>
 
-          {/* 标题 - 仿宋二号加粗居中 */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-[21cm] mx-auto px-[3.17cm] pb-[2.54cm] bg-white">
+
+          {/* 标题 - 仿宋二号加粗居中，保持两行 */}
           <div className="text-center mb-8">
-            <h1 className="text-[22pt] font-bold mb-2 font-['FangSong','SimSun',serif] leading-[2em]">{title}</h1>
+            {titleLines.map((line, idx) => (
+              <h1 key={idx} className="text-[22pt] font-bold mb-2 font-['FangSong','SimSun',serif] leading-[2em]">{line}</h1>
+            ))}
           </div>
 
           {/* 称谓和问候语 */}
@@ -237,6 +235,7 @@ export default function PromptLetterPreviewClient({ content, fileName, instituti
               </div>
             )}
           </div>
+        </div>
       </div>
     </div>
   );
