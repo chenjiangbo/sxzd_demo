@@ -95,19 +95,34 @@ export default function PromptLetterPreviewClient({ content, fileName, instituti
     const title = titleLines.join('') || '综合评价提示函';
     
     // 解析正文中的章节
-    const sections = [];
-    let currentSection: { title: string; content: string[] } | null = null;
+    const sections: { title: string; level: 1 | 2; content: string[] }[] = [];
+    let currentSection: { title: string; level: 1 | 2; content: string[] } | null = null;
     
     for (const line of bodyLines) {
-      if (line.match(/^一、|二、|三、|四、|五、|六、|七、|八、|九、|十、/)) {
+      // 一级标题：一、二、三...
+      if (line.match(/^[一二三四五六七八九十]+、/)) {
         if (currentSection) {
           sections.push(currentSection);
         }
         currentSection = {
           title: line,
+          level: 1,
           content: []
         };
-      } else if (currentSection) {
+      }
+      // 二级标题：（一）（二）（三）...
+      else if (line.match(/^（[一二三四五六七八九十]+）/)) {
+        // 二级标题作为独立 section 或追加到一级标题下
+        if (currentSection) {
+          sections.push(currentSection);
+        }
+        currentSection = {
+          title: line,
+          level: 2,
+          content: []
+        };
+      }
+      else if (currentSection) {
         if (line) {
           currentSection.content.push(line);
         }
@@ -134,8 +149,8 @@ export default function PromptLetterPreviewClient({ content, fileName, instituti
   // 编辑模式：纯 textarea
   if (isEditing) {
     return (
-      <div className="font-['SimSun',serif] text-[15px] leading-relaxed">
-        <div className="max-w-4xl mx-auto">
+      <div className="font-['SimSun',serif] text-[16px] leading-[28pt]">
+        <div className="max-w-[21cm] mx-auto">
           <div className="flex gap-2 mb-4">
             <button
               onClick={handleSave}
@@ -154,7 +169,7 @@ export default function PromptLetterPreviewClient({ content, fileName, instituti
           <textarea
             value={editingContent}
             onChange={(e) => setEditingContent(e.target.value)}
-            className="w-full h-[calc(100vh-200px)] p-4 border border-gray-300 rounded font-['SimSun',serif] text-[15px] leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full h-[calc(100vh-200px)] p-4 border border-gray-300 rounded font-['SimSun',serif] text-[16px] leading-[28pt] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
@@ -162,8 +177,8 @@ export default function PromptLetterPreviewClient({ content, fileName, instituti
   }
 
   return (
-    <div className="font-['SimSun',serif] text-[15px] leading-relaxed">
-      <div className="max-w-4xl mx-auto">
+    <div className="font-['SimSun',serif] text-[16px] leading-[28pt]">
+      <div className="max-w-[21cm] mx-auto">
         {/* 编辑按钮 */}
         <div className="flex justify-end mb-4">
           <button
@@ -177,30 +192,37 @@ export default function PromptLetterPreviewClient({ content, fileName, instituti
           </button>
         </div>
 
-          {/* 标题 */}
+          {/* 标题 - 仿宋二号加粗居中 */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold mb-2">{title}</h1>
+            <h1 className="text-[22pt] font-bold mb-2 font-['FangSong','SimSun',serif] leading-[2em]">{title}</h1>
           </div>
 
           {/* 称谓和问候语 */}
           {greeting && (
             <div className="mb-4">
-              <p className="font-bold text-left">{greeting}</p>
+              <p className="font-['FangSong','SimSun',serif] text-[16px] leading-[28pt] font-bold text-left">{greeting}</p>
             </div>
           )}
           {opening && (
             <div className="mb-6">
-              <p className="text-left indent-8">{opening}</p>
+              <p className="font-['FangSong','SimSun',serif] text-[16px] leading-[28pt] text-left pl-[2em]">{opening}</p>
             </div>
           )}
 
-          <div className="space-y-6">
+          <div className="space-y-0">
             {sections.map((section, index) => (
               <div key={index}>
-                <h2 className="font-bold text-lg mb-3 text-left">{section.title}</h2>
-                <div className="space-y-3 text-left">
+                {/* 一级标题 - 黑体三号加粗 */}
+                {section.level === 1 && (
+                  <h2 className="font-['SimHei','FangSong',serif] text-[16px] leading-[28pt] font-bold mb-3 text-left">{section.title}</h2>
+                )}
+                {/* 二级标题 - 楷体三号 */}
+                {section.level === 2 && (
+                  <h3 className="font-['KaiTi','FangSong',serif] text-[16px] leading-[28pt] mb-3 text-left pl-[2em]">{section.title}</h3>
+                )}
+                <div className="space-y-0 text-left">
                   {section.content.map((paragraph, pIndex) => (
-                    <p key={pIndex} className="leading-8 indent-8">
+                    <p key={pIndex} className="font-['FangSong','SimSun',serif] text-[16px] leading-[28pt] pl-[2em]">
                       {paragraph}
                     </p>
                   ))}
@@ -210,7 +232,7 @@ export default function PromptLetterPreviewClient({ content, fileName, instituti
 
             {/* 如果没有解析到特定结构，直接显示内容 */}
             {sections.length === 0 && content && (
-              <div className="whitespace-pre-line text-left">
+              <div className="whitespace-pre-line text-left font-['FangSong','SimSun',serif] text-[16px] leading-[28pt]">
                 {content}
               </div>
             )}
