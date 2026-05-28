@@ -145,6 +145,12 @@ function classifyLine(line: string): {
     return { type: 'title', text: trimmed };
   }
 
+  // 落款：陕西省信用再担保有限责任公司、总经理（带或不带冒号）
+  // 必须在称谓行判断之前，否则"总经理："会被误匹配为称谓
+  if (trimmed === '陕西省信用再担保有限责任公司' || trimmed === '总经理' || trimmed === '总经理：' || trimmed === '总经理:') {
+    return { type: 'signature', text: trimmed };
+  }
+
   // 称谓行：姓名+职务+冒号（如 "童彦董事长："、"滑全民总经理："）
   if (/^.{2,6}(董事长|总经理|执行董事|执行董事兼总经理|监事长)[：:]$/.test(trimmed)) {
     return { type: 'greeting', text: trimmed };
@@ -170,13 +176,8 @@ function classifyLine(line: string): {
     return { type: 'section', text: trimmed };
   }
 
-  // 落款：陕西省信用再担保有限责任公司、总经理
-  if (trimmed === '陕西省信用再担保有限责任公司' || trimmed.startsWith('总经理')) {
-    return { type: 'signature', text: trimmed };
-  }
-
-  // 日期行
-  if (/^\d{4}年\d{1,2}月(\d{1,2}日)?$/.test(trimmed)) {
+  // 日期行（容许数字与汉字之间有空格）
+  if (/^\d{4}\s*年\s*\d{1,2}\s*月(\s*\d{1,2}\s*日)?$/.test(trimmed)) {
     return { type: 'date', text: trimmed };
   }
 

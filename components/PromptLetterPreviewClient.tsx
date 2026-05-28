@@ -91,11 +91,26 @@ export default function PromptLetterPreviewClient({ content, fileName, instituti
       }
     }
     
-    // 解析正文中的章节
+    // 解析正文中的章节和落款
     const sections: { title: string; level: 1 | 2; content: string[] }[] = [];
     let currentSection: { title: string; level: 1 | 2; content: string[] } | null = null;
+    const signature: string[] = [];  // 落款行
+    let inSignature = false;
     
     for (const line of bodyLines) {
+      // 检测落款开始：陕西省信用再担保有限责任公司
+      if (line === '陕西省信用再担保有限责任公司') {
+        inSignature = true;
+        signature.push(line);
+        continue;
+      }
+      
+      // 落款行：总经理、日期等
+      if (inSignature) {
+        signature.push(line);
+        continue;
+      }
+      
       // 一级标题：一、二、三...
       if (line.match(/^[一二三四五六七八九十]+、/)) {
         if (currentSection) {
@@ -129,11 +144,11 @@ export default function PromptLetterPreviewClient({ content, fileName, instituti
       sections.push(currentSection);
     }
     
-    return { title: titleLinesArr.join('') || '综合评价提示函', titleLines: titleLinesArr, greeting, opening, sections };
+    return { title: titleLinesArr.join('') || '综合评价提示函', titleLines: titleLinesArr, greeting, opening, sections, signature };
   };
 
   // 解析内容
-  const { title, titleLines, greeting, opening, sections } = parsePromptLetterContent(content);
+  const { title, titleLines, greeting, opening, sections, signature } = parsePromptLetterContent(content);
 
   if (!content) {
     return (
@@ -227,6 +242,17 @@ export default function PromptLetterPreviewClient({ content, fileName, instituti
                 </div>
               </div>
             ))}
+
+            {/* 落款 - 右对齐 */}
+            {signature.length > 0 && (
+              <div className="mt-12 text-right">
+                {signature.map((line, idx) => (
+                  <p key={idx} className="font-['FangSong','SimSun',serif] text-[16px] leading-[28pt]">
+                    {line}
+                  </p>
+                ))}
+              </div>
+            )}
 
             {/* 如果没有解析到特定结构，直接显示内容 */}
             {sections.length === 0 && content && (
