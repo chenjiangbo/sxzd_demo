@@ -20,10 +20,12 @@ const materialMatchSchema = z.object({
   materials: z.array(
     z
       .object({
-        material_name: z.string(),
+        material_name: z.string().optional(),
+        material: z.string().optional(),
         status: z.enum(['matched', 'pending_confirm', 'missing', 'not_applicable']).optional(),
         match_status: z.enum(['matched', 'pending_confirm', 'missing', 'not_applicable']).optional(),
         file_name: z.string().optional(),
+        file_names: z.array(z.string()).optional(),
         matched_files: z
           .array(
             z.union([
@@ -40,10 +42,11 @@ const materialMatchSchema = z.object({
         manual_attention: z.string().nullable().default(null),
       })
       .transform((item) => ({
-        material_name: item.material_name,
+        material_name: item.material_name ?? item.material ?? '',
         status: item.status ?? item.match_status ?? 'pending_confirm',
         matched_files: [
           ...(item.file_name ? [item.file_name] : []),
+          ...(item.file_names ?? []),
           ...item.matched_files.map((file) => {
           if (typeof file === 'string') return file;
           return file.file_name ?? file.relative_path ?? '未命名文件';
@@ -528,10 +531,13 @@ function buildTextSnippet(text: string | null | undefined, keywords: string[], f
 }
 
 async function extractDocumentContent(document: AnalysisDocument, options: { force?: boolean } = {}) {
-  const hash = createHash('md5').update(`${EXTRACTION_CACHE_VERSION}:${document.absolutePath}`).digest('hex');
+  const stableCacheKey = path.relative(WORKSPACE_ROOT, document.absolutePath);
+  const hash = createHash('md5').update(`${EXTRACTION_CACHE_VERSION}:${stableCacheKey}`).digest('hex');
+  const legacyHash = createHash('md5').update(`${EXTRACTION_CACHE_VERSION}:${document.absolutePath}`).digest('hex');
   const outDir = path.join(CACHE_ROOT, 'extracted-documents');
   await ensureDir(outDir);
   const jsonPath = path.join(outDir, `${hash}.json`);
+  const legacyJsonPath = path.join(outDir, `${legacyHash}.json`);
 
   if (!options.force) {
     try {
@@ -542,6 +548,17 @@ async function extractDocumentContent(document: AnalysisDocument, options: { for
         text_source: 'xlsx' | 'pypdf' | 'vision_ocr';
         text: string;
       };
+    } catch {}
+    try {
+      const raw = await fs.readFile(legacyJsonPath, 'utf8');
+      const payload = JSON.parse(raw) as {
+        kind: 'pdf' | 'xlsx';
+        page_count: number | null;
+        text_source: 'xlsx' | 'pypdf' | 'vision_ocr';
+        text: string;
+      };
+      await fs.writeFile(jsonPath, JSON.stringify(payload, null, 2), 'utf8');
+      return payload;
     } catch {}
   }
 
@@ -1116,11 +1133,13 @@ async function buildCaseFromBaoji(options: { forceReextract?: boolean } = {}) {
             document_inventory: materialInventory,
             instructions: [
               '请为每个材料项判断 matched/pending_confirm/missing/not_applicable。',
+              '每个材料项必须使用 material_name 字段返回材料名称，禁止使用 material、name 等其他字段名。',
+              '每个材料项必须包含 status、matched_files、ai_reason、manual_attention 字段。',
               '一个文件可以匹配多个材料项。',
               '如果存在并件情形，要明确写入 ai_reason。',
               '优先依据文件全文提取结果和结构化台账，不要只凭文件名判断。',
               '不要编造文件名。',
-              '返回格式：{"materials":[...]}',
+              '返回格式必须为：{"materials":[{"material_name":"代偿补偿申请函","status":"matched","matched_files":["文件名.pdf"],"ai_reason":"判断依据","manual_attention":null}]}',
             ],
           },
           null,

@@ -315,22 +315,26 @@ async function extractPolicyText() {
     return parsed.pages.map((page) => page.text).join('\n\n');
   } catch {}
 
-  // Windows 环境下直接返回空文本，避免调用 macOS 的 Swift OCR
-  if (process.platform === 'win32') {
-    const emptyText = '';
-    await fs.writeFile(cachePath, JSON.stringify({ pageCount: 0, pages: [] }), 'utf8');
-    return emptyText;
-  }
-
-  const scriptPath = path.join(WORKSPACE_ROOT, 'scripts', 'pdf_vision_ocr.swift');
-  const { stdout } = await execFileAsync('swift', [scriptPath, CREDIT_POLICY_PDF], {
+  const scriptPath = path.join(WORKSPACE_ROOT, 'scripts', 'extract_case_document.py');
+  const extractedPath = path.join(CREDIT_CACHE_ROOT, 'policy-extracted.json');
+  await execFileAsync('python3', [scriptPath, CREDIT_POLICY_PDF, extractedPath], {
     timeout: 600_000,
     env: process.env,
     maxBuffer: 50 * 1024 * 1024,
   });
-  await fs.writeFile(cachePath, stdout, 'utf8');
-  const parsed = JSON.parse(stdout) as { pageCount: number; pages: Array<{ page: number; text: string }> };
-  return parsed.pages.map((page) => page.text).join('\n\n');
+  const raw = await fs.readFile(extractedPath, 'utf8');
+  const extracted = JSON.parse(raw) as { page_count: number | null; text: string; text_source: string };
+  const text = extracted.text.trim();
+  if (!text) {
+    throw new Error(`授信管理办法 PDF 文本抽取结果为空：${CREDIT_POLICY_PDF}`);
+  }
+  const parsed = {
+    pageCount: extracted.page_count ?? 0,
+    pages: [{ page: 1, text }],
+    textSource: extracted.text_source,
+  };
+  await fs.writeFile(cachePath, JSON.stringify(parsed, null, 2), 'utf8');
+  return text;
 }
 
 function normalizeRegionLevel(name: string): SpreadsheetInstitution['regionLevel'] {
