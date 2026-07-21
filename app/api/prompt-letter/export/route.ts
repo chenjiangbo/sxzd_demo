@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     // 文件名统一用 .docx
     const downloadName = `${letter.fileName || fileName}.docx`;
 
-    return new Response(docxBuffer, {
+    return new Response(new Uint8Array(docxBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

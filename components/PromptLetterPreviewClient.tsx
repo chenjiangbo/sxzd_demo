@@ -56,7 +56,7 @@ export default function PromptLetterPreviewClient({ content, fileName, instituti
 
   // 解析提示函内容结构
   const parsePromptLetterContent = (text: string) => {
-    if (!text) return { title: '综合评价提示函', titleLines: [], greeting: '', opening: '', sections: [] };
+    if (!text) return { title: '综合评价提示函', titleLines: [], greeting: '', opening: '', sections: [], signature: [] };
 
     const lines = text.split('\n').map(l => l.trim()).filter(l => l);
     
